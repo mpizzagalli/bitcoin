@@ -9,11 +9,21 @@
 #include <chain.h>
 #include <primitives/block.h>
 #include <uint256.h>
+#include <logging.h>
 
 unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock, const Consensus::Params& params)
 {
     assert(pindexLast != nullptr);
+
     unsigned int nProofOfWorkLimit = UintToArith256(params.powLimit).GetCompact();
+
+    //Si estamos simulando seteamos la dificultad minima
+    if (params.simuLambda >= 0)
+        return nProofOfWorkLimit;
+
+    //Si es el bloque 1, seteamos la dificultad inicial deseada
+    if (pindexLast->nHeight == 0)
+        return params.initialDifficultyBits;
 
     // Only change once per difficulty adjustment interval
     if ((pindexLast->nHeight+1) % params.DifficultyAdjustmentInterval() != 0)
@@ -88,4 +98,14 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params&
         return false;
 
     return true;
+}
+
+unsigned int CalculateDesiredDifficulty(uint32_t numberOfZeroes)
+{
+    arith_uint256 dificulta = arith_uint256(base_uint<256>("1"));
+    dificulta <<= 255;
+    dificulta -= 1;
+    dificulta >>= numberOfZeroes;
+
+    return dificulta.GetCompact();
 }

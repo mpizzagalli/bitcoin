@@ -57,6 +57,7 @@ class NodeImpl : public Node
     bool softSetArg(const std::string& arg, const std::string& value) override { return gArgs.SoftSetArg(arg, value); }
     bool softSetBoolArg(const std::string& arg, bool value) override { return gArgs.SoftSetBoolArg(arg, value); }
     void selectParams(const std::string& network) override { SelectParams(network); }
+    void selectParams(const std::string& network, int64_t regtestDifficulty, int64_t simuLambda) override { SelectParams(network, regtestDifficulty, simuLambda); }
     std::string getNetwork() override { return Params().NetworkIDString(); }
     void initLogging() override { InitLogging(); }
     void initParameterInteraction() override { InitParameterInteraction(); }

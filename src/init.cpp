@@ -1478,7 +1478,7 @@ bool AppInitMain()
 
                 // If the loaded chain has a wrong genesis, bail out immediately
                 // (we're likely using a testnet datadir, or the other way around).
-                if (!mapBlockIndex.empty() && !LookupBlockIndex(chainparams.GetConsensus().hashGenesisBlock)) {
+                if (!mapBlockIndex.empty() && !LookupBlockIndex(chainparams.GetConsensus().hashGenesisBlock)/* && chainparams.NetworkIDString() != CBaseChainParams::REGTEST*/) {
                     return InitError(_("Incorrect or no genesis block found. Wrong datadir for network?"));
                 }
 

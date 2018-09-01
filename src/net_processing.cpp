@@ -1326,6 +1326,9 @@ bool static ProcessHeadersMessage(CNode *pfrom, CConnman *connman, const std::ve
         return true;
     }
 
+    for (uint32_t i=0; i<nCount; ++i)
+        BCLog::LogNewBlockReadyForBlockchain(pfrom->addr.ToString(), headers[i].GetHash().ToString());
+
     bool received_new_header = false;
     const CBlockIndex *pindexLast = nullptr;
     {

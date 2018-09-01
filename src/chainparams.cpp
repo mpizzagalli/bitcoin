@@ -73,6 +73,8 @@ void CChainParams::UpdateVersionBitsParameters(Consensus::DeploymentPos d, int64
 class CMainParams : public CChainParams {
 public:
     CMainParams() {
+        consensus.simuLambda = -1;
+
         strNetworkID = "main";
         consensus.nSubsidyHalvingInterval = 210000;
         consensus.BIP16Exception = uint256S("0x00000000000002dc756eebf4f49723ed8d30cc28a5f108eb94b1ba88ac4f9c22");
@@ -188,6 +190,8 @@ public:
 class CTestNetParams : public CChainParams {
 public:
     CTestNetParams() {
+        consensus.simuLambda = -1;
+
         strNetworkID = "test";
         consensus.nSubsidyHalvingInterval = 210000;
         consensus.BIP16Exception = uint256S("0x00000000dd30457c001f4095d208cc1296b0eed002427aa599874af7a432b105");
@@ -280,7 +284,9 @@ public:
  */
 class CRegTestParams : public CChainParams {
 public:
-    CRegTestParams() {
+    CRegTestParams(int32_t desiredSimuLambda, uint32_t regtestDifficulty) {
+        consensus.simuLambda = desiredSimuLambda;
+
         strNetworkID = "regtest";
         consensus.nSubsidyHalvingInterval = 150;
         consensus.BIP16Exception = uint256();
@@ -291,8 +297,25 @@ public:
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
-        consensus.fPowAllowMinDifficultyBlocks = true;
-        consensus.fPowNoRetargeting = true;
+        if (desiredSimuLambda >= 0)
+        {
+            consensus.initialDifficultyBits = 0x0207fffff;
+            consensus.fPowAllowMinDifficultyBlocks = true;
+            consensus.fPowNoRetargeting = true;
+        }
+        else
+        {
+
+            arith_uint256 dificulta = arith_uint256(base_uint<256>("1"));
+            dificulta <<= 255;
+            dificulta -= 1;
+            dificulta >>= regtestDifficulty;
+
+            consensus.initialDifficultyBits = dificulta.GetCompact();
+            consensus.fPowAllowMinDifficultyBlocks = false;
+            consensus.fPowNoRetargeting = false;
+        }
+
         consensus.nRuleChangeActivationThreshold = 108; // 75% for testchains
         consensus.nMinerConfirmationWindow = 144; // Faster than normal for regtest (144 instead of 2016)
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
@@ -318,7 +341,7 @@ public:
         nDefaultPort = 18444;
         nPruneAfterHeight = 1000;
 
-        genesis = CreateGenesisBlock(1296688602, 2, 0x207fffff, 1, 50 * COIN);
+        genesis = CreateGenesisBlock(1296688602, 2, 0x0207fffff, 1, 50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
         assert(consensus.hashGenesisBlock == uint256S("0x0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"));
         assert(genesis.hashMerkleRoot == uint256S("0x4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"));
@@ -362,21 +385,27 @@ const CChainParams &Params() {
     return *globalChainParams;
 }
 
-std::unique_ptr<CChainParams> CreateChainParams(const std::string& chain)
+std::unique_ptr<CChainParams> CreateChainParams(const std::string& chain, uint32_t regtestDifficulty, int32_t simuLambda)
 {
     if (chain == CBaseChainParams::MAIN)
         return std::unique_ptr<CChainParams>(new CMainParams());
     else if (chain == CBaseChainParams::TESTNET)
         return std::unique_ptr<CChainParams>(new CTestNetParams());
     else if (chain == CBaseChainParams::REGTEST)
-        return std::unique_ptr<CChainParams>(new CRegTestParams());
+        return std::unique_ptr<CChainParams>(new CRegTestParams(simuLambda, regtestDifficulty));
     throw std::runtime_error(strprintf("%s: Unknown chain %s.", __func__, chain));
 }
 
 void SelectParams(const std::string& network)
 {
+    fprintf(stdout, " .....DIFICULTAD DE REGTEST STANDARD SOLICITADA\n");
+    SelectParams(network, 0, -1);
+}
+
+void SelectParams(const std::string& network, uint32_t regtestDifficulty, int32_t simuLambda)
+{
     SelectBaseParams(network);
-    globalChainParams = CreateChainParams(network);
+    globalChainParams = CreateChainParams(network, regtestDifficulty, simuLambda);
 }
 
 void UpdateVersionBitsParameters(Consensus::DeploymentPos d, int64_t nStartTime, int64_t nTimeout)

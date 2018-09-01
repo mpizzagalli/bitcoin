@@ -26,8 +26,12 @@
 #include <validationinterface.h>
 #include <warnings.h>
 
+#include <pow.h>
+
 #include <memory>
 #include <stdint.h>
+
+#include <random>
 
 unsigned int ParseConfirmTarget(const UniValue& value)
 {
@@ -103,7 +107,7 @@ static UniValue getnetworkhashps(const JSONRPCRequest& request)
     return GetNetworkHashPS(!request.params[0].isNull() ? request.params[0].get_int() : 120, !request.params[1].isNull() ? request.params[1].get_int() : -1);
 }
 
-UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGenerate, uint64_t nMaxTries, bool keepScript)
+UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGenerate, uint64_t nMaxTries, bool keepScript, int64_t desiredDifficulty)
 {
     static const int nInnerLoopCount = 0x10000;
     int nHeightEnd = 0;
@@ -116,31 +120,63 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
     }
     unsigned int nExtraNonce = 0;
     UniValue blockHashes(UniValue::VARR);
+
+    //simulated mining
+    if (Params().GetConsensus().simuLambda >= 0) {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+
+        int32_t usedLambda;
+
+        if (desiredDifficulty >= 0)
+            usedLambda = desiredDifficulty;
+        else
+            usedLambda = Params().GetConsensus().simuLambda;
+
+        std::exponential_distribution<double> d(usedLambda);
+
+        double secondsToWait = d(gen);
+
+        LogPrintf("Simulating computing time as: %d seconds with lambda: %i \n", secondsToWait, usedLambda);
+
+        long nanosec = (long)(((uint64_t)(secondsToWait * 1000000000.0))%1000000000);
+        time_t sec = (time_t)secondsToWait;
+        timespec timeToSleep = {sec, nanosec};
+
+        nanosleep(&timeToSleep, NULL);
+    }
+
     while (nHeight < nHeightEnd && !ShutdownRequested())
     {
-        std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript));
+        std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript, true, desiredDifficulty));
         if (!pblocktemplate.get())
             throw JSONRPCError(RPC_INTERNAL_ERROR, "Couldn't create new block");
+
         CBlock *pblock = &pblocktemplate->block;
         {
             LOCK(cs_main);
             IncrementExtraNonce(pblock, chainActive.Tip(), nExtraNonce);
         }
-        while (nMaxTries > 0 && pblock->nNonce < nInnerLoopCount && !CheckProofOfWork(pblock->GetHash(), pblock->nBits, Params().GetConsensus())) {
+
+        while (/*nMaxTries > 0 &&*/ pblock->nNonce < nInnerLoopCount && !CheckProofOfWork(pblock->GetHash(), pblock->nBits, Params().GetConsensus())) {
             ++pblock->nNonce;
             --nMaxTries;
         }
-        if (nMaxTries == 0) {
+
+        /*if (nMaxTries == 0) {
             break;
-        }
+        }*/
         if (pblock->nNonce == nInnerLoopCount) {
             continue;
         }
+
         std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(*pblock);
         if (!ProcessNewBlock(Params(), shared_pblock, true, nullptr))
             throw JSONRPCError(RPC_INTERNAL_ERROR, "ProcessNewBlock, block not accepted");
         ++nHeight;
         blockHashes.push_back(pblock->GetHash().GetHex());
+
+        BCLog::LogBroadcastBlock(pblock->GetHash().ToString());
 
         //mark script as important because it was used at least for one coinbase output if the script came from the wallet
         if (keepScript)

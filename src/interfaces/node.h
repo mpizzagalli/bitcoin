@@ -52,6 +52,8 @@ public:
     //! Choose network parameters.
     virtual void selectParams(const std::string& network) = 0;
 
+    virtual void selectParams(const std::string& network, int64_t regtestDifficulty, int64_t simuLambda) = 0;
+
     //! Get network name.
     virtual std::string getNetwork() = 0;
 

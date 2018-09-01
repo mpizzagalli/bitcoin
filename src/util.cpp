@@ -480,7 +480,8 @@ bool ArgsManager::IsArgKnown(const std::string& key, std::string& error)
     for (const auto& arg_map : m_available_args) {
         if (arg_map.second.count(arg_no_net)) return true;
     }
-    return false;
+
+    return arg_no_net == std::string("-dificulta") || arg_no_net == std::string("-simuLambda");
 }
 
 std::vector<std::string> ArgsManager::GetArgs(const std::string& strArg) const
