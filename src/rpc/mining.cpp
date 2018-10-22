@@ -133,7 +133,7 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
         else
             usedLambda = Params().GetConsensus().simuLambda;
 
-        std::exponential_distribution<double> d(usedLambda);
+        std::exponential_distribution<double> d(1/usedLambda);
 
         double secondsToWait = d(gen);
 

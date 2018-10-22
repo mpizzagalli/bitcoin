@@ -16,8 +16,8 @@ import (
 const bitcoind string = "/home/ndecarli/tesis-lic-ndecarli/bitcoin/src/bitcoind"
 const regtest string = "-regtest"
 const daemon string = "-daemon"
-const pass string = "-rpcpassword=pass"
-const user string = "-rpcuser=user"
+const pass string = "-rpcpassword=b"
+const user string = "-rpcuser=a"
 const baseDifficulty string = "-dificulta="
 const baseLambda string = "-simuLambda="
 const baseDirRoot string = "/home/ndecarli/regtestData/"
@@ -101,7 +101,7 @@ func runCommandsOnNode (nodeNumber int, userCommands... string){
   if err := cmd.Run(); err != nil {
     log.Printf("Command on node " + strconv.Itoa(nodeNumber) + " finished with error: %v", err)
   } else {
-	fmt.Printf(out.String())
+	fmt.Printf("h"+out.String()+"h")
   }
 }
 
@@ -111,7 +111,7 @@ func generateBlocks (nodeNumber int, blocksAmmount int, difficulty int) {
 
 func startPoisson (nodeNumber int) {
   rnd := rand.Intn(10)
-  time.Sleep(time.Duration((30 + rnd)) * time.Second )
+  time.Sleep(time.Duration(10 + rnd) * time.Second )
   for mine {
     rnd := rand.Intn(10)
     generateBlocks (nodeNumber, 1, rnd)
@@ -128,13 +128,14 @@ func main() {
 
   generateBaseDirFolder()
 
-  //initNode(0, nil)
-  allPreviousNodes := make([]int, 0, 5)
+  initNode(0, []int{1})
+  //allPreviousNodes := make([]int, 0, 5)
   //initNode(1, []int{0})
-  for i:=0; i<5; i++ {
-    initNode(i, allPreviousNodes)
-    allPreviousNodes = append(allPreviousNodes, i)
+  for i:=1; i<5; i++ {
+    initNode(i, []int{i-1, i+1})
+    //allPreviousNodes = append(allPreviousNodes, i)
   }
+  initNode(5, []int{4})
 
   reader := bufio.NewReader(os.Stdin)
   fmt.Print("Now listening to commands... \n")
