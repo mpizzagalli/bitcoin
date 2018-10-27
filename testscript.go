@@ -121,7 +121,7 @@ func startPoisson (nodeNumber int) {
 
 func initNode (nodeNumber int, peerNodes []int) {
   instantiateNode(nodeNumber, peerNodes)
-  go startPoisson(nodeNumber)
+  //go startPoisson(nodeNumber)
 }
 
 func main() {
