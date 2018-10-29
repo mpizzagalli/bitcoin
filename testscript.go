@@ -30,7 +30,7 @@ func dificulta (cantidadDeZerosRequeridos int) string {
   return baseDifficulty + strconv.Itoa(cantidadDeZerosRequeridos)
 }
 
-func simuLmabda (lambda int) string {
+func simuLambda (lambda int) string {
   return baseLambda + strconv.Itoa(lambda)
 }
 
@@ -77,7 +77,7 @@ func initCommands(nodeNumber int, peerNodes []int) []string {
   if nodeNumber % 2 == 0 {
     commands = append(commands, dificulta(0))
   } else{
-    commands = append(commands, simuLmabda(1))
+    commands = append(commands, simuLambda(1))
   }
   return append(commands, connectToPeers(peerNodes)...)
 }
@@ -101,7 +101,7 @@ func runCommandsOnNode (nodeNumber int, userCommands... string){
   if err := cmd.Run(); err != nil {
     log.Printf("Command on node " + strconv.Itoa(nodeNumber) + " finished with error: %v", err)
   } else {
-	fmt.Printf("h"+out.String()+"h")
+	fmt.Printf(out.String())
   }
 }
 
@@ -121,21 +121,22 @@ func startPoisson (nodeNumber int) {
 
 func initNode (nodeNumber int, peerNodes []int) {
   instantiateNode(nodeNumber, peerNodes)
-  //go startPoisson(nodeNumber)
+  go startPoisson(nodeNumber)
 }
 
 func main() {
 
   generateBaseDirFolder()
 
-  initNode(0, []int{1})
+  initNode(0, []int{1, 2, 3, 4, 5})
   //allPreviousNodes := make([]int, 0, 5)
   //initNode(1, []int{0})
-  for i:=1; i<5; i++ {
-    initNode(i, []int{i-1, i+1})
+  initNode(1, []int{0, 2, 5})
+  for i:=2; i<5; i++ {
+      initNode(i, []int{0, i-1, i+1})
     //allPreviousNodes = append(allPreviousNodes, i)
   }
-  initNode(5, []int{4})
+  initNode(5, []int{0, 4, 1})
 
   reader := bufio.NewReader(os.Stdin)
   fmt.Print("Now listening to commands... \n")

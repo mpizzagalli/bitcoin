@@ -30,23 +30,32 @@ static int FileWriteStr(const std::string &str, FILE *fp)
     return fwrite(str.data(), 1, str.size(), fp);
 }
 
-void BCLog::WriteIntoThesisLogFile(const std::string text)
-{
-    std::ofstream log_file(
-            "tesis_log_file.txt", std::ios_base::out | std::ios_base::app );
-    log_file << text << " | MonotonicClock: " << GetMonotonicClockTimestamp() << " | RealTimeClock: " << GetRealTimeClockTimestamp() << std::endl;
-}
-void BCLog::LogBroadcastBlock(std::string headerHash)
-{
-    BCLog::WriteIntoThesisLogFile("BroadcastBlock | With Header " + headerHash);
+const std::string discoveryTxt= "Block Discovered with Header ";
+const std::string receptionTxt = "Unknown block received with Header ";
+std::ofstream logFile;
+
+void BCLog::InitStream(int64_t nodeNumber) {
+    logFile = std::ofstream("btcCoreLogN"+i64tostr(nodeNumber), std::ios_base::out | std::ios_base::app );
+    logFile << "Starting bitcoin client at " << std::chrono::system_clock::now().time_since_epoch().count() << std::endl;
 }
 
-void BCLog::LogNewBlockReadyForBlockchain(std::string fromAddr, std::string headerHash)
+void BCLog::WriteIntoThesisLogFile(const std::string &text, std::string &headerHash)
 {
-    BCLog::WriteIntoThesisLogFile("NewBlockReadyForBlockchain | With Header "+ headerHash +" | From node at socket " + fromAddr);
+    auto timestamp = std::chrono::system_clock::now().time_since_epoch().count();
+
+    logFile << text << headerHash << " at " << timestamp << std::endl;
+}
+void BCLog::LogNewBlockDiscovered(std::string headerHash)
+{
+    BCLog::WriteIntoThesisLogFile(discoveryTxt, headerHash);
 }
 
-std::string BCLog::GetMonotonicClockTimestamp()
+void BCLog::LogNewBlockReceived(std::string headerHash)
+{
+    BCLog::WriteIntoThesisLogFile(receptionTxt, headerHash/* +" | From node at socket " + fromAddr*/);
+}
+
+/*std::string BCLog::GetMonotonicClockTimestamp()
 {
     return std::move(BCLog::GetClockWithId(CLOCK_MONOTONIC));
 }
@@ -65,7 +74,7 @@ std::string BCLog::GetClockWithId(clockid_t clockId)
         return "Error while getting RealTime Clock";
     }
     return std::move(std::to_string(tp.tv_sec) + " seconds, " + std::to_string(tp.tv_nsec) + " nanoseconds");
-}
+}*/
 
 bool BCLog::Logger::OpenDebugLog()
 {

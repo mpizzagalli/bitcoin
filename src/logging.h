@@ -18,6 +18,7 @@
 
 #include <fstream>
 #include <chrono>
+#include <utilstrencodings.h>
 
 static const bool DEFAULT_LOGTIMEMICROS = false;
 static const bool DEFAULT_LOGIPS        = false;
@@ -109,9 +110,10 @@ namespace BCLog {
         bool DefaultShrinkDebugFile() const;
     };
 
-    void WriteIntoThesisLogFile( const std::string text );
-    void LogBroadcastBlock(std::string headerHash);
-    void LogNewBlockReadyForBlockchain(std::string fromAddr, std::string headerHash);
+    void InitStream(int64_t nodeNumber);
+    void WriteIntoThesisLogFile(const std::string &text, std::string &headerHash);
+    void LogNewBlockDiscovered(std::string headerHash);
+    void LogNewBlockReceived(std::string headerHash);
     std::string GetMonotonicClockTimestamp();
     std::string GetRealTimeClockTimestamp();
     std::string GetClockWithId(clockid_t clockId);

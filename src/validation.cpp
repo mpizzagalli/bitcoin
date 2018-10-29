@@ -3567,6 +3567,13 @@ bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<cons
         }
     }
 
+    if (fNewBlock) {
+        if (*fNewBlock)
+            BCLog::LogNewBlockReceived(pblock->GetHash().ToString());
+    } else {
+        BCLog::LogNewBlockDiscovered(pblock->GetHash().ToString());
+    }
+
     NotifyHeaderTip();
 
     CValidationState state; // Only used to report errors, not invalidity - ignore it
