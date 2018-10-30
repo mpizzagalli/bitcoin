@@ -294,7 +294,8 @@ public:
         consensus.BIP34Hash = uint256();
         consensus.BIP65Height = 1351; // BIP65 activated on regtest (Used in rpc activation tests)
         consensus.BIP66Height = 1251; // BIP66 activated on regtest (Used in rpc activation tests)
-        consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        //consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.powLimit = uint256S("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
         if (desiredSimuLambda >= 0)
@@ -309,6 +310,8 @@ public:
             arith_uint256 dificulta = arith_uint256(base_uint<256>("1"));
             dificulta <<= 255;
             dificulta -= 1;
+            dificulta <<= 1;
+            dificulta |= 1;
             dificulta >>= regtestDifficulty;
 
             consensus.initialDifficultyBits = dificulta.GetCompact();

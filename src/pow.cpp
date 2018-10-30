@@ -22,11 +22,11 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHead
         return nProofOfWorkLimit;
 
     //Si es el bloque 1, seteamos la dificultad inicial deseada
-    if (pindexLast->nHeight == 0)
+    //if (pindexLast->nHeight == 0)
         return params.initialDifficultyBits;
 
     // Only change once per difficulty adjustment interval
-    if ((pindexLast->nHeight+1) % params.DifficultyAdjustmentInterval() != 0)
+    /*if ((pindexLast->nHeight+1) % params.DifficultyAdjustmentInterval() != 0)
     {
         if (params.fPowAllowMinDifficultyBlocks)
         {
@@ -53,7 +53,7 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHead
     const CBlockIndex* pindexFirst = pindexLast->GetAncestor(nHeightFirst);
     assert(pindexFirst);
 
-    return CalculateNextWorkRequired(pindexLast, pindexFirst->GetBlockTime(), params);
+    return CalculateNextWorkRequired(pindexLast, pindexFirst->GetBlockTime(), params);*/
 }
 
 unsigned int CalculateNextWorkRequired(const CBlockIndex* pindexLast, int64_t nFirstBlockTime, const Consensus::Params& params)

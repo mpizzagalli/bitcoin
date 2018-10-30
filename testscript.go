@@ -105,8 +105,8 @@ func runCommandsOnNode (nodeNumber int, userCommands... string){
   }
 }
 
-func generateBlocks (nodeNumber int, blocksAmmount int, difficulty int) {
-  runCommandsOnNode(nodeNumber, "generate", strconv.Itoa(blocksAmmount), strconv.Itoa(difficulty))
+func generateBlocks (nodeNumber int, blocksAmmount int) {
+  runCommandsOnNode(nodeNumber, "generate", strconv.Itoa(blocksAmmount))
 }
 
 func startPoisson (nodeNumber int) {
@@ -114,7 +114,7 @@ func startPoisson (nodeNumber int) {
   time.Sleep(time.Duration(10 + rnd) * time.Second )
   for mine {
     rnd := rand.Intn(10)
-    generateBlocks (nodeNumber, 1, rnd)
+    generateBlocks (nodeNumber, 1)
     time.Sleep(time.Duration(rnd) * time.Second)
   }
 }
