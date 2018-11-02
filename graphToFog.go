@@ -26,6 +26,7 @@ type NetworkConnection struct {
 type btcNode struct {
 	Id int `json:"id"`
 	Host int  `json:"host"`
+	HashingPower float64 `json:"HashingPower"`
 	ConnectedTo []int `json:"connectedTo"`
 }
 
@@ -67,12 +68,10 @@ func makePhysicalLayer(scriptFile *os.File, topology *network) {
 	writeLineToFile(scriptFile, "\nbuild-network\n")
 }
 
-func makeLogicalLayer(scriptFile *os.File, nodes []btcNode) {
-
-	nodeIdToHost := make(map[int]int)
+func makeLogicalLayer(scriptFile *os.File, nodes []btcNode, nodeIdToHost map[int]int) {
 
 	for i:=0; i<len(nodes); i++ {
-		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash /home/mgeier/ndecarli/invokeBitcoin.sh %d",nodes[i].Host,nodes[i].Host,nodes[i].Id))
+		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash /home/mgeier/ndecarli/invokeBitcoin.sh %d -simuLambda=%f",nodes[i].Host,nodes[i].Host,nodes[i].Id,nodes[i].HashingPower))
 		nodeIdToHost[nodes[i].Id] = nodes[i].Host
 	}
 
@@ -83,6 +82,11 @@ func makeLogicalLayer(scriptFile *os.File, nodes []btcNode) {
 			writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash /home/mgeier/ndecarli/connectNodes.sh %d %d n%d", nodes[i].Host, nodes[i].Host, nodes[i].Id, nodes[i].ConnectedTo[j], nodeIdToHost[nodes[i].ConnectedTo[j]]))
 		}
 	}
+}
+
+func makeBlockChain(scriptFile *os.File, nodes []btcNode, nodeIdToHost map[int]int) {
+
+
 }
 
 func main(){
@@ -98,5 +102,9 @@ func main(){
 
 	makePhysicalLayer(scriptFile, &topology.Network)
 
-	makeLogicalLayer(scriptFile, topology.BtcNodes)
+	nodeIdToHost := make(map[int]int)
+
+	makeLogicalLayer(scriptFile, topology.BtcNodes, nodeIdToHost)
+
+	makeBlockChain(scriptFile, topology.BtcNodes, nodeIdToHost)
 }

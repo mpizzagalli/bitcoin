@@ -3870,12 +3870,12 @@ UniValue generate(const JSONRPCRequest& request)
 
     int num_generate = request.params[0].get_int();
     uint64_t max_tries = 1000000;
-    int64_t desiredDifficulty = -1;
+    /*int64_t desiredDifficulty = -1;
     if (!request.params[1].isNull()) {
         desiredDifficulty = request.params[1].get_int();
-    }
-    if (!request.params[2].isNull()) {
-        max_tries = request.params[2].get_int();
+    }*/
+    if (!request.params[1].isNull()) {
+        max_tries = request.params[1].get_int();
     }
 
     std::shared_ptr<CReserveScript> coinbase_script;
@@ -3891,7 +3891,7 @@ UniValue generate(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_INTERNAL_ERROR, "No coinbase script available");
     }
 
-    return generateBlocks(coinbase_script, num_generate, max_tries, true, desiredDifficulty);
+    return generateBlocks(coinbase_script, num_generate, max_tries, true);
 }
 
 UniValue rescanblockchain(const JSONRPCRequest& request)

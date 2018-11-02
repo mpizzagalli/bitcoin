@@ -98,11 +98,11 @@ void BlockAssembler::resetBlock()
 
 std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn)
 {
-    return CreateNewBlock(scriptPubKeyIn, true, -1);
+    return CreateNewBlock(scriptPubKeyIn, true/*, -1*/);
 
 }
 
-std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn, bool fMineWitnessTx, int64_t desiredDifficulty)
+std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn, bool fMineWitnessTx)//, int64_t desiredDifficulty)
 {
     int64_t nTimeStart = GetTimeMicros();
 
@@ -172,10 +172,10 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     // Fill in header
     pblock->hashPrevBlock  = pindexPrev->GetBlockHash();
     UpdateTime(pblock, chainparams.GetConsensus(), pindexPrev);
-    if (chainparams.GetConsensus().simuLambda < 0 && desiredDifficulty >= 0)
+    /*if (chainparams.GetConsensus().simuLambda < 0 && desiredDifficulty >= 0)
         pblock->nBits = CalculateDesiredDifficulty(desiredDifficulty);
-    else
-        pblock->nBits = GetNextWorkRequired(pindexPrev, pblock, chainparams.GetConsensus());
+    else*/
+    pblock->nBits = GetNextWorkRequired(pindexPrev, pblock, chainparams.GetConsensus());
     pblock->nNonce         = 0;
     pblocktemplate->vTxSigOpsCost[0] = WITNESS_SCALE_FACTOR * GetLegacySigOpCount(*pblock->vtx[0]);
 

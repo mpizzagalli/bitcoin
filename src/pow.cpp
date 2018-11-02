@@ -23,7 +23,7 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHead
 
     //Si es el bloque 1, seteamos la dificultad inicial deseada
     //if (pindexLast->nHeight == 0)
-        return params.initialDifficultyBits;
+    return params.initialDifficultyBits;
 
     // Only change once per difficulty adjustment interval
     /*if ((pindexLast->nHeight+1) % params.DifficultyAdjustmentInterval() != 0)

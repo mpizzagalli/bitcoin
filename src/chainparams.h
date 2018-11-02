@@ -108,7 +108,7 @@ protected:
  * @returns a CChainParams* of the chosen chain.
  * @throws a std::runtime_error if the chain is not supported.
  */
-std::unique_ptr<CChainParams> CreateChainParams(const std::string& chain, uint32_t regtestDifficulty = 0x0207fffff, int32_t simuLambda = -1);
+std::unique_ptr<CChainParams> CreateChainParams(const std::string& chain, uint32_t regtestDifficulty = 0x0207fffff, double simuLambda = -1.0);
 
 /**
  * Return the currently selected parameters. This won't change after app
@@ -120,7 +120,7 @@ const CChainParams &Params();
  * Sets the params returned by Params() to those for the given BIP70 chain name.
  * @throws std::runtime_error when the chain is not supported.
  */
-void SelectParams(const std::string& chain, uint32_t regtestDifficulty, int32_t simuLambda);
+void SelectParams(const std::string& chain, uint32_t regtestDifficulty, double simuLambda);
 
 void SelectParams(const std::string& chain);
 

@@ -104,7 +104,9 @@ static bool AppInit(int argc, char* argv[])
         // Check for -testnet or -regtest parameter (Params() calls are only valid after this clause)
         try {
             int64_t regtestDifficulty = gArgs.GetArg("-dificulta", 0);
-            int64_t simuLambda = gArgs.GetArg("-simuLambda", -1);
+            std::string desiredSimuLambda = gArgs.GetArg("-simuLambda", "-1");
+            double simuLambda;
+            ParseDouble(desiredSimuLambda, &simuLambda);
             SelectParams(gArgs.GetChainName(), regtestDifficulty, simuLambda);
         } catch (const std::exception& e) {
             fprintf(stderr, "Error: %s\n", e.what());

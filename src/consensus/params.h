@@ -76,8 +76,8 @@ struct Params {
     uint256 nMinimumChainWork;
     uint256 defaultAssumeValid;
 
+    double simuLambda;
     uint32_t initialDifficultyBits;
-    int32_t simuLambda;
 };
 } // namespace Consensus
 

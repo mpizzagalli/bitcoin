@@ -284,7 +284,7 @@ public:
  */
 class CRegTestParams : public CChainParams {
 public:
-    CRegTestParams(int32_t desiredSimuLambda, uint32_t regtestDifficulty) {
+    CRegTestParams(double desiredSimuLambda, uint32_t regtestDifficulty) {
         consensus.simuLambda = desiredSimuLambda;
 
         strNetworkID = "regtest";
@@ -298,10 +298,10 @@ public:
         consensus.powLimit = uint256S("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
+
         if (desiredSimuLambda >= 0)
         {
             consensus.initialDifficultyBits = 0x0207fffff;
-            consensus.fPowAllowMinDifficultyBlocks = true;
             consensus.fPowNoRetargeting = true;
         }
         else
@@ -315,9 +315,9 @@ public:
             dificulta >>= regtestDifficulty;
 
             consensus.initialDifficultyBits = dificulta.GetCompact();
-            consensus.fPowAllowMinDifficultyBlocks = false;
             consensus.fPowNoRetargeting = false;
         }
+        consensus.fPowAllowMinDifficultyBlocks = true;
 
         consensus.nRuleChangeActivationThreshold = 108; // 75% for testchains
         consensus.nMinerConfirmationWindow = 144; // Faster than normal for regtest (144 instead of 2016)
@@ -388,7 +388,7 @@ const CChainParams &Params() {
     return *globalChainParams;
 }
 
-std::unique_ptr<CChainParams> CreateChainParams(const std::string& chain, uint32_t regtestDifficulty, int32_t simuLambda)
+std::unique_ptr<CChainParams> CreateChainParams(const std::string& chain, uint32_t regtestDifficulty, double simuLambda)
 {
     if (chain == CBaseChainParams::MAIN)
         return std::unique_ptr<CChainParams>(new CMainParams());
@@ -405,7 +405,7 @@ void SelectParams(const std::string& network)
     SelectParams(network, 0, -1);
 }
 
-void SelectParams(const std::string& network, uint32_t regtestDifficulty, int32_t simuLambda)
+void SelectParams(const std::string& network, uint32_t regtestDifficulty, double simuLambda)
 {
     SelectBaseParams(network);
     globalChainParams = CreateChainParams(network, regtestDifficulty, simuLambda);

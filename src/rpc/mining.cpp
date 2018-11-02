@@ -107,28 +107,23 @@ static UniValue getnetworkhashps(const JSONRPCRequest& request)
     return GetNetworkHashPS(!request.params[0].isNull() ? request.params[0].get_int() : 120, !request.params[1].isNull() ? request.params[1].get_int() : -1);
 }
 
-UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGenerate, uint64_t nMaxTries, bool keepScript, int64_t desiredDifficulty)
+UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGenerate, uint64_t nMaxTries, bool keepScript)//, int64_t desiredDifficulty)
 {
     //simulated mining
     if (Params().GetConsensus().simuLambda >= 0) {
         std::random_device rd;
         std::mt19937 gen(rd());
 
-        int32_t usedLambda;
-
-        if (desiredDifficulty >= 0)
-            usedLambda = desiredDifficulty;
-        else
-            usedLambda = Params().GetConsensus().simuLambda;
-
-        std::exponential_distribution<double> d(1/usedLambda);
+        std::exponential_distribution<double> d(Params().GetConsensus().simuLambda);
 
         double secondsToWait = d(gen);
 
-        LogPrintf("Simulating computing time as: %d seconds with lambda: %i \n", secondsToWait, usedLambda);
+        //secondsToWait *= 600;
 
-        long nanosec = (long)(((uint64_t)(secondsToWait * 1000000000.0))%1000000000);
-        time_t sec = (time_t)secondsToWait;
+        time_t sec = (time_t) secondsToWait;
+
+        long nanosec = (long)((secondsToWait - (double)sec) * 1000000000.0);
+
         timespec timeToSleep = {sec, nanosec};
 
         nanosleep(&timeToSleep, NULL);
@@ -148,7 +143,7 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
 
     while (nHeight < nHeightEnd && !ShutdownRequested())
     {
-        std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript, true, desiredDifficulty));
+        std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript, true/*, desiredDifficulty*/));
         if (!pblocktemplate.get())
             throw JSONRPCError(RPC_INTERNAL_ERROR, "Couldn't create new block");
 
