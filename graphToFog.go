@@ -136,7 +136,7 @@ func launchSherlockFog(scriptFile *os.File, numberOfHosts int) {
 				_, err = ipsFile.Write(hostIps[i%len(hostIps)])
 			}
 			if err == nil {
-				launchFog := exec.Command("python3", "/home/mgeier/repos/sherlockfog/sherlockfog.py", "/home/mgeier/ndecarli/"+scriptFile.Name(), "--real-host-list:/home/mgeier/ndecarli/"+ipsFilename, "&", "disown")
+				launchFog := exec.Command("python3", "/home/mgeier/repos/sherlockfog/sherlockfog.py", "/home/mgeier/ndecarli/"+scriptFile.Name(), "--real-host-list:/home/mgeier/ndecarli/"+ipsFilename, ">", "sherlockOut"+scriptFile.Name(), "&", "disown")
 				var stdErr bytes.Buffer
 				var stdOut []byte
 				launchFog.Stderr = &stdErr
