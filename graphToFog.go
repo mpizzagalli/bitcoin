@@ -31,7 +31,7 @@ type btcNode struct {
 	ConnectedTo []int `json:"connectedTo"`
 }
 
-var hostIps = [4][]byte{[]byte("0.1.10.162\n"), []byte("0.1.10.163\n"), []byte("0.1.10.166\n"), []byte("0.1.10.167\n")}
+var hostIps = [4][]byte{[]byte("0.1.10.162\n"), []byte("0.1.10.163\n"), []byte("0.1.10.166\n")/*, []byte("0.1.10.167\n")*/}
 
 func writeLineToFile(file *os.File, content string) {
 	if _, err := file.Write([]byte(content+"\n")); err != nil {
@@ -113,16 +113,16 @@ func makeBlockChain(scriptFile *os.File, nodes []btcNode) {
 func startEngines(scriptFile *os.File, topology *GraphJson) {
 
 	for i:=0; i<len(topology.BtcNodes); i++ {
-		writeLineToFile(scriptFile, fmt.Sprintf("run n%d netns n%d go run testEngine.go %d & disown", topology.BtcNodes[i].Host, topology.BtcNodes[i].Host, topology.BtcNodes[i].Id))
+		writeLineToFile(scriptFile, fmt.Sprintf("run n%d netns n%d go run /home/mgeier/ndecarli/testEngine.go %d & disown", topology.BtcNodes[i].Host, topology.BtcNodes[i].Host, topology.BtcNodes[i].Id))
 	}
 
 	writeLineToFile(scriptFile, "")
 
 	for i:=1; i<topology.Network.Hosts; i++ {
-		writeLineToFile(scriptFile, fmt.Sprintf("run n%d netns n%d go run pingEngine.go %d %d & disown", i, i, topology.Network.Hosts, i))
+		writeLineToFile(scriptFile, fmt.Sprintf("run n%d netns n%d go run /home/mgeier/ndecarli/pingEngine.go %d %d & disown", i, i, topology.Network.Hosts, i))
 	}
 
-	writeLineToFile(scriptFile, fmt.Sprintf("run n0 netns n0 go run pingEngine.go %d 0", topology.Network.Hosts))
+	writeLineToFile(scriptFile, fmt.Sprintf("run n0 netns n0 go run /home/mgeier/ndecarli/pingEngine.go %d 0", topology.Network.Hosts))
 }
 
 func launchSherlockFog(scriptFile *os.File, numberOfHosts int) {
@@ -131,7 +131,7 @@ func launchSherlockFog(scriptFile *os.File, numberOfHosts int) {
 		ipsFilename := os.Args[1]+"ips.txt"
 		if ipsFile, err := os.Create(ipsFilename); err == nil {
 			for i:=0; i<numberOfHosts && err == nil; i++ {
-				_, err = ipsFile.Write(hostIps[i&3])
+				_, err = ipsFile.Write(hostIps[i%len(hostIps)])
 			}
 			if err == nil {
 				launchFog := exec.Command("python3", "/home/mgeier/repos/sherlockfog", "/home/mgeier/ndecarli/"+scriptFile.Name(), "/home/mgeier/ndecarli/"+ipsFilename, "&", "disown")
