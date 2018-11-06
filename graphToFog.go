@@ -137,9 +137,10 @@ func launchSherlockFog(scriptFile *os.File, numberOfHosts int) {
 			if err == nil {
 				launchFog := exec.Command("python3", "/home/mgeier/repos/sherlockfog", "/home/mgeier/ndecarli/"+scriptFile.Name(), "/home/mgeier/ndecarli/"+ipsFilename, "&", "disown")
 				var stdErr bytes.Buffer
+				var stdOut []byte
 				launchFog.Stdout = &stdErr
-				if err = launchFog.Run(); err != nil {
-					os.Stderr.WriteString(fmt.Sprintf("Failed to launch sherlock fog.\n %s : %s\n", err.Error(), stdErr.String()))
+				if stdOut, err = launchFog.Output(); err != nil {
+					os.Stderr.WriteString(fmt.Sprintf("Failed to launch sherlock fog.\n stdOut: %s \n %s : %s\n", string(stdOut), err.Error(), stdErr.String()))
 				}
 			} else {
 				os.Stderr.WriteString(fmt.Sprintf("Failed to write ips file.\n %s\n", err.Error()))
