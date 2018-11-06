@@ -118,7 +118,7 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
 
         double secondsToWait = d(gen);
 
-        //secondsToWait *= 600;
+        secondsToWait *= 600;
 
         time_t sec = (time_t) secondsToWait;
 

@@ -56,7 +56,6 @@ const (
 
 var hostIps = [4][]byte{[]byte("0.1.10.162\n"), []byte("0.1.10.163\n"), []byte("0.1.10.166\n"), []byte("0.1.10.167\n")}
 var numberOfHosts int
-var scriptFilename string
 
 type NodeEvent struct {
 	Offset time.Duration
@@ -84,9 +83,8 @@ func writeLineToFile(file *os.File, content string) {
 
 func createFile() (scriptFile *os.File) {
 	var err error
-	scriptFilename = os.Args[1]+".fog"
 
-	if scriptFile, err = os.Create(scriptFilename); err != nil {
+	if scriptFile, err = os.Create(os.Args[1]+".fog"); err != nil {
 		os.Stderr.WriteString(fmt.Sprintf("Failed to create file.\n %s\n", err.Error()))
 	}
 
@@ -260,7 +258,7 @@ func makeEvents(scriptFile *os.File, nodeIdToHost map[int]int) {
 				_, err = ipsFile.Write(hostIps[i&3])
 			}
 			if err == nil {
-				launchFog := exec.Command("python3", "/home/mgeier/repos/sherlockfog", "/home/mgeier/ndecarli/"+scriptFilename, "/home/mgeier/ndecarli/ipsFilename", "&", "disown")
+				launchFog := exec.Command("python3", "/home/mgeier/repos/sherlockfog", "/home/mgeier/ndecarli/"+scriptFile.Name(), "/home/mgeier/ndecarli/"+ipsFilename, "&", "disown")
 				if err = launchFog.Run(); err != nil {
 					os.Stderr.WriteString(fmt.Sprintf("Failed to launch sherlock fog.\n %s\n", err.Error()))
 				}
@@ -275,6 +273,8 @@ func makeEvents(scriptFile *os.File, nodeIdToHost map[int]int) {
 	}
 	
 }
+
+
 
 func main(){
 

@@ -6,10 +6,7 @@ import (
     "strconv"
     "math/rand"
     "time"
-    "bufio"
-    "os"
     "fmt"
-    "strings"
     "bytes"
 )
 
@@ -30,8 +27,8 @@ func dificulta (cantidadDeZerosRequeridos int) string {
   return baseDifficulty + strconv.Itoa(cantidadDeZerosRequeridos)
 }
 
-func simuLambda (lambda int) string {
-  return baseLambda + strconv.Itoa(lambda)
+func simuLambda (lambda float64) string {
+  return baseLambda + strconv.FormatFloat(lambda, 'f', 3, 64)
 }
 
 func nodeBasePort (nodeNumber int) int {
@@ -74,11 +71,11 @@ func connectToPeers (peerNodes []int) []string {
 
 func initCommands(nodeNumber int, peerNodes []int) []string {
   commands := []string{regtest, daemon, pass, user, listenPort(nodeNumber), rpcPort(nodeNumber), nodeDataDir(nodeNumber)}
-  if nodeNumber % 2 == 0 {
+  /*if nodeNumber % 2 == 0 {
     commands = append(commands, dificulta(0))
-  } else{
-    commands = append(commands, simuLambda(1))
-  }
+  } else{*/
+    commands = append(commands, simuLambda(0.1))
+  //}
   return append(commands, connectToPeers(peerNodes)...)
 }
 
@@ -121,24 +118,23 @@ func startPoisson (nodeNumber int) {
 
 func initNode (nodeNumber int, peerNodes []int) {
   instantiateNode(nodeNumber, peerNodes)
-  go startPoisson(nodeNumber)
+  //go startPoisson(nodeNumber)
 }
 
 func main() {
 
   generateBaseDirFolder()
 
-  initNode(0, []int{1, 2, 3, 4, 5})
+  initNode(0, []int{1})
   //allPreviousNodes := make([]int, 0, 5)
   //initNode(1, []int{0})
-  initNode(1, []int{0, 2, 5})
-  for i:=2; i<5; i++ {
-      initNode(i, []int{0, i-1, i+1})
+  for i:=1; i<5; i++ {
+      initNode(i, []int{i-1, i+1})
     //allPreviousNodes = append(allPreviousNodes, i)
   }
-  initNode(5, []int{0, 4, 1})
+  initNode(5, []int{4})
 
-  reader := bufio.NewReader(os.Stdin)
+  /*reader := bufio.NewReader(os.Stdin)
   fmt.Print("Now listening to commands... \n")
   for mine {
     text, _ := reader.ReadString('\n')
@@ -151,5 +147,5 @@ func main() {
         runCommandsOnNode(nodeNumber, commands[1:]...)
       }
     }
-  }
+  }*/
 }
