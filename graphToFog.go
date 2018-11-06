@@ -32,7 +32,8 @@ type btcNode struct {
 	ConnectedTo []int `json:"connectedTo"`
 }
 
-var hostIps = [4][]byte{[]byte("0.1.10.162\n"), []byte("0.1.10.163\n"), []byte("0.1.10.166\n")/*, []byte("0.1.10.167\n")*/}
+//var hostIps = [3][]byte{[]byte("0.1.10.162\n"), []byte("0.1.10.163\n"), []byte("0.1.10.166\n")/*, []byte("0.1.10.167\n")*/}
+var hostIps = [1][]byte{[]byte("127.0.0.1\n")}
 
 func writeLineToFile(file *os.File, content string) {
 	if _, err := file.Write([]byte(content+"\n")); err != nil {
@@ -135,7 +136,7 @@ func launchSherlockFog(scriptFile *os.File, numberOfHosts int) {
 				_, err = ipsFile.Write(hostIps[i%len(hostIps)])
 			}
 			if err == nil {
-				launchFog := exec.Command("python3", "/home/mgeier/repos/sherlockfog/sherlockfog.py", "/home/mgeier/ndecarli/"+scriptFile.Name(), "/home/mgeier/ndecarli/"+ipsFilename, "&", "disown")
+				launchFog := exec.Command("python3", "/home/mgeier/repos/sherlockfog/sherlockfog.py", "/home/mgeier/ndecarli/"+scriptFile.Name(), "--real-host-list:/home/mgeier/ndecarli/"+ipsFilename, "&", "disown")
 				var stdErr bytes.Buffer
 				var stdOut []byte
 				launchFog.Stderr = &stdErr
