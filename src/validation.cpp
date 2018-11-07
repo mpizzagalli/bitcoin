@@ -4484,9 +4484,9 @@ bool LoadExternalBlockFile(const CChainParams& chainparams, FILE* fileIn, CDiskB
 
 void CChainState::CheckBlockIndex(const Consensus::Params& consensusParams)
 {
-    if (!fCheckBlockIndex) {
+    //if (!fCheckBlockIndex) {
         return;
-    }
+    //}
 
     LOCK(cs_main);
 
