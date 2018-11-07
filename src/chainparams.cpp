@@ -337,7 +337,6 @@ public:
 
         // By default assume that the signatures in ancestors of this block are valid.
         //consensus.defaultAssumeValid = uint256S("0x00");
-        //consensus.defaultAssumeValid = uint256S("0x9871e602ca560e2e42d9cf59cdc2e806d8421b50df4035253db9a65e59bef062");
         consensus.defaultAssumeValid = uint256S("0x9b1d89935e8ac6612c64cb92cc70a5d75d57c3ccc0bfd53d0b0c4d2c6270a683");
 
         pchMessageStart[0] = 0xfa;
@@ -345,7 +344,8 @@ public:
         pchMessageStart[2] = 0xb5;
         pchMessageStart[3] = 0xda;
         nDefaultPort = 18444;
-        nPruneAfterHeight = 1000;
+        //nPruneAfterHeight = 1000;
+        nPruneAfterHeight = 100000;
 
         genesis = CreateGenesisBlock(1296688602, 2, 0x0207fffff, 1, 50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
@@ -355,7 +355,8 @@ public:
         vFixedSeeds.clear(); //!< Regtest mode doesn't have any fixed seeds.
         vSeeds.clear();      //!< Regtest mode doesn't have any DNS seeds.
 
-        fDefaultConsistencyChecks = true;
+        //fDefaultConsistencyChecks = true;
+        fDefaultConsistencyChecks = false;
         fRequireStandard = false;
         fMineBlocksOnDemand = true;
 
@@ -404,8 +405,7 @@ std::unique_ptr<CChainParams> CreateChainParams(const std::string& chain, uint32
 
 void SelectParams(const std::string& network)
 {
-    fprintf(stdout, " .....DIFICULTAD DE REGTEST STANDARD SOLICITADA\n");
-    SelectParams(network, 0, -1);
+    SelectParams(network, 0, -1.0);
 }
 
 void SelectParams(const std::string& network, uint32_t regtestDifficulty, double simuLambda)
