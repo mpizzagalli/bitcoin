@@ -32,7 +32,7 @@ type btcNode struct {
 	ConnectedTo []int `json:"connectedTo"`
 }
 
-var hostIps = [3][]byte{[]byte("0.1.10.162\n"), []byte("0.1.10.163\n"), []byte("0.1.10.166\n")/*, []byte("0.1.10.167\n")*/}
+var hostIps = [3][]byte{[]byte("adm1gnode02\n"), []byte("adm1gnode03\n"), []byte("adm1gnode06\n")/*, []byte("adm1gnode07\n")*/}
 //var hostIps = [1][]byte{[]byte("127.0.0.1\n")}
 
 func writeLineToFile(file *os.File, content string) {
