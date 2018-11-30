@@ -113,7 +113,11 @@ func makeBlockChain(scriptFile *os.File, nodes []btcNode) {
 
 	writeLineToFile(scriptFile,fmt.Sprintf("run n0 netns n0 /usr/local/go/bin/go run /home/mgeier/ndecarli/generateBlockchain.go %d\n", len(nodes)))
 
-	writeLineToFile(scriptFile, "run n0 netns n0 sleep 6m")
+	for i:=0; i<len(nodes); i++ {
+		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d /usr/local/go/bin/go run /home/mgeier/ndecarli/semaphore.go %d", nodes[i].Host, nodes[i].Host, nodes[i].Id))
+	}
+
+	writeLineToFile(scriptFile, "")
 
 	writeLineToFile(scriptFile,fmt.Sprintf("run n0 netns n0 bash /home/mgeier/ndecarli/bitcoindo.sh %d stop\n", len(nodes)))
 }
@@ -138,7 +142,7 @@ func teardown(scriptFile *os.File, nodes []btcNode) {
 	writeLineToFile(scriptFile, "")
 
 	for i:=0; i<len(nodes); i++ {
-		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash /home/mgeier/ndecarli/bitcoindo.sh %d stop\n", nodes[i].Host,nodes[i].Host,nodes[i].Id))
+		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash /home/mgeier/ndecarli/bitcoindo.sh %d stop", nodes[i].Host,nodes[i].Host,nodes[i].Id))
 	}
 
 }

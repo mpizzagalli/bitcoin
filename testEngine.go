@@ -95,11 +95,22 @@ func generateTxs(addresses []string) {
 	var tx Tx
 	var nextTx time.Duration
 	sleepRndGen := rand.New(rand.NewSource(time.Now().UnixNano()))
-	unspentOutputs := getCredit(addresses)
 	nodeNumber := os.Args[1]
 	var err error
+	var unspentOutputs [][]Credit
 
 	for  {
+
+		if j[i] >= len(unspentOutputs[i]) {
+			j[0] = 0
+			j[1] = 0
+			unspentOutputs = getCredit(addresses)
+			for len(unspentOutputs[1]) == 0 || len(unspentOutputs[0]) == 0 {
+				time.Sleep(time.Minute * 10)
+				unspentOutputs = getCredit(addresses)
+			}
+		}
+
 		timestamp = time.Now().UnixNano()
 
 		creditToUse = &unspentOutputs[i][j[i]]
@@ -115,17 +126,7 @@ func generateTxs(addresses []string) {
 		_ = execCmd(exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", nodeNumber, "sendrawtransaction", tx.Hex))
 
 		j[i]++
-
-		if j[i] >= len(unspentOutputs[i]) {
-			unspentOutputs = getCredit(addresses)
-			j[0] = 0
-			j[1] = 0
-			for len(unspentOutputs[1]) == 0 || len(unspentOutputs[0]) == 0 {
-				time.Sleep(time.Minute * 10)
-				unspentOutputs = getCredit(addresses)
-			}
-		}
-
+		
 		i ^= 1
 
 		nextTx = time.Duration(timestamp) + time.Duration(sleepRndGen.Int63n(txSleepMaxAggregate)) + txSleepMinimum
