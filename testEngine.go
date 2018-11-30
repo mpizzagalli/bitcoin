@@ -77,7 +77,7 @@ func outputTemplate(address string) string {
 
 func execCmd(cmd *exec.Cmd) []byte {
 	var stdErr bytes.Buffer
-	cmd.Stdout = &stdErr
+	cmd.Stderr = &stdErr
 	stdOut, execErr := cmd.Output()
 	if execErr != nil || stdErr.Len() > 0 {
 		os.Stderr.WriteString(fmt.Sprintf("Error executing command.\n %s : %s\n", execErr.Error(), stdErr.String()))
