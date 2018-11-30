@@ -133,6 +133,16 @@ func startEngines(scriptFile *os.File, topology *GraphJson) {
 	writeLineToFile(scriptFile, fmt.Sprintf("run n0 netns n0 /usr/local/go/bin/go run /home/mgeier/ndecarli/pingEngine.go %d 0", topology.Network.Hosts))
 }
 
+func teardown(scriptFile *os.File, nodes []btcNode) {
+
+	writeLineToFile(scriptFile, "")
+
+	for i:=0; i<len(nodes); i++ {
+		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash /home/mgeier/ndecarli/bitcoindo.sh %d stop\n", nodes[i].Host,nodes[i].Host,nodes[i].Id))
+	}
+
+}
+
 func launchSherlockFog(scriptFile *os.File, numberOfHosts int) {
 
 	if fileErr := scriptFile.Close(); fileErr == nil {
@@ -180,6 +190,8 @@ func main() {
 	makeBlockChain(scriptFile, topology.BtcNodes)
 
 	startEngines(scriptFile, &topology)
+
+	teardown(scriptFile, topology.BtcNodes)
 
 	launchSherlockFog(scriptFile, topology.Network.Hosts)
 
