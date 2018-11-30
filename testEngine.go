@@ -97,7 +97,7 @@ func generateTxs(addresses []string) {
 	sleepRndGen := rand.New(rand.NewSource(time.Now().UnixNano()))
 	nodeNumber := os.Args[1]
 	var err error
-	var unspentOutputs [][]Credit
+	unspentOutputs  := make([][]Credit, 1)
 
 	for  {
 
