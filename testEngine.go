@@ -34,10 +34,10 @@ type Tx struct {
 
 func getAddresses() (addresses []string) {
 
-	if addressesBytes, err := ioutil.ReadFile("addrN" + os.Args[1]); err == nil {
+	if addressesBytes, err := ioutil.ReadFile("/home/mgeier/ndecarli/addrN" + os.Args[1]); err == nil {
 		addresses = strings.Split(string(addressesBytes), "\n")
 	} else {
-		os.Stderr.WriteString(fmt.Sprintf("Failed to parse physical layer file.\n %s\n", err.Error()))
+		os.Stderr.WriteString(fmt.Sprintf("Failed to parse address file.\n %s\n", err.Error()))
 	}
 
 	return
@@ -56,7 +56,7 @@ func mineBlocks(addresses []string) {
 	i := 0
 	nodeNumber := os.Args[1]
 	for {
-		_ = exec.Command("bash", "bitcoindo.sh", nodeNumber, "generatetoaddress", "1", addresses[i]).Run()
+		_ = exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", nodeNumber, "generatetoaddress", "1", addresses[i]).Run()
 		i ^= 1
 	}
 }
@@ -104,15 +104,15 @@ func generateTxs(addresses []string) {
 
 		creditToUse = &unspentOutputs[i][j[i]]
 
-		stdOut = execCmd(exec.Command("bash", "bitcoindo.sh", nodeNumber, "createrawtransaction", txInput(creditToUse), txOutput(templates[i], creditToUse.Amount)))
+		stdOut = execCmd(exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", nodeNumber, "createrawtransaction", txInput(creditToUse), txOutput(templates[i], creditToUse.Amount)))
 
-		stdOut = execCmd(exec.Command("bash", "bitcoindo.sh", nodeNumber, "signrawtransactionwithwallet", string(stdOut)))
+		stdOut = execCmd(exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", nodeNumber, "signrawtransactionwithwallet", string(stdOut)))
 
 		if err = json.Unmarshal(stdOut, &tx); err != nil {
 			os.Stderr.WriteString(fmt.Sprintf("Error unmarshaling signedtransaction json.\n %s\n", err.Error()))
 		}
 
-		_ = execCmd(exec.Command("bash", "bitcoindo.sh", nodeNumber, "sendrawtransaction", tx.Hex))
+		_ = execCmd(exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", nodeNumber, "sendrawtransaction", tx.Hex))
 
 		j[i]++
 
@@ -134,7 +134,7 @@ func generateTxs(addresses []string) {
 
 func getCredit(addresses []string) (credits [][]Credit) {
 
-	btcCmd := exec.Command("bash", "bitcoindo.sh", os.Args[1], "listunspent")
+	btcCmd := exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", os.Args[1], "listunspent")
 
 	var outputs []UnspentOutput
 
