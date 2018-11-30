@@ -14,8 +14,8 @@ import (
 )
 
 const txFee float64 = 0.00001
-const txSleepMaxAggregate = int64(time.Second * 8)
-const txSleepMinimum = time.Second * 6
+const txSleepMaxAggregate = int64(time.Second * 7)
+const txSleepMinimum = time.Second * 3
 
 type UnspentOutput struct {
 	Address string `json:"address"`
@@ -125,6 +125,8 @@ func generateTxs(addresses []string) {
 				unspentOutputs = getCredit(addresses)
 			}
 		}
+
+		i ^= 1
 
 		nextTx = time.Duration(timestamp) + time.Duration(sleepRndGen.Int63n(txSleepMaxAggregate)) + txSleepMinimum
 
