@@ -119,8 +119,9 @@ func main(){
 
 		if r >= nodeNumber {r++}
 
-		targetIp, _ = net.LookupIP("n"+strconv.FormatInt(r, 10))
-		//targetIp, _ = net.LookupIP("localhost")
+		if targetIp, _ = net.LookupIP("n"+strconv.FormatInt(r, 10)); len(targetIp == 0) {
+			targetIp, _ = net.LookupIP("localhost")
+		}
 
 		addr.Port = NodeToPort(int(r))
 		addr.IP = targetIp[0]
