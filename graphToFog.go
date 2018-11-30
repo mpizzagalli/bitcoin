@@ -94,7 +94,7 @@ func makeLogicalLayer(scriptFile *os.File, nodes []btcNode) {
 
 func makeBlockChain(scriptFile *os.File, nodes []btcNode) {
 
-	writeLineToFile(scriptFile,fmt.Sprintf("\nrun n0 netns n0 bash /home/mgeier/ndecarli/invokeBitcoin.sh %d -dificulta=0 -dbcache=2048 -loadblock=/home/mgeier/ndecarli/blk00000.dat\n", len(nodes)))
+	writeLineToFile(scriptFile,fmt.Sprintf("\nrun n0 netns n0 bash /home/mgeier/ndecarli/invokeBitcoin.sh %d -dificulta=0 -dbcache=2048 -loadblock=/home/mgeier/ndecarli/blk00000.dat -loadblock=/home/mgeier/ndecarli/blk00001.dat\n", len(nodes)))
 
 	writeLineToFile(scriptFile, "run n0 netns n0 sleep 6m")
 
