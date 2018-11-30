@@ -110,6 +110,7 @@ func makeBlockChain(scriptFile *os.File, nodes []btcNode) {
 	addSemaphore(scriptFile, []btcNode{btcNode{Id: len(nodes), Host:0}})
 
 	for i:=0; i<len(nodes); i++ {
+		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash /home/mgeier/ndecarli/connectNodes.sh %d %d n0", nodes[i].Host, nodes[i].Host, nodes[i].Id, len(nodes)))
 		writeLineToFile(scriptFile,fmt.Sprintf("run n0 netns n0 bash /home/mgeier/ndecarli/connectNodes.sh %d %d n%d", len(nodes), nodes[i].Id, nodes[i].Host))
 	}
 
