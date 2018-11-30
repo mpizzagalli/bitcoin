@@ -113,7 +113,9 @@ func makeBlockChain(scriptFile *os.File, nodes []btcNode) {
 
 	writeLineToFile(scriptFile,fmt.Sprintf("run n0 netns n0 /usr/local/go/bin/go run /home/mgeier/ndecarli/generateBlockchain.go %d\n", len(nodes)))
 
-	//writeLineToFile(scriptFile,fmt.Sprintf("run n0 netns n0 bash /home/mgeier/ndecarli/bitcoindo.sh %d stop\n", len(nodes)))
+	writeLineToFile(scriptFile, "run n0 netns n0 sleep 6m")
+
+	writeLineToFile(scriptFile,fmt.Sprintf("run n0 netns n0 bash /home/mgeier/ndecarli/bitcoindo.sh %d stop\n", len(nodes)))
 }
 
 func startEngines(scriptFile *os.File, topology *GraphJson) {
