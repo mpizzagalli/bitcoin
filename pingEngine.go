@@ -119,7 +119,7 @@ func main(){
 
 		if r >= nodeNumber {r++}
 
-		if targetIp, _ = net.LookupIP("n"+strconv.FormatInt(r, 10)); len(targetIp == 0) {
+		if targetIp, _ = net.LookupIP("n"+strconv.FormatInt(r, 10)); len(targetIp) == 0 {
 			targetIp, _ = net.LookupIP("localhost")
 		}
 
