@@ -20,10 +20,10 @@ func getAmountOfNodes() int {
 
 func getAddresses(n int) (addresses [][]string) {
 	for i:=0; i<n; i++ {
-		if addressesBytes, err := ioutil.ReadFile(fmt.Sprintf("addrN%d", i)); err == nil {
+		if addressesBytes, err := ioutil.ReadFile(fmt.Sprintf("/home/mgeier/ndecarli/addrN%d", i)); err == nil {
 			addresses = append(addresses, strings.Split(string(addressesBytes), "\n"))
 		} else {
-			os.Stderr.WriteString(fmt.Sprintf("Failed to parse physical layer file.\n %s\n", err.Error()))
+			os.Stderr.WriteString(fmt.Sprintf("Failed to parse addresses file.\n %s\n", err.Error()))
 		}
 	}
 

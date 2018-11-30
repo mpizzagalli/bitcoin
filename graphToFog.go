@@ -104,10 +104,10 @@ func makeBlockChain(scriptFile *os.File, nodes []btcNode) {
 		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash /home/mgeier/ndecarli/bitcoindo.sh %d getnewaddress > /home/mgeier/ndecarli/addrN%d", nodes[i].Host, nodes[i].Host, nodes[i].Id, nodes[i].Id))
 		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash /home/mgeier/ndecarli/bitcoindo.sh %d getnewaddress >> /home/mgeier/ndecarli/addrN%d", nodes[i].Host, nodes[i].Host, nodes[i].Id, nodes[i].Id))
 
-		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d scp /home/mgeier/ndecarli/addrN%d adm1gnode02:/home/mgeier/ndecarli/addrN%d\n", nodes[i].Host, nodes[i].Host, nodes[i].Id, nodes[i].Id))
+		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d scp /home/mgeier/ndecarli/addrN%d n0:/home/mgeier/ndecarli/addrN%d\n", nodes[i].Host, nodes[i].Host, nodes[i].Id, nodes[i].Id))
 	}
 
-	writeLineToFile(scriptFile,fmt.Sprintf("run n0 netns n0 go run generateBlockchain.go %d\n", len(nodes)))
+	writeLineToFile(scriptFile,fmt.Sprintf("run n0 netns n0 /usr/local/go/bin/go run generateBlockchain.go %d\n", len(nodes)))
 
 	writeLineToFile(scriptFile,fmt.Sprintf("run n0 netns n0 bash /home/mgeier/ndecarli/bitcoindo.sh %d stop\n", len(nodes)))
 }
@@ -115,16 +115,16 @@ func makeBlockChain(scriptFile *os.File, nodes []btcNode) {
 func startEngines(scriptFile *os.File, topology *GraphJson) {
 
 	for i:=0; i<len(topology.BtcNodes); i++ {
-		writeLineToFile(scriptFile, fmt.Sprintf("run n%d netns n%d go run /home/mgeier/ndecarli/testEngine.go %d & disown", topology.BtcNodes[i].Host, topology.BtcNodes[i].Host, topology.BtcNodes[i].Id))
+		writeLineToFile(scriptFile, fmt.Sprintf("run n%d netns n%d /usr/local/go/bin/go run /home/mgeier/ndecarli/testEngine.go %d & disown", topology.BtcNodes[i].Host, topology.BtcNodes[i].Host, topology.BtcNodes[i].Id))
 	}
 
 	writeLineToFile(scriptFile, "")
 
 	for i:=1; i<topology.Network.Hosts; i++ {
-		writeLineToFile(scriptFile, fmt.Sprintf("run n%d netns n%d go run /home/mgeier/ndecarli/pingEngine.go %d %d & disown", i, i, topology.Network.Hosts, i))
+		writeLineToFile(scriptFile, fmt.Sprintf("run n%d netns n%d /usr/local/go/bin/go run /home/mgeier/ndecarli/pingEngine.go %d %d & disown", i, i, topology.Network.Hosts, i))
 	}
 
-	writeLineToFile(scriptFile, fmt.Sprintf("run n0 netns n0 go run /home/mgeier/ndecarli/pingEngine.go %d 0", topology.Network.Hosts))
+	writeLineToFile(scriptFile, fmt.Sprintf("run n0 netns n0 /usr/local/go/bin/go run /home/mgeier/ndecarli/pingEngine.go %d 0", topology.Network.Hosts))
 }
 
 func launchSherlockFog(scriptFile *os.File, numberOfHosts int) {
