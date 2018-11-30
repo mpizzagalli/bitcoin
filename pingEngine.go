@@ -84,7 +84,7 @@ func ListenIncomingPackets(c *net.UDPConn) {
 }
 
 func flushBufer(logFile *os.File){
-	if _, err := logFile.Write(Log); err == nil {
+	if _, err := logFile.WriteString(string(Log)); err == nil {
 		Log = make([]byte, 0, 8192)
 	}
 }
