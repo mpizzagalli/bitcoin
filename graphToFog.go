@@ -41,6 +41,17 @@ func writeLineToFile(file *os.File, content string) {
 	}
 }
 
+func addSemaphore(scriptFile *os.File, nodes []btcNode) {
+
+	writeLineToFile(scriptFile, "run n0 netns n0 sleep 1m")
+
+	for i:=0; i<len(nodes); i++ {
+		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d /usr/local/go/bin/go run /home/mgeier/ndecarli/semaphore.go %d", nodes[i].Host, nodes[i].Host, nodes[i].Id))
+	}
+
+	writeLineToFile(scriptFile, "")
+}
+
 func createFile() (scriptFile *os.File) {
 	var err error
 
@@ -82,8 +93,8 @@ func makeLogicalLayer(scriptFile *os.File, nodes []btcNode) {
 	}
 
 	writeLineToFile(scriptFile, "")
-	writeLineToFile(scriptFile, "run n0 netns n0 sleep 6m")
-	writeLineToFile(scriptFile, "")
+
+	addSemaphore(scriptFile, nodes)
 
 	for i:=0; i<len(nodes); i++ {
 		for j:=0; j<len(nodes[i].ConnectedTo); j++{
@@ -96,7 +107,7 @@ func makeBlockChain(scriptFile *os.File, nodes []btcNode) {
 
 	writeLineToFile(scriptFile,fmt.Sprintf("\nrun n0 netns n0 bash /home/mgeier/ndecarli/invokeBitcoin.sh %d -dificulta=0 -dbcache=2048 -loadblock=/home/mgeier/ndecarli/blk00000.dat -loadblock=/home/mgeier/ndecarli/blk00001.dat\n", len(nodes)))
 
-	writeLineToFile(scriptFile, "run n0 netns n0 sleep 6m")
+	addSemaphore(scriptFile, []btcNode{btcNode{Id: len(nodes), Host:0}})
 
 	for i:=0; i<len(nodes); i++ {
 		writeLineToFile(scriptFile,fmt.Sprintf("run n0 netns n0 bash /home/mgeier/ndecarli/connectNodes.sh %d %d n%d", len(nodes), nodes[i].Id, nodes[i].Host))
@@ -113,11 +124,7 @@ func makeBlockChain(scriptFile *os.File, nodes []btcNode) {
 
 	writeLineToFile(scriptFile,fmt.Sprintf("run n0 netns n0 /usr/local/go/bin/go run /home/mgeier/ndecarli/generateBlockchain.go %d\n", len(nodes)))
 
-	for i:=0; i<len(nodes); i++ {
-		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d /usr/local/go/bin/go run /home/mgeier/ndecarli/semaphore.go %d", nodes[i].Host, nodes[i].Host, nodes[i].Id))
-	}
-
-	writeLineToFile(scriptFile, "")
+	addSemaphore(scriptFile, nodes)
 
 	writeLineToFile(scriptFile,fmt.Sprintf("run n0 netns n0 bash /home/mgeier/ndecarli/bitcoindo.sh %d stop\n", len(nodes)))
 }
