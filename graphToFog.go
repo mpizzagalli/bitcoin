@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"os/exec"
-	"bytes"
 )
 
 type GraphJson struct {
