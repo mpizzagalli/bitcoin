@@ -133,13 +133,13 @@ func makeBlockChain(scriptFile *os.File, nodes []btcNode) {
 func startEngines(scriptFile *os.File, topology *GraphJson) {
 
 	for i:=0; i<len(topology.BtcNodes); i++ {
-		writeLineToFile(scriptFile, fmt.Sprintf("run n%d netns n%d bash -c '/usr/local/go/bin/go run /home/mgeier/ndecarli/testEngine.go %d & disown'", topology.BtcNodes[i].Host, topology.BtcNodes[i].Host, topology.BtcNodes[i].Id))
+		writeLineToFile(scriptFile, fmt.Sprintf("run n%d netns n%d /usr/local/go/bin/go run /home/mgeier/ndecarli/launcher.go /usr/local/go/bin/go run /home/mgeier/ndecarli/testEngine.go %d", topology.BtcNodes[i].Host, topology.BtcNodes[i].Host, topology.BtcNodes[i].Id))
 	}
 
 	writeLineToFile(scriptFile, "")
 
 	for i:=1; i<topology.Network.Hosts; i++ {
-		writeLineToFile(scriptFile, fmt.Sprintf("run n%d netns n%d bash -c '/usr/local/go/bin/go run /home/mgeier/ndecarli/pingEngine.go %d %d & disown'", i, i, topology.Network.Hosts, i))
+		writeLineToFile(scriptFile, fmt.Sprintf("run n%d netns n%d /usr/local/go/bin/go run /home/mgeier/ndecarli/launcher.go /usr/local/go/bin/go run /home/mgeier/ndecarli/pingEngine.go %d %d", i, i, topology.Network.Hosts, i))
 	}
 
 	writeLineToFile(scriptFile, fmt.Sprintf("run n0 netns n0 /usr/local/go/bin/go run /home/mgeier/ndecarli/pingEngine.go %d 0", topology.Network.Hosts))
@@ -153,6 +153,7 @@ func teardown(scriptFile *os.File, nodes []btcNode) {
 		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash /home/mgeier/ndecarli/bitcoindo.sh %d stop", nodes[i].Host,nodes[i].Host,nodes[i].Id))
 	}
 
+	writeLineToFile(scriptFile, "\nrun n0 netns n0 sleep 1m")
 }
 
 func launchSherlockFog(scriptFile *os.File, numberOfHosts int) {
@@ -164,14 +165,18 @@ func launchSherlockFog(scriptFile *os.File, numberOfHosts int) {
 				_, err = ipsFile.Write(hostIps[i%len(hostIps)])
 			}
 			if err == nil {
-				launchFog := exec.Command(/*"bash", "-c", */"python3", "/home/mgeier/repos/sherlockfog/sherlockfog.py", "/home/mgeier/ndecarli/"+scriptFile.Name(), "--real-host-list=/home/mgeier/ndecarli/"+ipsFilename)//, "> sherlockOut")
-				var stdErr bytes.Buffer
+				//launchFog := exec.Command(/*"bash", "-c", */"python3", "/home/mgeier/repos/sherlockfog/sherlockfog.py", "/home/mgeier/ndecarli/"+scriptFile.Name(), "--real-host-list=/home/mgeier/ndecarli/"+ipsFilename)//, "> sherlockOut")
+				/*var stdErr bytes.Buffer
 				launchFog.Stderr = &stdErr
 				if b, err := launchFog.Output(); err != nil {
-					os.Stderr.WriteString(fmt.Sprintf("Failed to launch sherlock fog.\n %s : %s\n", err.Error(), stdErr.String()))
+					os.Stderr.WriteString(fmt.Sprintf("Failed to launch sherlock fog.\n%s : %s\n", err.Error(), stdErr.String()))
 				} else {
 					fmt.Println(string(b))
 					fmt.Println(stdErr.String())
+				}*/
+				launchFog := exec.Command("bash", "-c", "python3 /home/mgeier/repos/sherlockfog/sherlockfog.py /home/mgeier/ndecarli/"+scriptFile.Name()+" --real-host-list=/home/mgeier/ndecarli/"+ipsFilename, "> sherlockOut")
+				if err = launchFog.Start(); err != nil {
+					os.Stderr.WriteString(fmt.Sprintf("Failed to launch sherlock fog.\n%s\n", err.Error()))
 				}
 			} else {
 				os.Stderr.WriteString(fmt.Sprintf("Failed to write ips file.\n %s\n", err.Error()))
