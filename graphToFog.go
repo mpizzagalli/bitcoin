@@ -21,7 +21,7 @@ type network struct {
 type NetworkConnection struct {
 	A int `json:"a"`
 	B int `json:"b"`
-	Latency int `json:"latencyMs"`
+	Latency float64 `json:"latencyMs"`
 }
 
 type btcNode struct {
@@ -31,8 +31,7 @@ type btcNode struct {
 	ConnectedTo []int `json:"connectedTo"`
 }
 
-var hostIps = [1][]byte{[]byte("10.1.10.162\n")/*[]byte("adm1gnode02\n"), []byte("adm1gnode03\n"), []byte("adm1gnode06\n"), []byte("adm1gnode07\n")*/}
-//var hostIps = [1][]byte{[]byte("127.0.0.1\n")}
+var hostIps = [3][]byte{[]byte("10.1.10.162\n"), []byte("10.1.10.163\n"), []byte("10.1.10.167\n")}//, []byte("adm1gnode07\n")}
 
 func writeLineToFile(file *os.File, content string) {
 	if _, err := file.Write([]byte(content+"\n")); err != nil {
@@ -76,7 +75,7 @@ func makePhysicalLayer(scriptFile *os.File, networkTopology *network) {
 	writeLineToFile(scriptFile ,fmt.Sprintf("for i in 0..%d do\n\tdef n{i}\nend for\n", networkTopology.Hosts))
 
 	for i := 0; i<len(networkTopology.Connections); i++ {
-		writeLineToFile(scriptFile,fmt.Sprintf("connect n%d n%d %dms",networkTopology.Connections[i].A,networkTopology.Connections[i].B,networkTopology.Connections[i].Latency))
+		writeLineToFile(scriptFile,fmt.Sprintf("connect n%d n%d %fms",networkTopology.Connections[i].A,networkTopology.Connections[i].B,networkTopology.Connections[i].Latency))
 	}
 
 	writeLineToFile(scriptFile, "\nbuild-network\n")

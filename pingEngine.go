@@ -135,11 +135,4 @@ func main(){
 		time.Sleep(time.Millisecond * (1000 + time.Duration(r)))
 	}
 
-
-
-
-
-
-
-
 }
