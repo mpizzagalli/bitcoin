@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"os/exec"
+	"bytes"
 )
 
 type GraphJson struct {
@@ -70,12 +71,20 @@ func parseJson() (topology GraphJson) {
 	return
 }
 
+func delayString(latency int) string {
+	if latency > 0 {
+		return fmt.Sprintf(" %dms", latency)
+	} else {
+		return ""
+	}
+}
+
 func makePhysicalLayer(scriptFile *os.File, networkTopology *network) {
 
 	writeLineToFile(scriptFile ,fmt.Sprintf("for i in 0..%d do\n\tdef n{i}\nend for\n", networkTopology.Hosts))
 
 	for i := 0; i<len(networkTopology.Connections); i++ {
-		writeLineToFile(scriptFile,fmt.Sprintf("connect n%d n%d %dms",networkTopology.Connections[i].A,networkTopology.Connections[i].B,networkTopology.Connections[i].Latency))
+		writeLineToFile(scriptFile,fmt.Sprintf("connect n%d n%d%s",networkTopology.Connections[i].A,networkTopology.Connections[i].B,delayString(networkTopology.Connections[i].Latency)))
 	}
 
 	writeLineToFile(scriptFile, "\nbuild-network\n")
@@ -163,19 +172,19 @@ func launchSherlockFog(scriptFile *os.File, numberOfHosts int) {
 				_, err = ipsFile.Write(hostIps[i%len(hostIps)])
 			}
 			if err == nil {
-				//launchFog := exec.Command(/*"bash", "-c", */"python3", "/home/mgeier/repos/sherlockfog/sherlockfog.py", "/home/mgeier/ndecarli/"+scriptFile.Name(), "--real-host-list=/home/mgeier/ndecarli/"+ipsFilename)//, "> sherlockOut")
-				/*var stdErr bytes.Buffer
+				launchFog := exec.Command(/*"bash", "-c", */"python3", "/home/mgeier/repos/sherlockfog/sherlockfog.py", "/home/mgeier/ndecarli/"+scriptFile.Name(), "--real-host-list=/home/mgeier/ndecarli/"+ipsFilename, "--cpu-exclusive=False")//, "> sherlockOut")
+				var stdErr bytes.Buffer
 				launchFog.Stderr = &stdErr
-				if b, err := launchFog.Output(); err != nil {
+				b, err := launchFog.Output()
+				if err != nil {
 					os.Stderr.WriteString(fmt.Sprintf("Failed to launch sherlock fog.\n%s : %s\n", err.Error(), stdErr.String()))
-				} else {
-					fmt.Println(string(b))
-					fmt.Println(stdErr.String())
-				}*/
-				launchFog := exec.Command("bash", "-c", "python3 /home/mgeier/repos/sherlockfog/sherlockfog.py /home/mgeier/ndecarli/"+scriptFile.Name()+" --real-host-list=/home/mgeier/ndecarli/"+ipsFilename+" --cpu-exclusive=False", "> sherlockOut")
+				}
+				fmt.Println(string(b))
+				fmt.Println(stdErr.String())
+				/*launchFog := exec.Command("bash", "-c", "python3 /home/mgeier/repos/sherlockfog/sherlockfog.py /home/mgeier/ndecarli/"+scriptFile.Name()+" --real-host-list=/home/mgeier/ndecarli/"+ipsFilename+" --cpu-exclusive=False", "> sherlockOut")
 				if err = launchFog.Start(); err != nil {
 					os.Stderr.WriteString(fmt.Sprintf("Failed to launch sherlock fog.\n%s\n", err.Error()))
-				}
+				}*/
 			} else {
 				os.Stderr.WriteString(fmt.Sprintf("Failed to write ips file.\n %s\n", err.Error()))
 			}
