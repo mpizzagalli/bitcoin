@@ -60,7 +60,7 @@ type network struct {
 type NetworkConnection struct {
 	A int `json:"a"`
 	B int `json:"b"`
-	Latency float64 `json:"latencyMs"`
+	Latency int `json:"latencyMs"`
 }
 
 type btcNode struct {
@@ -199,7 +199,7 @@ func generateNetwork(data *DistributionJson, amountOfNodes int) (hostNetwork net
 			countryIdtoHostId[data.CountryDistribution[i].Id] = j//[2]int{j, nodesInCountry}
 			routerHostId := j+nodesInCountry
 			for j<routerHostId {
-				hostNetwork.Connections = append(hostNetwork.Connections, NetworkConnection{routerHostId, j, data.CountryDistribution[i].InnerLatency})
+				hostNetwork.Connections = append(hostNetwork.Connections, NetworkConnection{routerHostId, j, int(data.CountryDistribution[i].InnerLatency + 0.5)})
 				j++
 			}
 
@@ -212,7 +212,7 @@ func generateNetwork(data *DistributionJson, amountOfNodes int) (hostNetwork net
 		hostA:=countryIdtoHostId[data.CountryLatency[i].A]+hostsPerCountry[data.CountryLatency[i].A]
 		hostB:=countryIdtoHostId[data.CountryLatency[i].B]+hostsPerCountry[data.CountryLatency[i].B]
 
-		hostNetwork.Connections = append(hostNetwork.Connections, NetworkConnection{hostA, hostB, data.CountryLatency[i].Latency})
+		hostNetwork.Connections = append(hostNetwork.Connections, NetworkConnection{hostA, hostB, int(data.CountryLatency[i].Latency + 0.5)})
 	}
 
 	return

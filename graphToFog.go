@@ -21,7 +21,7 @@ type network struct {
 type NetworkConnection struct {
 	A int `json:"a"`
 	B int `json:"b"`
-	Latency float64 `json:"latencyMs"`
+	Latency int `json:"latencyMs"`
 }
 
 type btcNode struct {
@@ -75,7 +75,7 @@ func makePhysicalLayer(scriptFile *os.File, networkTopology *network) {
 	writeLineToFile(scriptFile ,fmt.Sprintf("for i in 0..%d do\n\tdef n{i}\nend for\n", networkTopology.Hosts))
 
 	for i := 0; i<len(networkTopology.Connections); i++ {
-		writeLineToFile(scriptFile,fmt.Sprintf("connect n%d n%d %fms",networkTopology.Connections[i].A,networkTopology.Connections[i].B,networkTopology.Connections[i].Latency))
+		writeLineToFile(scriptFile,fmt.Sprintf("connect n%d n%d %dms",networkTopology.Connections[i].A,networkTopology.Connections[i].B,networkTopology.Connections[i].Latency))
 	}
 
 	writeLineToFile(scriptFile, "\nbuild-network\n")
@@ -172,7 +172,7 @@ func launchSherlockFog(scriptFile *os.File, numberOfHosts int) {
 					fmt.Println(string(b))
 					fmt.Println(stdErr.String())
 				}*/
-				launchFog := exec.Command("bash", "-c", "python3 /home/mgeier/repos/sherlockfog/sherlockfog.py /home/mgeier/ndecarli/"+scriptFile.Name()+" --real-host-list=/home/mgeier/ndecarli/"+ipsFilename, "> sherlockOut")
+				launchFog := exec.Command("bash", "-c", "python3 /home/mgeier/repos/sherlockfog/sherlockfog.py /home/mgeier/ndecarli/"+scriptFile.Name()+" --real-host-list=/home/mgeier/ndecarli/"+ipsFilename+" --cpu-exclusive=False", "> sherlockOut")
 				if err = launchFog.Start(); err != nil {
 					os.Stderr.WriteString(fmt.Sprintf("Failed to launch sherlock fog.\n%s\n", err.Error()))
 				}
