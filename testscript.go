@@ -8,6 +8,9 @@ import (
     "time"
     "fmt"
     "bytes"
+    "bufio"
+    "os"
+    "strings"
 )
 
 const bitcoind string = "/home/ndecarli/tesis-lic-ndecarli/bitcoin/src/bitcoind"
@@ -71,10 +74,10 @@ func connectToPeers (peerNodes []int) []string {
 
 func initCommands(nodeNumber int, peerNodes []int) []string {
   commands := []string{regtest, daemon, pass, user, listenPort(nodeNumber), rpcPort(nodeNumber), nodeDataDir(nodeNumber)}
-  /*if nodeNumber % 2 == 0 {
+  //if nodeNumber % 2 == 0 {
     commands = append(commands, dificulta(0))
-  } else{*/
-    commands = append(commands, simuLambda(0.1))
+  //} else{*/
+    //commands = append(commands, simuLambda(0.1))
   //}
   return append(commands, connectToPeers(peerNodes)...)
 }
@@ -118,23 +121,23 @@ func startPoisson (nodeNumber int) {
 
 func initNode (nodeNumber int, peerNodes []int) {
   instantiateNode(nodeNumber, peerNodes)
-  //go startPoisson(nodeNumber)
+  go startPoisson(nodeNumber)
 }
 
 func main() {
 
   generateBaseDirFolder()
 
-  initNode(0, []int{1})
+  initNode(0, []int{1, 5})
   //allPreviousNodes := make([]int, 0, 5)
   //initNode(1, []int{0})
   for i:=1; i<5; i++ {
-      initNode(i, []int{i-1, i+1})
+      initNode(i, []int{0, i-1, i+1})
     //allPreviousNodes = append(allPreviousNodes, i)
   }
-  initNode(5, []int{4})
+  initNode(5, []int{0, 4})
 
-  /*reader := bufio.NewReader(os.Stdin)
+  reader := bufio.NewReader(os.Stdin)
   fmt.Print("Now listening to commands... \n")
   for mine {
     text, _ := reader.ReadString('\n')
@@ -147,5 +150,5 @@ func main() {
         runCommandsOnNode(nodeNumber, commands[1:]...)
       }
     }
-  }*/
+  }
 }

@@ -127,7 +127,7 @@ func makeBlockChain(scriptFile *os.File, nodes []btcNode) {
 		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash /home/mgeier/ndecarli/bitcoindo.sh %d getnewaddress > /home/mgeier/ndecarli/addrN%d", nodes[i].Host, nodes[i].Host, nodes[i].Id, nodes[i].Id))
 		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash /home/mgeier/ndecarli/bitcoindo.sh %d getnewaddress >> /home/mgeier/ndecarli/addrN%d", nodes[i].Host, nodes[i].Host, nodes[i].Id, nodes[i].Id))
 
-		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d scp /home/mgeier/ndecarli/addrN%d n0:/home/mgeier/ndecarli/addrN%d\n", nodes[i].Host, nodes[i].Host, nodes[i].Id, nodes[i].Id))
+		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d scp -q -o StrictHostKeyChecking=no /home/mgeier/ndecarli/addrN%d n0:/home/mgeier/ndecarli/addrN%d\n", nodes[i].Host, nodes[i].Host, nodes[i].Id, nodes[i].Id))
 	}
 
 	writeLineToFile(scriptFile,fmt.Sprintf("run n0 netns n0 /usr/local/go/bin/go run /home/mgeier/ndecarli/generateBlockchain.go %d\n", len(nodes)))
