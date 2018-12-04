@@ -171,6 +171,9 @@ func calculateHostsPerCountry(data *DistributionJson, amountOfNodes int) map[str
 		z--
 		z = z % len(data.CountryDistribution)
 	}
+	for k, v := range (hostsPerCountry) {
+		fmt.Println(fmt.Sprintf("%s %d", k, v))
+	}
 
 	return hostsPerCountry
 }
@@ -182,12 +185,6 @@ func generateNetwork(data *DistributionJson, amountOfNodes int) (hostNetwork net
 	//Cantidad de hosts es cantidad de nodos + cantidad de paises con nodos
 	hostNetwork.Hosts = amountOfNodes
 
-	for _, v := range hostsPerCountry {
-		if (v>0) {
-			hostNetwork.Hosts++
-		}
-	}
-
 	hostNetwork.Connections = make([]NetworkConnection, 0)
 
 	countryIdtoHostId = make(map[string]int)
@@ -198,38 +195,35 @@ func generateNetwork(data *DistributionJson, amountOfNodes int) (hostNetwork net
 
 		nodesInCountry := hostsPerCountry[data.CountryDistribution[i].Id]
 		if nodesInCountry>0 {
-			countryIdtoHostId[data.CountryDistribution[i].Id] = j //[2]int{j, nodesInCountry}
-			routerHostId := j + nodesInCountry
-			for j < routerHostId {
+			routerHostId := j
+			j++
+			countryIdtoHostId[data.CountryDistribution[i].Id] = j
+			for ;nodesInCountry>0; nodesInCountry-- {
 				hostNetwork.Connections = append(hostNetwork.Connections, NetworkConnection{routerHostId, j, int(data.CountryDistribution[i].InnerLatency + 0.5)})
 				j++
 			}
 			addedConnections[data.CountryDistribution[i].Id] = make(map[string]bool)
-			j++
 		}
 	}
-
-
 
 	for i:=0; i<len(data.CountryLatency); i++ {
 
 		countryA := data.CountryLatency[i].A
 		countryB := data.CountryLatency[i].B
-
-		hostA := hostsPerCountry[countryA]
-		hostB := hostsPerCountry[countryB]
-
+		
 		//Agregamos el enlace si ambos paises tienen hosts y no agregamos el inverso
-		if hostA > 0 && hostB > 0 && (!addedConnections[countryB][countryA]) {
+		if hostsPerCountry[countryA] > 0 && hostsPerCountry[countryB] > 0 && (!addedConnections[countryB][countryA]) {
 
-			hostA += countryIdtoHostId[countryA] // agregamos indice base
-			hostB += countryIdtoHostId[countryB] // agregamos indice base
+			hostA := countryIdtoHostId[countryA]-1
+			hostB := countryIdtoHostId[countryB]-1
 
 			hostNetwork.Connections = append(hostNetwork.Connections, NetworkConnection{hostA, hostB, int(data.CountryLatency[i].Latency + 0.5)})
 
-				addedConnections[countryA][countryB] = true
+			addedConnections[countryA][countryB] = true
 		}
 	}
+
+	fmt.Println("")
 
 	return
 }
