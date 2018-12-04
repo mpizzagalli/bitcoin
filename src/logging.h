@@ -114,6 +114,7 @@ namespace BCLog {
     void WriteIntoThesisLogFile(const std::string &text, std::string &headerHash);
     void LogNewBlockDiscovered(std::string headerHash);
     void LogNewBlockReceived(std::string headerHash);
+    void LogNewHeaderReceived(std::string headerHash);
     std::string GetMonotonicClockTimestamp();
     std::string GetRealTimeClockTimestamp();
     std::string GetClockWithId(clockid_t clockId);

@@ -32,6 +32,7 @@ static int FileWriteStr(const std::string &str, FILE *fp)
 
 const std::string discoveryTxt= "Block Discovered with Header ";
 const std::string receptionTxt = "Unknown block received with Header ";
+const std::string headerTxt = "Unknown header received ";
 std::ofstream logFile;
 
 void BCLog::InitStream(int64_t nodeNumber) {
@@ -53,6 +54,10 @@ void BCLog::LogNewBlockDiscovered(std::string headerHash)
 void BCLog::LogNewBlockReceived(std::string headerHash)
 {
     BCLog::WriteIntoThesisLogFile(receptionTxt, headerHash/* +" | From node at socket " + fromAddr*/);
+}
+
+void BCLog::LogNewHeaderReceived(std::string headerHash) {
+    BCLog::WriteIntoThesisLogFile(headerTxt, headerHash);
 }
 
 /*std::string BCLog::GetMonotonicClockTimestamp()
