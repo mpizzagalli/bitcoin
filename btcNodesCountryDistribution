@@ -1,107 +1,107 @@
 103
-1 USA 2543
-2 DEU 1947
-3 FRA 743
-4 NLD 502
-5 unknown 292
-6 CHN 451
-7 CAN 431
-8 GBR 328
-9 SGP 274
-10 RUS 289
-11 JPN 249
-12 KOR 209
-13 AUS 173
-14 CHE 129
-15 HKG 135
-16 FIN 115
-17 IRL 113
-18 SWE 98
-19 UKR 99
-20 BRA 90
-21 IND 77
-22 CZE 78
-23 LTU 74
-24 POL 68
-25 ITA 66
-26 ESP 66
-27 ROU 64
-28 AUT 55
-29 NOR 49
-30 BGR 44
-31 BEL 35
-32 BLR 32
-33 ARG 23
-34 SVK 23
-35 HUN 23
-36 GRC 22
-37 DNK 22
-38 SVN 21
-39 THA 20
-40 NZL 19
-41 Malaysia 19
-42 ZAF 18
-43 Israel 16
-44 Taiwan 17
-45 Turkey 17
-46 Mexico 12
-47 Latvia 10
-48 Portugal 7
-49 Estonia 9
-50 Luxembourg 10
-51 Vietnam 10
-52 Kazakhstan 8
-53 ARE 7
-54 Venezuela 5
-55 CRI 6
-56 ISL 6
-57 Croatia 5
-58 Seychelles 4
-59 Serbia 4
-60 GEO 3
-61 MDA 5
-62 Uruguay 3
-63 Chile 5
-64 Curacao 4
-65 Kyrgyzstan 4
-66 Colombia 4
-67 Cyprus 3
-68 Kenya 3
-69 TTO 2
-70 IRN 3
-71 Qatar 3
-72 Bahamas 2
-73 Jersey 2
-74 Belize 2
-75 Ghana 2
-76 Panama 2
-77 Peru 1
-78 Cambodia 2
-79 Indonesia 2
-80 Bermuda 1
-81 Bolivia 1
-82 Reunion 1
-83 Guernsey 1
-84 PRI 2
-85 Philippines 1
-86 Ecuador 2
-87 Montenegro 1
-88 Macao 1
-89 Macedonia 1
-90 Malta 1
-91 FRO 1
-92 Nigeria 1
-93 SAU 1
-94 DOM 1
-95 Lebanon 1
-96 LAO 1
-97 Liechtenstein 1
-98 Andorra 1
-99 VGB 1
-100 Armenia 1
-101 Albania 1
-102 Angola 1
-103 Aruba 1
+1 USA 2543 10
+2 DEU 1947 8
+3 FRA 743 12
+4 NLD 502 8
+5 unknown 292 0
+6 CHN 451 10
+7 CAN 431 24
+8 GBR 328 8
+9 SGP 274 8
+10 RUS 289 32
+11 JPN 249 10
+12 KOR 209 10
+13 AUS 173 12
+14 CHE 129 5
+15 HKG 135 2
+16 FIN 115 4
+17 IRL 113 6
+18 SWE 98 8
+19 UKR 99 8
+20 BRA 90 30
+21 IND 77 26
+22 CZE 78 8
+23 LTU 74 8
+24 POL 68 10
+25 ITA 66 8
+26 ESP 66 8
+27 ROU 64 8
+28 AUT 55 8
+29 NOR 49 8
+30 BGR 44 8
+31 BEL 35 8
+32 BLR 32 8
+33 ARG 23 14
+34 SVK 23 8
+35 HUN 23 8
+36 GRC 22 8
+37 DNK 22 8
+38 SVN 21 8
+39 THA 20 10
+40 NZL 19 10
+41 Malaysia 19 10
+42 ZAF 18 10
+43 Israel 16 10
+44 Taiwan 17 10
+45 Turkey 17 10
+46 Mexico 12 10
+47 Latvia 10 10
+48 Portugal 7 10
+49 Estonia 9 10
+50 Luxembourg 10 10
+51 Vietnam 10 10
+52 Kazakhstan 8 10
+53 ARE 7 10
+54 Venezuela 5 10
+55 CRI 6 10
+56 ISL 6 10
+57 Croatia 5 10
+58 Seychelles 4 10
+59 Serbia 4 10
+60 GEO 3 10
+61 MDA 5 10
+62 Uruguay 3 10
+63 Chile 5 10
+64 Curacao 4 10
+65 Kyrgyzstan 4 10
+66 Colombia 4 10
+67 Cyprus 3 10
+68 Kenya 3 10
+69 TTO 2 10
+70 IRN 3 10
+71 Qatar 3 10
+72 Bahamas 2 10
+73 Jersey 2 10
+74 Belize 2 10
+75 Ghana 2 10
+76 Panama 2 10
+77 Peru 1 10
+78 Cambodia 2 10
+79 Indonesia 2 10
+80 Bermuda 1 10
+81 Bolivia 1 10
+82 Reunion 1 10
+83 Guernsey 1 10
+84 PRI 2 10
+85 Philippines 1 10
+86 Ecuador 2 10
+87 Montenegro 1 10
+88 Macao 1 10
+89 Macedonia 1 10
+90 Malta 1 10
+91 FRO 1 10
+92 Nigeria 1 10
+93 SAU 1 10
+94 DOM 1 10
+95 Lebanon 1 10
+96 LAO 1 10
+97 Liechtenstein 1 10
+98 Andorra 1 10
+99 VGB 1 10
+100 Armenia 1 10
+101 Albania 1 10
+102 Angola 1 10
+103 Aruba 1 10
 41
 NLD
 GRC

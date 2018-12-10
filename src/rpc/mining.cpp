@@ -118,7 +118,7 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
 
         double secondsToWait = d(gen);
 
-        secondsToWait *= 600;
+        secondsToWait *= 75;
 
         time_t sec = (time_t) secondsToWait;
 
@@ -130,14 +130,15 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
     }
 
     static const int nInnerLoopCount = 0x10000;
-    int nHeightEnd = 0;
-    int nHeight = 0;
 
+    int nHeight;
     {   // Don't keep cs_main locked
         LOCK(cs_main);
         nHeight = chainActive.Height();
-        nHeightEnd = nHeight+nGenerate;
     }
+
+    int nHeightEnd = nHeight+nGenerate;
+
     unsigned int nExtraNonce = 0;
     UniValue blockHashes(UniValue::VARR);
 

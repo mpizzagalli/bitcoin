@@ -3,6 +3,7 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <map>
 
 using namespace::std;
 
@@ -10,6 +11,8 @@ struct country {
 	string id;
 	double cnt;
 };
+
+map<string, double> innerLat;
 
 void parseCountries() {
 	cout << "\t\"country_distribution\":[\n";
@@ -24,11 +27,12 @@ void parseCountries() {
 	int m;
 	string id;
 	int cnt;
+	double ilat;
 	int tot =0;
 
 	for (int i=0; i<n; ++i){
 		
-		cin >> m >> id >> cnt;
+		cin >> m >> id >> cnt >> ilat;
 
 		if(id != "unknown"){
 			/*
@@ -38,12 +42,17 @@ void parseCountries() {
 			if ((cnt >= 23 && id != "BRL") || id == "GEO" || id == "ISL") { 
 				if (id == "USA") {
 					v.push_back({"USA-E", ((double)cnt)*0.7});
+					innerLat["USA-E"] = 20.0;
 					v.push_back({"USA-W", ((double)cnt)*0.3});
+					innerLat["USA-W"] = 40.0;
 				} else if (id == "CHN") {
 					v.push_back({"CHN-N", ((double)cnt)*0.7});
+					innerLat["CHN-N"] = 26.0;
 					v.push_back({"CHN-S", ((double)cnt)*0.3});
+					innerLat["CHN-S"] = 30.0;
 				} else {
 					v.push_back({id, (double)cnt});
+					innerLat[id] = ilat;
 				}
 			}
 			
@@ -56,7 +65,7 @@ void parseCountries() {
 	for (int i=0; i<v.size(); ++i){
 
 		double share = v[i].cnt/dtot;
-		cout << "\t\t{\n\t\t\t\"id\":\"" << v[i].id << "\",\n\t\t\t\"share\":" << share << ",\n\t\t\t\"inner_latency\":0\n\t\t}";
+		cout << "\t\t{\n\t\t\t\"id\":\"" << v[i].id << "\",\n\t\t\t\"share\":" << share << ",\n\t\t\t\"inner_latency\":" << (innerLat[v[i].id]/2) << "\n\t\t}";
 		if (i<v.size()-1) {
 			cout << ',';
 		}
@@ -120,6 +129,15 @@ void parseLatencies(){
 
 					cin >> latency;
 
+					double correction = (innerLat[id] + innerLat[v[j]])/4;
+
+					//corregimos la latencia restando una fraccion de las latencias locales
+					if (latency-correction<3.5) {
+						latency = 3.5;	
+					} else {
+						latency -= correction;
+					}
+
 					if (j == chnni) {
 						latsAChnN.push_back(make_pair(i, latency));
 					} else if (j == chnsi) {
@@ -155,7 +173,8 @@ void parseLatencies(){
 
 	string idtmp = "CHN-N";
 
-	printLatency(id, idtmp, 37.782);
+	//dividimos la latencia por 3 por el delay local de chn -s y -n
+	printLatency(id, idtmp, (37.782)/3);
 
 	cout << endl;
 
