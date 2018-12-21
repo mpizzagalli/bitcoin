@@ -171,9 +171,9 @@ func calculateHostsPerCountry(data *DistributionJson, amountOfNodes int) map[str
 		z--
 		z = z % len(data.CountryDistribution)
 	}
-	for k, v := range (hostsPerCountry) {
+	/*for k, v := range (hostsPerCountry) {
 		fmt.Println(fmt.Sprintf("%s %d", k, v))
-	}
+	}*/
 
 	return hostsPerCountry
 }
@@ -252,26 +252,26 @@ func generateNodes(data *DistributionJson, countryIdtoHostId map[string]int, hos
 	for k, v := range hostsPerCountry {
 		for ; v>0; v-- {
 			nodeId := len(btcNodesList)
-			nodeHp := meanHpPerNode + rand.NormFloat64() * 0.0002
+			//nodeHp := meanHpPerNode + rand.NormFloat64() * 0.0002
 			nodeHost := countryIdtoHostId[k]
 			countryIdtoHostId[k]++
-			btcNodesList = append(btcNodesList, btcNode{Id:nodeId, HashingPower:nodeHp, Host:nodeHost, ConnectedTo:make([]int, 0)})
+			btcNodesList = append(btcNodesList, btcNode{Id:nodeId, HashingPower:meanHpPerNode, Host:nodeHost, ConnectedTo:make([]int, 0)})
 		}
 	}
 
 	indexOrder := rand.Perm(len(btcNodesList))
 
-	rndSlice := make([]int, 6)
-
-	for i:=0; i<6; i++ {
-		rndSlice[i] = indexOrder[0]
-	}
-
 	nodeRndGen := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	rndSlice := make([]int, 0)
 
 	for j:=1; j<len(btcNodesList); j++ {
 
-		i := indexOrder[j]
+		i := indexOrder[j-1]
+
+		rndSlice = append(rndSlice, []int{i,i,i,i,i,i}...)
+
+		i = indexOrder[j]
 
 		r := nodeRndGen.Int63n(int64(len(rndSlice)))
 		nodeA := rndSlice[r]
@@ -286,8 +286,6 @@ func generateNodes(data *DistributionJson, countryIdtoHostId map[string]int, hos
 			btcNodesList[nodeB].ConnectedTo = append(btcNodesList[nodeB].ConnectedTo, i)
 			rndSlice = append(rndSlice[:r], rndSlice[r+1:]...)
 		}
-
-		rndSlice = append(rndSlice, []int{i,i,i,i,i,i}...)
 	}
 
 	return btcNodesList
@@ -322,5 +320,4 @@ func main(){
 	nodes := generateNodes(&data, countryIdtoHostId, hostsPerCountry, amountOfNodes)
 
 	writeTopology(network, nodes)
-
 }
