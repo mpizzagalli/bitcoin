@@ -30,9 +30,9 @@ static int FileWriteStr(const std::string &str, FILE *fp)
     return fwrite(str.data(), 1, str.size(), fp);
 }
 
-const std::string discoveryTxt= "Block Discovered with Header ";
-const std::string receptionTxt = "Unknown block received with Header ";
-const std::string headerTxt = "Unknown header received ";
+const std::string discoveryTxt= "0 ";
+const std::string receptionTxt = "1 ";
+const std::string headerTxt = "2 ";
 std::ofstream logFile;
 
 void BCLog::InitStream(int64_t nodeNumber) {
@@ -44,7 +44,7 @@ void BCLog::WriteIntoThesisLogFile(const std::string &text, std::string &headerH
 {
     auto timestamp = std::chrono::system_clock::now().time_since_epoch().count();
 
-    logFile << text << headerHash << " at " << timestamp << std::endl;
+    logFile << text << headerHash << ' ' << timestamp << std::endl;
 }
 void BCLog::LogNewBlockDiscovered(std::string headerHash)
 {
