@@ -13,7 +13,7 @@ import (
     "strings"
 )
 
-const bitcoind string = "/home/ndecarli/tesis-lic-ndecarli/bitcoin/src/bitcoind"
+const bitcoind string = "bitcoind"
 const regtest string = "-regtest"
 const daemon string = "-daemon"
 const pass string = "-rpcpassword=b"

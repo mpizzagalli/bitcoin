@@ -182,9 +182,6 @@ func generateNetwork(data *DistributionJson, amountOfNodes int) (hostNetwork net
 
 	hostsPerCountry = calculateHostsPerCountry(data, amountOfNodes)
 
-	//Cantidad de hosts es cantidad de nodos + cantidad de paises con nodos
-	hostNetwork.Hosts = amountOfNodes
-
 	hostNetwork.Connections = make([]NetworkConnection, 0)
 
 	countryIdtoHostId = make(map[string]int)
@@ -223,7 +220,8 @@ func generateNetwork(data *DistributionJson, amountOfNodes int) (hostNetwork net
 		}
 	}
 
-	fmt.Println("")
+	//Cantidad de hosts es cantidad de nodos + cantidad de paises con nodos
+	hostNetwork.Hosts = amountOfNodes + len(countryIdtoHostId)
 
 	return
 }
