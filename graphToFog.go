@@ -110,6 +110,8 @@ func makeLogicalLayer(scriptFile *os.File, nodes []btcNode) map[int]bool {
 			writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash /home/mgeier/ndecarli/connectNodes.sh %d %d n%d", nodes[i].Host, nodes[i].Host, nodes[i].Id, nodes[i].ConnectedTo[j], nodeIdToHost[nodes[i].ConnectedTo[j]]))
 		}
 	}
+
+	return hostHasNode
 }
 
 func makeBlockChain(scriptFile *os.File, nodes []btcNode) {
