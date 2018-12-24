@@ -90,13 +90,15 @@ func makePhysicalLayer(scriptFile *os.File, networkTopology *network) {
 	writeLineToFile(scriptFile, "\nbuild-network\n")
 }
 
-func makeLogicalLayer(scriptFile *os.File, nodes []btcNode) {
+func makeLogicalLayer(scriptFile *os.File, nodes []btcNode) map[int]bool {
 
 	nodeIdToHost := make(map[int]int)
+	hostHasNode := make(map[int]bool)
 
 	for i:=0; i<len(nodes); i++ {
 		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash /home/mgeier/ndecarli/invokeBitcoin.sh %d -simuLambda=%f -dbcache=2048 -loadblock=/home/mgeier/ndecarli/blk00000.dat -loadblock=/home/mgeier/ndecarli/blk00001.dat",nodes[i].Host,nodes[i].Host,nodes[i].Id,nodes[i].HashingPower))
 		nodeIdToHost[nodes[i].Id] = nodes[i].Host
+		hostHasNode[nodes[i].Host] = true
 	}
 
 	writeLineToFile(scriptFile, "")
@@ -163,13 +165,26 @@ func teardown(scriptFile *os.File, nodes []btcNode) {
 	writeLineToFile(scriptFile, "\nrun n0 netns n0 sleep 1m")
 }
 
-func launchSherlockFog(scriptFile *os.File, numberOfHosts int) {
+func launchSherlockFog(scriptFile *os.File, numberOfHosts int, hostHasNode map[int]bool) {
 
 	if fileErr := scriptFile.Close(); fileErr == nil {
 		ipsFilename := os.Args[1]+"ips.txt"
 		if ipsFile, err := os.Create(ipsFilename); err == nil {
+			j := 0
+			k := len(hostIps)-1
 			for i:=0; i<numberOfHosts && err == nil; i++ {
-				_, err = ipsFile.Write(hostIps[i%len(hostIps)])
+				if hostHasNode[i] {
+					_, err = ipsFile.Write(hostIps[k])
+					if (k>0){
+						k--
+					} else {
+						k = len(hostIps)-1
+					}
+				} else {
+					_, err = ipsFile.Write(hostIps[j])
+					j++
+					j %= len(hostIps)
+				}
 			}
 			if err == nil {
 				launchFog := exec.Command(/*"bash", "-c", */"python3", "/home/mgeier/repos/sherlockfog/sherlockfog.py", "/home/mgeier/ndecarli/"+scriptFile.Name(), "--real-host-list=/home/mgeier/ndecarli/"+ipsFilename, "--cpu-exclusive=False")//, "> sherlockOut")
@@ -209,7 +224,7 @@ func main() {
 
 	makePhysicalLayer(scriptFile, &topology.Network)
 
-	makeLogicalLayer(scriptFile, topology.BtcNodes)
+	hostHasNode := makeLogicalLayer(scriptFile, topology.BtcNodes)
 
 	makeBlockChain(scriptFile, topology.BtcNodes)
 
@@ -217,6 +232,6 @@ func main() {
 
 	teardown(scriptFile, topology.BtcNodes)
 
-	launchSherlockFog(scriptFile, topology.Network.Hosts)
+	launchSherlockFog(scriptFile, topology.Network.Hosts, hostHasNode)
 
 }

@@ -63,7 +63,7 @@ func decodeLog(log []byte, scriptFile *os.File) {
 		sentTime = time.Unix(0, decodePacket(log[i:i+8]))
 		receiveTime = time.Unix(0, decodePacket(log[i+8:i+16]))
 		senderPort = decodePort(log[i+16:i+18])
-		writeLineToFile(scriptFile, fmt.Sprintf("Packet from node at port %d sent at %s and received at %s", senderPort, sentTime.Format(timeFormat), receiveTime.Format(timeFormat)))
+		writeLineToFile(scriptFile, fmt.Sprintf("Packet from node at port %d had a delay of %dms", senderPort, (receiveTime.Sub(sentTime).Nanoseconds()+500000)/1000000))
 	}
 }
 
