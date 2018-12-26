@@ -114,7 +114,7 @@ func makeLogicalLayer(scriptFile *os.File, nodes []btcNode) map[int]bool {
 	return hostHasNode
 }
 
-func makeBlockChain(scriptFile *os.File, nodes []btcNode) {
+func makeBlockChain(scriptFile *os.File, nodes []btcNode, hostHasNode map[int]bool) {
 
 	writeLineToFile(scriptFile,fmt.Sprintf("\nrun n0 netns n0 bash /home/mgeier/ndecarli/invokeBitcoin.sh %d -dificulta=0 -dbcache=2048 -loadblock=/home/mgeier/ndecarli/blk00000.dat -loadblock=/home/mgeier/ndecarli/blk00001.dat\n", len(nodes)))
 
@@ -129,12 +129,18 @@ func makeBlockChain(scriptFile *os.File, nodes []btcNode) {
 
 	for i:=0; i<len(nodes); i++ {
 		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash /home/mgeier/ndecarli/bitcoindo.sh %d getnewaddress > /home/mgeier/ndecarli/addrN%d", nodes[i].Host, nodes[i].Host, nodes[i].Id, nodes[i].Id))
-		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash /home/mgeier/ndecarli/bitcoindo.sh %d getnewaddress >> /home/mgeier/ndecarli/addrN%d", nodes[i].Host, nodes[i].Host, nodes[i].Id, nodes[i].Id))
+		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash /home/mgeier/ndecarli/bitcoindo.sh %d getnewaddress >> /home/mgeier/ndecarli/addrN%d\n", nodes[i].Host, nodes[i].Host, nodes[i].Id, nodes[i].Id))
 
-		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d scp -q -o StrictHostKeyChecking=no /home/mgeier/ndecarli/addrN%d n0:/home/mgeier/ndecarli/addrN%d\n", nodes[i].Host, nodes[i].Host, nodes[i].Id, nodes[i].Id))
 	}
 
-	writeLineToFile(scriptFile,fmt.Sprintf("run n0 netns n0 /usr/local/go/bin/go run /home/mgeier/ndecarli/generateBlockchain.go %d\n", len(nodes)))
+	for i, j := 0, 0; i<len(nodes) && j<len(hostIps); i++ {
+		if (hostHasNode[i]) {
+			writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d scp -q -o StrictHostKeyChecking=no /home/mgeier/ndecarli/addrN* n0:/home/mgeier/ndecarli/addrN*", i, i))//, nodes[i].Id, nodes[i].Id))
+			j++
+		}
+	}
+
+	writeLineToFile(scriptFile,fmt.Sprintf("\nrun n0 netns n0 /usr/local/go/bin/go run /home/mgeier/ndecarli/generateBlockchain.go %d\n", len(nodes)))
 
 	addSemaphore(scriptFile, nodes)
 
