@@ -96,7 +96,7 @@ func makeLogicalLayer(scriptFile *os.File, nodes []btcNode) map[int]bool {
 	hostHasNode := make(map[int]bool)
 
 	for i:=0; i<len(nodes); i++ {
-		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash /home/mgeier/ndecarli/invokeBitcoin.sh %d -simuLambda=%f -dbcache=2048 -loadblock=/home/mgeier/ndecarli/blk00000.dat -loadblock=/home/mgeier/ndecarli/blk00001.dat",nodes[i].Host,nodes[i].Host,nodes[i].Id,nodes[i].HashingPower))
+		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash /home/mgeier/ndecarli/invokeBitcoin.sh %d -simuLambda=%f -dbcache=2048",nodes[i].Host,nodes[i].Host,nodes[i].Id,nodes[i].HashingPower))//-loadblock=/home/mgeier/ndecarli/blk00000.dat -loadblock=/home/mgeier/ndecarli/blk00001.dat
 		nodeIdToHost[nodes[i].Id] = nodes[i].Host
 		hostHasNode[nodes[i].Host] = true
 	}
@@ -116,7 +116,7 @@ func makeLogicalLayer(scriptFile *os.File, nodes []btcNode) map[int]bool {
 
 func makeBlockChain(scriptFile *os.File, nodes []btcNode, hostHasNode map[int]bool) {
 
-	writeLineToFile(scriptFile,fmt.Sprintf("\nrun n0 netns n0 bash /home/mgeier/ndecarli/invokeBitcoin.sh %d -dificulta=0 -dbcache=2048 -loadblock=/home/mgeier/ndecarli/blk00000.dat -loadblock=/home/mgeier/ndecarli/blk00001.dat\n", len(nodes)))
+	writeLineToFile(scriptFile,fmt.Sprintf("\nrun n0 netns n0 bash /home/mgeier/ndecarli/invokeBitcoin.sh %d -dificulta=0 -dbcache=2048\n", len(nodes)))//-loadblock=/home/mgeier/ndecarli/blk00000.dat -loadblock=/home/mgeier/ndecarli/blk00001.dat
 
 	addSemaphore(scriptFile, []btcNode{btcNode{Id: len(nodes), Host:0}})
 
