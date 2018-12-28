@@ -45,7 +45,7 @@ func main() {
 	}
 
 	for haveToWait() {
-		time.Sleep(time.Minute)
+		time.Sleep(time.Second * 40)
 	}
 
 }
