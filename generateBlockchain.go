@@ -45,7 +45,7 @@ func main() {
 
 	n := getAmountOfNodes()
 	addresses := getAddresses(n)
-	for j:=0; j<1000; j++ {
+	for j:=0; j<1200; j++ {
 		for i := 0; i < n; i++ {
 			_ = execCmd(exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", os.Args[1], "generatetoaddress", "1", addresses[i][0]))
 			_ = execCmd(exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", os.Args[1], "generatetoaddress", "1", addresses[i][1]))
