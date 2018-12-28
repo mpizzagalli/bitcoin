@@ -111,8 +111,8 @@ namespace BCLog {
     };
 
     void InitStream(int64_t nodeNumber);
-    void WriteIntoThesisLogFile(const std::string &text, std::string &headerHash);
-    void LogNewBlockDiscovered(std::string headerHash);
+    void WriteIntoThesisLogFile(const std::string &text, std::string &headerHash, int64_t txAmount = -1);
+    void LogNewBlockDiscovered(std::string headerHash, int64_t txAmount);
     void LogNewBlockReceived(std::string headerHash);
     void LogNewHeaderReceived(std::string headerHash);
     std::string GetMonotonicClockTimestamp();

@@ -40,15 +40,20 @@ void BCLog::InitStream(int64_t nodeNumber) {
     logFile << "Starting bitcoin client at " << std::chrono::system_clock::now().time_since_epoch().count() << std::endl;
 }
 
-void BCLog::WriteIntoThesisLogFile(const std::string &text, std::string &headerHash)
+void BCLog::WriteIntoThesisLogFile(const std::string &text, std::string &headerHash, int64_t txAmount)
 {
     auto timestamp = std::chrono::system_clock::now().time_since_epoch().count();
 
-    logFile << text << headerHash << ' ' << timestamp << std::endl;
+    logFile << text << headerHash << ' ';
+
+    if (txAmount >= 0)
+        logFile << txAmount << ' ';
+
+    logFile << timestamp << std::endl;
 }
-void BCLog::LogNewBlockDiscovered(std::string headerHash)
+void BCLog::LogNewBlockDiscovered(std::string headerHash, int64_t txAmount)
 {
-    BCLog::WriteIntoThesisLogFile(discoveryTxt, headerHash);
+    BCLog::WriteIntoThesisLogFile(discoveryTxt, headerHash, txAmount);
 }
 
 void BCLog::LogNewBlockReceived(std::string headerHash)
