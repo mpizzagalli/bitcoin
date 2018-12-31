@@ -3573,9 +3573,9 @@ bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<cons
 
     if (fNewBlock) {
         if (*fNewBlock)
-            BCLog::LogNewBlockReceived(pblock->GetHash().ToString());
+            BCLog::LogNewBlockReceived(pblock->GetHash().ToString(), pblock->hashPrevBlock.ToString());
     } else {
-        BCLog::LogNewBlockDiscovered(pblock->GetHash().ToString(), pblock->vtx.size());
+        BCLog::LogNewBlockDiscovered(pblock->GetHash().ToString(), pblock->hashPrevBlock.ToString(), pblock->vtx.size());
     }
 
     NotifyHeaderTip();
