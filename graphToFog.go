@@ -204,10 +204,6 @@ func launchSherlockFog(scriptFile *os.File, numberOfHosts int, hostHasNode map[i
 				}
 				fmt.Println(string(b))
 				fmt.Println(stdErr.String())
-				/*launchFog := exec.Command("bash", "-c", "python3 /home/mgeier/repos/sherlockfog/sherlockfog.py /home/mgeier/ndecarli/"+scriptFile.Name()+" --real-host-list=/home/mgeier/ndecarli/"+ipsFilename+" --cpu-exclusive=False", "> sherlockOut")
-				if err = launchFog.Start(); err != nil {
-					os.Stderr.WriteString(fmt.Sprintf("Failed to launch sherlock fog.\n%s\n", err.Error()))
-				}*/
 			} else {
 				os.Stderr.WriteString(fmt.Sprintf("Failed to write ips file.\n %s\n", err.Error()))
 			}
