@@ -42,7 +42,7 @@ func writeLineToFile(file *os.File, content string) {
 
 func addSemaphore(scriptFile *os.File, nodes []btcNode) {
 
-	writeLineToFile(scriptFile, "run n0 netns n0 sleep 1m")
+	writeLineToFile(scriptFile, "run n0 netns n0 sleep 30s")
 
 	for i:=0; i<len(nodes); i++ {
 		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d /usr/local/go/bin/go run /home/mgeier/ndecarli/semaphore.go %d", nodes[i].Host, nodes[i].Host, nodes[i].Id))
@@ -145,6 +145,12 @@ func makeBlockChain(scriptFile *os.File, nodes []btcNode, hostHasNode map[int]bo
 	addSemaphore(scriptFile, nodes)
 
 	writeLineToFile(scriptFile,fmt.Sprintf("run n0 netns n0 bash /home/mgeier/ndecarli/bitcoindo.sh %d stop\n", len(nodes)))
+
+	writeLineToFile(scriptFile, "\nrun n0 netns n0 sleep 1m")
+
+	writeLineToFile(scriptFile, fmt.Sprintf("\nrun n0 netns n0 rm /root/btcCoreLogN%d", len(nodes)))
+
+	writeLineToFile(scriptFile, fmt.Sprintf("\nrun n0 netns n0 rm -r /home/ndecarli/regtestData/%d", len(nodes)))
 }
 
 func startEngines(scriptFile *os.File, topology *GraphJson) {
