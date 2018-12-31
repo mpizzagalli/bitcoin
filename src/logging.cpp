@@ -37,7 +37,7 @@ std::ofstream logFile;
 
 void BCLog::InitStream(int64_t nodeNumber) {
     logFile = std::ofstream("btcCoreLogN"+i64tostr(nodeNumber), std::ios_base::out | std::ios_base::app );
-    logFile << "Starting bitcoin client at " << std::chrono::system_clock::now().time_since_epoch().count() << std::endl;
+    logFile << "Starting bitcoin client at " << std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count() << std::endl;
 }
 
 void BCLog::WriteIntoThesisLogFile(const std::string &text, std::string &headerHash, int64_t txAmount)

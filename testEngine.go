@@ -13,9 +13,9 @@ import (
 	"bytes"
 )
 
-const txFee float64 = 0.00001
+const txFee float64 = 0.000002
 const txSleepMaxAggregate = int64(time.Millisecond * 100)
-const txSleepMinimum = time.Millisecond * 1600
+const txSleepMinimum = time.Millisecond * 1200
 
 type UnspentOutput struct {
 	Address string `json:"address"`
@@ -106,7 +106,7 @@ func generateTxs(addresses []string) {
 			j[1] = 0
 			unspentOutputs = getCredit(addresses)
 			for len(unspentOutputs[1]) == 0 || len(unspentOutputs[0]) == 0 {
-				time.Sleep(time.Second * 75)
+				time.Sleep(txSleepMinimum)
 				unspentOutputs = getCredit(addresses)
 			}
 		}
@@ -152,7 +152,7 @@ func getCredit(addresses []string) (credits [][]Credit) {
 	credits = make([][]Credit, 2)
 
 	for i:=0; i<len(outputs); i++ {
-		if outputs[i].Amount - txFee >= 0.0000001 {
+		if outputs[i].Amount - txFee >= 0.000001 {
 			if outputs[i].Address == addresses[0] {
 				credits[0] = append(credits[0], outputs[i].Credit)
 			} else if outputs[i].Address == addresses[1] {
