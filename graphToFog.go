@@ -96,7 +96,7 @@ func makeLogicalLayer(scriptFile *os.File, nodes []btcNode) map[int]bool {
 	hostHasNode := make(map[int]bool)
 
 	for i:=0; i<len(nodes); i++ {
-		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash /home/mgeier/ndecarli/invokeBitcoin.sh %d -simuLambda=%f -dbcache=2048",nodes[i].Host,nodes[i].Host,nodes[i].Id,nodes[i].HashingPower))//-loadblock=/home/mgeier/ndecarli/blk00000.dat -loadblock=/home/mgeier/ndecarli/blk00001.dat
+		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash /home/mgeier/ndecarli/invokeBitcoin.sh %d -dificulta=0 -dbcache=2048",nodes[i].Host,nodes[i].Host,nodes[i].Id))//-loadblock=/home/mgeier/ndecarli/blk00000.dat -loadblock=/home/mgeier/ndecarli/blk00001.dat
 		nodeIdToHost[nodes[i].Id] = nodes[i].Host
 		hostHasNode[nodes[i].Host] = true
 	}
@@ -156,7 +156,7 @@ func makeBlockChain(scriptFile *os.File, nodes []btcNode, hostHasNode map[int]bo
 func startEngines(scriptFile *os.File, topology *GraphJson) {
 
 	for i:=0; i<len(topology.BtcNodes); i++ {
-		writeLineToFile(scriptFile, fmt.Sprintf("run n%d netns n%d /usr/local/go/bin/go run /home/mgeier/ndecarli/launcher.go /usr/local/go/bin/go run /home/mgeier/ndecarli/testEngine.go %d", topology.BtcNodes[i].Host, topology.BtcNodes[i].Host, topology.BtcNodes[i].Id))
+		writeLineToFile(scriptFile, fmt.Sprintf("run n%d netns n%d /usr/local/go/bin/go run /home/mgeier/ndecarli/launcher.go /usr/local/go/bin/go run /home/mgeier/ndecarli/testEngine.go %d %f", topology.BtcNodes[i].Host, topology.BtcNodes[i].Host, topology.BtcNodes[i].Id, topology.BtcNodes[i].HashingPower))
 	}
 
 	writeLineToFile(scriptFile, "")

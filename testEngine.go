@@ -11,6 +11,8 @@ import (
 	"time"
 	"math/rand"
 	"bytes"
+	crand "crypto/rand"
+	"encoding/binary"
 )
 
 const txFee float64 = 0.000002
@@ -51,13 +53,34 @@ func getNodeNumber() int {
 	return n
 }
 
+func createRng() *rand.Rand {
+	// ugly hack to make all nodes use a different seed: get the seed from crypto/rand
+	buf := make([]byte, 8)
+	_, _ = crand.Read(buf)
+
+	seed := int64(binary.LittleEndian.Uint64(buf))
+
+	return rand.New(rand.NewSource(seed))
+}
+
 func mineBlocks(addresses []string) {
 
-	i := 0
 	nodeNumber := os.Args[1]
-	for {
+	simuLambda, _ := strconv.ParseFloat(os.Args[2], 64)
+
+	var sleepTime float64
+	var sleepSeconds int64
+	var sleepNanoseconds int64
+
+	rng := createRng()
+
+	for i := 0;;i ^= 1 {
+
+		sleepTime = (rng.ExpFloat64() / simuLambda)*150.0
+		sleepSeconds = int64(sleepTime)
+		sleepNanoseconds = int64((sleepTime-float64(sleepSeconds))*1000000000)
+		time.Sleep(time.Duration(sleepSeconds) * time.Second + time.Duration(sleepNanoseconds) * time.Nanosecond)
 		_ = exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", nodeNumber, "generatetoaddress", "1", addresses[i]).Run()
-		i ^= 1
 	}
 }
 

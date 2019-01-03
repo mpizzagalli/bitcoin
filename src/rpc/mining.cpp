@@ -31,7 +31,7 @@
 #include <memory>
 #include <stdint.h>
 
-#include <random>
+//#include <random>
 
 unsigned int ParseConfirmTarget(const UniValue& value)
 {
@@ -110,15 +110,15 @@ static UniValue getnetworkhashps(const JSONRPCRequest& request)
 UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGenerate, uint64_t nMaxTries, bool keepScript)//, int64_t desiredDifficulty)
 {
     //simulated mining
-    if (Params().GetConsensus().simuLambda >= 0) {
+    /*if (Params().GetConsensus().simuLambda >= 0) {
         std::random_device rd;
         std::mt19937 gen(rd());
 
-        std::exponential_distribution<double> d(Params().GetConsensus().simuLambda);
+        std::exponential_distribution<double> d(Params().GetConsensus().simuLambda/75.0);
 
         double secondsToWait = d(gen);
 
-        secondsToWait *= 75;
+        //secondsToWait *= 75;
 
         time_t sec = (time_t) secondsToWait;
 
@@ -127,7 +127,7 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
         timespec timeToSleep = {sec, nanosec};
 
         nanosleep(&timeToSleep, NULL);
-    }
+    }*/
 
     static const int nInnerLoopCount = 0x10000;
 
