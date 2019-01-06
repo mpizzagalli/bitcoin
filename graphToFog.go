@@ -243,5 +243,4 @@ func main() {
 	teardown(scriptFile, topology.BtcNodes)
 
 	launchSherlockFog(scriptFile, topology.Network.Hosts, hostHasNode)
-
 }

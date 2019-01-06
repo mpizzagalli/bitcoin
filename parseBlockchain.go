@@ -59,7 +59,6 @@ func parseLog() [][]block {
 
 	blockChain := make([][]block, len(lines))
 
-
 	for i:=1; i<len(lines); i++{
 
 		entry = strings.Split(lines[i], " ")
