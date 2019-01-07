@@ -36,15 +36,46 @@ func readLogFile() string {
 	}
 }
 
-func getBlockLines() []string {
+func getBlockLines() (val []string) {
 	data := readLogFile()
 	s := strings.Split(data, "\n")
-	return s[1152000:]
+	max := 1154482
+	if max > len(s) {
+		max = len(s)
+	}
+	if len(s)>1152000 {
+		val = make([]string, 0)
+		for i:=1152000; i<max; i++ {
+			if len(s[i]) > 0 && s[i][0] != '2' {
+				buff := make([]byte, len(s[i]))
+				_ = copy(buff, s[i])
+				val = append(val, string(buff))
+			}
+		}
+	}
+	return
 }
 
 func getNsec(s string) int64 {
 	n, _ := strconv.ParseInt(s, 10, 64)
 	return n
+}
+
+func resolveLevel(i int, blockLevel map[string]int, lines []string, entry []string) int {
+
+	if h, b := blockLevel[entry[2]]; b {
+		return h+1
+	}
+
+	for j := i+1; j<len(lines); j++ {
+		if parentEntry := strings.Split(lines[j], " "); len(parentEntry)>2 && parentEntry[0] != "2" && parentEntry[1] == entry[2] {
+			return  resolveLevel(j, blockLevel, lines, parentEntry)+1
+		}
+	}
+
+	fmt.Println("Error while calculating level for block " + entry[1])
+
+	return 0
 }
 
 func parseLog() [][]block {
@@ -55,7 +86,7 @@ func parseLog() [][]block {
 
 	entry := strings.Split(lines[0], " ")
 
-	blockLevel[entry[1]] = -1;
+	blockLevel[entry[1]] = -1
 
 	blockChain := make([][]block, len(lines))
 
@@ -65,7 +96,7 @@ func parseLog() [][]block {
 
 		if entry[0] != "2" && len(entry)>2 {
 
-			h := blockLevel[entry[2]]+1
+			h := resolveLevel(i, blockLevel, lines, entry)
 			blockLevel[entry[1]] = h
 
 			if blockChain[h] == nil {
@@ -74,7 +105,7 @@ func parseLog() [][]block {
 
 			if entry[0]=="0" {
 				blockChain[h] = append(blockChain[h], block{Hash:entry[1], Parent:entry[2], Time:time.Unix(0, getNsec(entry[4]))})
-				//fmt.Println(h, entry[3])
+
 			} else {
 				blockChain[h] = append(blockChain[h], block{Hash:entry[1], Parent:entry[2], Time:time.Unix(0, getNsec(entry[3]))})
 			}

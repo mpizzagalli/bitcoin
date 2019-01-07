@@ -16,8 +16,8 @@ import (
 )
 
 const txFee float64 = 0.000002
-const txSleepMaxAggregate = int64(time.Millisecond * 100)
-const txSleepMinimum = time.Millisecond * 1200
+const txSleepMaxAggregate = int64(time.Millisecond * 50)
+const txSleepMinimum = time.Millisecond * 2400
 
 type UnspentOutput struct {
 	Address string `json:"address"`
@@ -75,7 +75,7 @@ func mineBlocks(addresses []string) {
 	rng := createRng()
 
 	for i := 0;;i ^= 1 {
-		sleepTime = (rng.ExpFloat64() / simuLambda)*300.0
+		sleepTime = (rng.ExpFloat64() / simuLambda)*75.0
 		sleepSeconds = time.Duration(sleepTime)
 		sleepNanoseconds = time.Duration((sleepTime-float64(sleepSeconds))*1000000000.0)
 		time.Sleep(sleepSeconds * time.Second + sleepNanoseconds)
