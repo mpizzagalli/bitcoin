@@ -39,7 +39,7 @@ void parseCountries() {
 				Belarus se excluye por no tener info de latencias
 				Georgia e Islandia se incluyen a pesar de tener pocos nodos porque son usados en pools
 			*/
-			if ((cnt >= 23 && id != "BRL") || id == "GEO" || id == "ISL") { 
+			if ((cnt >= 23 && id != "BLR") || id == "GEO" || id == "ISL") { 
 				if (id == "USA") {
 					v.push_back({"USA-E", ((double)cnt)*0.7});
 					innerLat["USA-E"] = 20.0;
