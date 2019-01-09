@@ -17,7 +17,7 @@ import (
 
 const txFee float64 = 0.000002
 const txSleepMaxAggregate = int64(time.Millisecond * 50)
-const txSleepMinimum = time.Millisecond * 2400
+const txSleepMinimum = time.Millisecond * 4800
 
 type UnspentOutput struct {
 	Address string `json:"address"`
