@@ -2188,19 +2188,19 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         CInv inv(MSG_TX, tx.GetHash());
         pfrom->AddInventoryKnown(inv);
 
-        LOCK2(cs_main, g_cs_orphans);
-
         bool fMissingInputs = false;
         CValidationState state;
+
+        std::list<CTransactionRef> lRemovedTxn;
+
+        LOCK2(cs_main, g_cs_orphans);
 
         pfrom->setAskFor.erase(inv.hash);
         mapAlreadyAskedFor.erase(inv.hash);
 
-        std::list<CTransactionRef> lRemovedTxn;
-
         if (!AlreadyHave(inv) &&
             AcceptToMemoryPool(mempool, state, ptx, &fMissingInputs, &lRemovedTxn, false /* bypass_limits */, 0 /* nAbsurdFee */)) {
-            mempool.check(pcoinsTip.get());
+            //mempool.check(pcoinsTip.get());
             RelayTransaction(tx, connman);
             for (unsigned int i = 0; i < tx.vout.size(); i++) {
                 vWorkQueue.emplace_back(inv.hash, i);

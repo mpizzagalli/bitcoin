@@ -284,23 +284,25 @@ func writeBlockTimes(blockchain map[string]Block, list [][]string) {
 
 	var i int64
 	var j int
-	var min time.Duration
+	var max time.Duration
+
+	var d int64 = 0;
 
 	for i = 0; i<int64(len(list)) && len(list[i])>0 && i<1201; i++ {
 
 		block = blockchain[list[i][0]]
 
-		min = block.Time
+		max = block.Time
 
 		for j=1; j<len(list[i]); j++ {
 			tmpBlock = blockchain[list[i][j]]
-			if tmpBlock.Time<min {
-				min = tmpBlock.Time
+			if tmpBlock.Time>max {
+				max = tmpBlock.Time
 				block = tmpBlock
 			}
 		}
 
-		s := fmt.Sprintf("%d %s", len(list[i]), time.Unix(0, int64(block.Time)).Format(timeFormat))
+		s := fmt.Sprintf("%d %s %d", len(list[i]), time.Unix(0, int64(block.Time)).Format(timeFormat), block.NTx)
 
 		diff := block.Time - initTime
 
@@ -312,8 +314,10 @@ func writeBlockTimes(blockchain map[string]Block, list [][]string) {
 
 		s += fmt.Sprintf("+%d seconds ", int64(diff.Seconds()+0.5))
 
+		d += int64(len(list[i]))
+
 		if i>0 {
-			s += fmt.Sprintf("- Mean Diff: %d seconds\n", ((meanDiff/(i))+500000000)/1000000000)
+			s += fmt.Sprintf("- Mean Diff: %d seconds\n", ((meanDiff/(d))+500000000)/1000000000)
 		} else {
 			s += "\n"
 		}

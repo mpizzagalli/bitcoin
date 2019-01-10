@@ -601,7 +601,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
 
     // Check for conflicts with in-memory transactions
     std::set<uint256> setConflicts;
-    for (const CTxIn &txin : tx.vin)
+    /*for (const CTxIn &txin : tx.vin)
     {
         auto itConflicting = pool.mapNextTx.find(txin.prevout);
         if (itConflicting != pool.mapNextTx.end())
@@ -640,7 +640,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
                 setConflicts.insert(ptxConflicting->GetHash());
             }
         }
-    }
+    }*/
 
     {
         CCoinsView dummy;
@@ -651,7 +651,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
         view.SetBackend(viewMemPool);
 
         // do all inputs exist?
-        for (const CTxIn& txin : tx.vin) {
+        /*for (const CTxIn& txin : tx.vin) {
             if (!pcoinsTip->HaveCoinInCache(txin.prevout)) {
                 coins_to_uncache.push_back(txin.prevout);
             }
@@ -669,7 +669,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
                 }
                 return false; // fMissingInputs and !state.IsInvalid() is used to detect this condition, don't set state.Invalid()
             }
-        }
+        }*/
 
         // Bring the best block into scope
         view.GetBestBlock();
@@ -1005,7 +1005,7 @@ static bool AcceptToMemoryPoolWithTime(const CChainParams& chainparams, CTxMemPo
     }
     // After we've (potentially) uncached entries, ensure our coins cache is still within its size limits
     CValidationState stateDummy;
-    FlushStateToDisk(chainparams, stateDummy, FlushStateMode::PERIODIC);
+    FlushStateToDisk(chainparams, stateDummy, FlushStateMode::PERIODIC);//FlushStateMode::NONE
     return res;
 }
 
@@ -2115,11 +2115,11 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
  */
 bool static FlushStateToDisk(const CChainParams& chainparams, CValidationState &state, FlushStateMode mode, int nManualPruneHeight) {
     int64_t nMempoolUsage = mempool.DynamicMemoryUsage();
-    LOCK(cs_main);
     static int64_t nLastWrite = 0;
     static int64_t nLastFlush = 0;
     std::set<int> setFilesToPrune;
     bool full_flush_completed = false;
+    LOCK(cs_main);
     try {
     {
         bool fFlushForPrune = false;
