@@ -73,27 +73,6 @@ void BCLog::LogNewHeaderReceived(std::string headerHash)
     logFile << headerTxt << headerHash << ' ' << timestamp << std::endl;
 }
 
-/*std::string BCLog::GetMonotonicClockTimestamp()
-{
-    return std::move(BCLog::GetClockWithId(CLOCK_MONOTONIC));
-}
-
-std::string BCLog::GetRealTimeClockTimestamp()
-{
-    return std::move(BCLog::GetClockWithId(CLOCK_REALTIME));
-}
-
-std::string BCLog::GetClockWithId(clockid_t clockId)
-{
-    timespec tp;
-    int statusCode = clock_gettime(clockId, &tp);
-    if(statusCode < 0)
-    {
-        return "Error while getting RealTime Clock";
-    }
-    return std::move(std::to_string(tp.tv_sec) + " seconds, " + std::to_string(tp.tv_nsec) + " nanoseconds");
-}*/
-
 bool BCLog::Logger::OpenDebugLog()
 {
     std::lock_guard<std::mutex> scoped_lock(m_file_mutex);
