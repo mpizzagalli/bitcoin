@@ -157,6 +157,7 @@ func startEngines(scriptFile *os.File, topology *GraphJson) {
 
 	for i:=0; i<len(topology.BtcNodes); i++ {
 		writeLineToFile(scriptFile, fmt.Sprintf("run n%d netns n%d /usr/local/go/bin/go run /home/mgeier/ndecarli/launcher.go /usr/local/go/bin/go run /home/mgeier/ndecarli/testEngine.go %d %f", topology.BtcNodes[i].Host, topology.BtcNodes[i].Host, topology.BtcNodes[i].Id, topology.BtcNodes[i].HashingPower))
+		writeLineToFile(scriptFile, "\nrun n0 netns n0 sleep 1s")
 	}
 
 	writeLineToFile(scriptFile, "")
