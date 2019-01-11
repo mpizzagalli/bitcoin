@@ -16,8 +16,8 @@ import (
 )
 
 const txFee float64 = 0.000002
-const txSleepMaxAggregate = int64(time.Millisecond * 50)
-const txSleepMinimum = time.Millisecond * 4800
+const txSleepMaxAggregate = int64(time.Millisecond * 100)
+const txSleepMinimum = time.Millisecond * 1000
 
 type UnspentOutput struct {
 	Address string `json:"address"`
@@ -75,7 +75,7 @@ func mineBlocks(addresses []string) {
 	rng := createRng()
 
 	for i := 0;;i ^= 1 {
-		sleepTime = (rng.ExpFloat64() / simuLambda)*150.0
+		sleepTime = (rng.ExpFloat64() / simuLambda)*75.0
 		sleepSeconds = time.Duration(sleepTime)
 		sleepNanoseconds = time.Duration((sleepTime-float64(sleepSeconds))*1000000000.0)
 		time.Sleep(sleepSeconds * time.Second + sleepNanoseconds)
@@ -137,7 +137,7 @@ func generateTxs(addresses []string) {
 
 		creditToUse = &unspentOutputs[i][j[i]]
 
-		stdOut = execCmd(exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", nodeNumber, "createrawtransaction", txInput(creditToUse), txOutput(templates[i], creditToUse.Amount)))
+		stdOut = execCmd(exec.Command("bash", "/home/mgeier/ndecarli/bitcoindoc.sh", nodeNumber, "createrawtransaction", txInput(creditToUse), txOutput(templates[i], creditToUse.Amount)))
 
 		stdOut = execCmd(exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", nodeNumber, "signrawtransactionwithwallet", string(stdOut)))
 
@@ -145,7 +145,9 @@ func generateTxs(addresses []string) {
 			os.Stderr.WriteString(fmt.Sprintf("Error unmarshaling signedtransaction json.\n %s\n", err.Error()))
 		}
 
-		_ = execCmd(exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", nodeNumber, "sendrawtransaction", tx.Hex))
+		if err = exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", nodeNumber, "sendrawtransaction", tx.Hex).Start(); err != nil {
+			os.Stderr.WriteString(fmt.Sprintf("Error executing command: %s\n", err.Error()))
+		}
 
 		j[i]++
 		
