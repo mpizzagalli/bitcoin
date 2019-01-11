@@ -1125,8 +1125,7 @@ static UniValue sendrawtransaction(const JSONRPCRequest& request)
             const Coin& existingCoin = view.AccessCoin(COutPoint(hashTx, o));
             fHaveChain = !existingCoin.IsSpent();
         }
-        bool fHaveMempool = mempool.exists(hashTx);
-        if (!fHaveMempool && !fHaveChain) {
+        if (!fHaveChain && !mempool.exists(hashTx)) {
             // push to local node and sync with wallets
             CValidationState state;
             bool fMissingInputs;
@@ -1160,8 +1159,6 @@ static UniValue sendrawtransaction(const JSONRPCRequest& request)
 
     } // cs_main
 
-    promise.get_future().wait();
-
     if(!g_connman)
         throw JSONRPCError(RPC_CLIENT_P2P_DISABLED, "Error: Peer-to-peer functionality missing or disabled");
 
@@ -1170,6 +1167,8 @@ static UniValue sendrawtransaction(const JSONRPCRequest& request)
     {
         pnode->PushInventory(inv);
     });
+
+    promise.get_future().wait();
 
     return hashTx.GetHex();
 }
