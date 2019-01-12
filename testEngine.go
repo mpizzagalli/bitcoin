@@ -144,9 +144,17 @@ func generateTxs(addresses []string) {
 			j[0] = 0
 			j[1] = 0
 			unspentOutputs = getCredit(addresses)
-			for len(unspentOutputs[1]) == 0 || len(unspentOutputs[0]) == 0 {
+			for cont && (len(unspentOutputs[1]) == 0 || len(unspentOutputs[0]) == 0) {
 				time.Sleep(txSleepMinimum)
 				unspentOutputs = getCredit(addresses)
+				select {
+				case _ = <-sigs:
+					cont = false
+				default:
+				}
+			}
+			if !cont {
+				break
 			}
 			timestamp = time.Now().UnixNano()
 		}
