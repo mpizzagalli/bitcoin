@@ -44,6 +44,10 @@ func getAddresses() (addresses []string) {
 		os.Stderr.WriteString(fmt.Sprintf("Failed to parse address file.\n %s\n", err.Error()))
 	}
 
+	nodeNumber, _ := strconv.ParseInt(os.Args[1], 10, 64)
+
+	time.Sleep(time.Duration(120-nodeNumber) * time.Second)
+
 	return
 }
 
