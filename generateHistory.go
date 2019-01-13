@@ -56,7 +56,7 @@ func readLogFile(node int) string {
 
 func getBlockLines(node int) (val []string) {
 	data := readLogFile(node)
-	s := strings.Split(data, "\n")
+	/*s := strings.Split(data, "\n")
 	max := 1154482
 	if max > len(s) {
 		max = len(s)
@@ -64,14 +64,14 @@ func getBlockLines(node int) (val []string) {
 	if len(s)>1152000 {
 		val = make([]string, 0)
 		for i:=1152000; i<max; i++ {
-			if len(s[i]) > 0 /*&& s[i][0] != '2'*/ {
+			if len(s[i]) > 0 {
 				buff := make([]byte, len(s[i]))
 				_ = copy(buff, s[i])
 				val = append(val, string(buff))
 			}
 		}
-	}
-	return
+	}*/
+	return strings.Split(data, "\n")
 }
 
 func getNsec(s string) int64 {
@@ -87,11 +87,11 @@ func addNodeInfo(blockchain map[string]Block, node int){
 	var contained bool
 	var entry []string
 
-	for i:=1; i<len(lines); i++ {
+	for i:=2; i<len(lines); i++ {
 
 		entry = strings.Split(lines[i], " ")
 
-		if /*entry[0] != "2" && */len(entry)>2 {
+		if len(entry)>2 {
 
 			if block, contained = blockchain[entry[1]]; !contained {
 				block.AcceptDelays = make([]Delay, 0, 240)
