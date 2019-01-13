@@ -129,11 +129,11 @@ func makeBlockChain(scriptFile *os.File, nodes []btcNode, hostHasNode map[int]bo
 
 	for i, j := 0, 0; i<len(nodes) && j<len(hostIps); i++ {
 		if hostHasNode[i] {
-			writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d rm /home/mgeier/ndecarli/addrN*", i, i))
+			writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d rm -r /home/mgeier/ndecarli/addrN*", i, i))
 			j++
 		}
 	}
-	
+
 	writeLineToFile(scriptFile, "")
 
 	for i:=0; i<len(nodes); i++ {

@@ -65,7 +65,7 @@ void BCLog::LogNewBlockDiscovered(std::string headerHash, std::string parentHash
 
 void BCLog::LogNewBlockReceived(std::string headerHash, std::string parentHash)
 {
-    if (++firstLoggedBlock > 576000){
+    if (firstLoggedBlock > 576000){
         auto timestamp = std::chrono::system_clock::now().time_since_epoch().count();
 
         logFile << receptionTxt << headerHash << ' ' << parentHash << ' ' << timestamp << std::endl;
@@ -74,7 +74,7 @@ void BCLog::LogNewBlockReceived(std::string headerHash, std::string parentHash)
 
 void BCLog::LogNewHeaderReceived(std::string headerHash)
 {
-    if (firstLoggedBlock > 576000) {
+    if (++firstLoggedBlock > 576000) {
         auto timestamp = std::chrono::system_clock::now().time_since_epoch().count();
 
         logFile << headerTxt << headerHash << ' ' << timestamp << std::endl;
