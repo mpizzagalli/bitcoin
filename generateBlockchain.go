@@ -45,7 +45,7 @@ func execCmd(cmd *exec.Cmd) []byte {
 	cmd.Stderr = &stdErr
 	output, execErr := cmd.Output()
 	if execErr != nil || stdErr.Len() > 0 {
-		os.Stderr.WriteString(fmt.Sprintf("Error executing command.\n%s\n%s\n", execErr.Error(), stdErr.String()))
+		os.Stderr.WriteString(fmt.Sprintf("Error executing command %s.\n%s\n%s\n", cmd.Args[2], execErr.Error(), stdErr.String()))
 	}
 	return output
 }
@@ -102,7 +102,7 @@ func multiplyTransactions(stdOut []byte, node int, addresses [][]string) {
 		}
 
 		if err = exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", os.Args[1], "sendrawtransaction", tx.Hex).Run(); err != nil {
-			os.Stderr.WriteString(fmt.Sprintf("Error executing command: %s\n", err.Error()))
+			os.Stderr.WriteString(fmt.Sprintf("Error sending transaction: %s\n", err.Error()))
 		}
 
 	}
