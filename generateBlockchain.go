@@ -9,7 +9,7 @@ import (
 		"fmt"
 		"bytes"
 		"time"
-		"encoding/json"
+		//"encoding/json"
 )
 
 type Block struct {
@@ -40,16 +40,15 @@ func getAddresses(n int) (addresses [][]string) {
 	return
 }
 
-func execCmd(cmd *exec.Cmd) []byte {
+func execCmd(cmd *exec.Cmd) {
 	var stdErr bytes.Buffer
 	cmd.Stderr = &stdErr
-	output, execErr := cmd.Output()
-	if execErr != nil || stdErr.Len() > 0 {
+	if execErr := cmd.Run(); execErr != nil || stdErr.Len() > 0 {
 		os.Stderr.WriteString(fmt.Sprintf("Error executing command %s.\n%s\n%s\n", cmd.Args[2], execErr.Error(), stdErr.String()))
 	}
-	return output
+	return
 }
-
+/*
 const txInputTemplate = "[{\"txid\":\"%s\",\"vout\":0}]"
 const txOutputTemplate = "[{\"%s\":9.9999980}, {\"%s\":9.9999980}, {\"%s\":10.0}, {\"%s\":10.0}, {\"%s\":10.0}]"
 
@@ -108,25 +107,26 @@ func multiplyTransactions(stdOut []byte, node int, addresses [][]string) {
 	}
 
 
-}
+}*/
 
 func main() {
 
 	n := getAmountOfNodes()
 	addresses := getAddresses(n)
-	var output1 []byte
+	/*var output1 []byte
 	var output2 []byte
 	var output3 []byte
-	var output4 []byte
+	var output4 []byte*/
 	for j:=0; j<240; j++ {
 		for i := 0; i < n; i++ {
-			output1 = execCmd(exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", os.Args[1], "generatetoaddress", "5", addresses[i][0]))
-			time.Sleep(5 * time.Millisecond)
-			output2 = execCmd(exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", os.Args[1], "generatetoaddress", "5", addresses[i][1]))
-			multiplyTransactions(output3, i, addresses)
+			execCmd(exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", os.Args[1], "generatetoaddress", "5", addresses[i][0]))
+			time.Sleep(10 * time.Millisecond)
+			execCmd(exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", os.Args[1], "generatetoaddress", "5", addresses[i][1]))
+			time.Sleep(10 * time.Millisecond)
+			/*multiplyTransactions(output3, i, addresses)
 			multiplyTransactions(output4, i, addresses)
 			output3 = output1
-			output4 = output2
+			output4 = output2*/
 		}
 	}
 
