@@ -108,7 +108,7 @@ func txOutput(template string, txCredit float64) string {
 }
 
 func outputTemplate(address string) string {
-	return "[{\""+address+"\":%f}]"
+	return "{\""+address+"\":%f}"
 }
 
 func execCmd(cmd *exec.Cmd) []byte {
@@ -218,7 +218,7 @@ func generateTxs(addresses []string) {
 
 func getCredit(addresses []string) (credits [][]Credit) {
 
-	btcCmd := exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", os.Args[1], "listunspent")
+	btcCmd := exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", os.Args[1], "credit")
 
 	var outputs []UnspentOutput
 

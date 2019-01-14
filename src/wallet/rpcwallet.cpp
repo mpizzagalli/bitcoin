@@ -3419,6 +3419,48 @@ static UniValue listunspent(const JSONRPCRequest& request)
     return results;
 }
 
+static UniValue credit(const JSONRPCRequest& request)
+{
+    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(request);
+    CWallet* const pwallet = wallet.get();
+
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    // Make sure the results are valid at least up to the most recent block
+    // the user could have gotten from another RPC command prior to now
+    pwallet->BlockUntilSyncedToCurrentChain();
+
+    UniValue results(UniValue::VARR);
+    std::vector<COutput> vecOutputs;
+    {
+        LOCK2(cs_main, pwallet->cs_wallet);
+        pwallet->AvailableCoins(vecOutputs, false, nullptr, 0, MAX_MONEY, MAX_MONEY, 0, 1, 9999999);
+    }
+
+    LOCK(pwallet->cs_wallet);
+
+    for (const COutput& out : vecOutputs) {
+
+        UniValue entry(UniValue::VOBJ);
+        entry.pushKV("txid", out.tx->GetHash().GetHex());
+        entry.pushKV("vout", out.i);
+
+        CTxDestination address;
+        const CScript& scriptPubKey = out.tx->tx->vout[out.i].scriptPubKey;
+
+        if (ExtractDestination(scriptPubKey, address)) {
+            entry.pushKV("address", EncodeDestination(address));
+        }
+
+        entry.pushKV("amount", ValueFromAmount(out.tx->tx->vout[out.i].nValue));
+        results.push_back(entry);
+    }
+
+    return results;
+}
+
 static UniValue fundrawtransaction(const JSONRPCRequest& request)
 {
     std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(request);
@@ -4414,6 +4456,7 @@ static const CRPCCommand commands[] =
     { "hidden",             "addwitnessaddress",                &addwitnessaddress,             {"address","p2sh"} },
     { "wallet",             "backupwallet",                     &backupwallet,                  {"destination"} },
     { "wallet",             "bumpfee",                          &bumpfee,                       {"txid", "options"} },
+    { "wallet",             "credit",                           &credit,                        {} },
     { "wallet",             "createwallet",                     &createwallet,                  {"wallet_name"} },
     { "wallet",             "dumpprivkey",                      &dumpprivkey,                   {"address"}  },
     { "wallet",             "dumpwallet",                       &dumpwallet,                    {"filename"} },
