@@ -58,15 +58,14 @@ func txInput(tx string) string {
 }
 
 func txOutput(addresses [][]string, node int) string {
-	nextNode := (node+1)%len(addresses)
-	var nextNextNode int
 	mod := node%2
-	if mod==0 {
-		nextNextNode = (node+2)%len(addresses)
-	} else {
-		nextNextNode = nextNode
-	}
-	return fmt.Sprintf(txOutputTemplate, addresses[node][0], addresses[node][1], addresses[nextNode][0], addresses[nextNode][1], addresses[nextNextNode][mod])
+	base := node - mod
+	nodo2 := (base+1)%len(addresses)
+	nodo3 := (base+2)%len(addresses)
+	nodo4 := (base+3)%len(addresses)
+	nodo5 := (base+4)%len(addresses)
+
+	return fmt.Sprintf(txOutputTemplate, addresses[base][mod], addresses[nodo2][mod], addresses[nodo3][mod], addresses[nodo4][mod], addresses[nodo5][mod])
 }
 
 func multiplyTransactions(stdOut []byte, node int, addresses [][]string) {
