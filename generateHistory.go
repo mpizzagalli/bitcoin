@@ -11,6 +11,7 @@ import (
 )
 
 const filePrefix = "btcCoreLogN"
+const txPrefix = "txLogN"
 const timeFormat = "15:04:05.999999"
 
 type Delay struct {
@@ -87,7 +88,7 @@ func addNodeInfo(blockchain map[string]Block, node int){
 	var contained bool
 	var entry []string
 
-	for i:=2; i<len(lines); i++ {
+	for i:=1; i<len(lines); i++ {
 
 		entry = strings.Split(lines[i], " ")
 
@@ -288,6 +289,13 @@ func writeBlockTimes(blockchain map[string]Block, list [][]string) {
 
 	var d int64 = 0;
 
+	promprom := 0.0
+	
+	avgs := make([]int, 10)
+
+	neigh :=0
+	var lastInterval time.Duration = 75 * time.Second
+
 	for i = 0; i<int64(len(list)) && len(list[i])>0 && i<1201; i++ {
 
 		block = blockchain[list[i][0]]
@@ -302,7 +310,16 @@ func writeBlockTimes(blockchain map[string]Block, list [][]string) {
 			}
 		}
 
-		s := fmt.Sprintf("%d %s %d", len(list[i]), time.Unix(0, int64(block.Time)).Format(timeFormat), block.NTx)
+		prom := float64(block.NTx)/74.83
+
+		if i>=30 {
+			promprom += prom
+			for j:=0; j<10 && float64(j*10)<=prom; j++ {
+				avgs[j]++
+			}
+		}
+
+		s := fmt.Sprintf("%d %s %d %f", len(list[i]), time.Unix(0, int64(block.Time)).Format(timeFormat), block.NTx, prom)
 
 		diff := block.Time - initTime
 
@@ -313,6 +330,11 @@ func writeBlockTimes(blockchain map[string]Block, list [][]string) {
 		meanDiff += diff.Nanoseconds()
 
 		s += fmt.Sprintf("+%d seconds ", int64(diff.Seconds()+0.5))
+
+		if i>=30 && lastInterval < 65 * time.Second && diff < time.Second * 65 {
+			neigh++
+		}
+		lastInterval = diff
 
 		d += int64(len(list[i]))
 
@@ -327,7 +349,63 @@ func writeBlockTimes(blockchain map[string]Block, list [][]string) {
 		lastTime = block.Time
 	}
 
-	//writeToFile(heightFile, fmt.Sprintf("Mean Diff: %d seconds\n", ((meanDiff/i)+500000000)/1000000000))
+	writeToFile(blockTimesFile, fmt.Sprintf("Mean Diff: %d seconds\nMean Percentage of Fullness:%f\n", ((meanDiff/i)+500000000)/1000000000, promprom/float64(i-30)))
+	for j:=0; j<10; j++ {
+		writeToFile(blockTimesFile, fmt.Sprintf("Percentage of blocks above %d of fullness: %f\n", j*10, (float64(avgs[j])/float64(i-30))*100.0))
+	}
+
+	writeToFile(blockTimesFile, fmt.Sprintf("Percentage of consecutive intervals below 65s: %f\n", (float64(neigh)/float64(i-30))*100.0))
+
+}
+
+
+
+func createTxFile() (outFile *os.File) {
+	var err error
+
+	if outFile, err = os.Create(os.Args[5]); err != nil {
+		os.Stderr.WriteString(fmt.Sprintf("Failed to create file %s\n %s\n", os.Args[4], err.Error()))
+	}
+
+	return outFile
+}
+
+func readTxFile(node int) string {
+	if b, err := ioutil.ReadFile(fmt.Sprintf("%s%s%d", os.Args[1], txPrefix, node)); err == nil {
+		return string(b)
+	} else {
+		os.Stderr.WriteString(fmt.Sprintf("Failed to parse log file.\n %s\n", err.Error()))
+		return ""
+	}
+}
+
+func getTxLogLines(node int) (val []string) {
+	data := readTxFile(node)
+	return strings.Split(data, "\n")
+}
+
+func addTxData(file *os.File, node int) {
+
+	lines := getTxLogLines(node)
+
+	if len(lines)>1 {
+		lines = strings.Split(lines[1], " ")
+		if len(lines)>9 {
+			writeToFile(file, lines[9]+"\n")
+		}
+
+	}
+
+}
+
+func printTxData(nodeAmount int64) {
+
+	file := createTxFile()
+
+	for i:=0; i<int(nodeAmount); i++ {
+		addTxData(file, i)
+	}
+
 }
 
 func main(){
@@ -341,4 +419,6 @@ func main(){
 	writeBlockTimes(blockchain, list)
 
 	printPropagationTimes(blockchain, list)
+
+	printTxData(nodeAmount)
 }

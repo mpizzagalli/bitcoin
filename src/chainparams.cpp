@@ -289,7 +289,7 @@ public:
 
         strNetworkID = "regtest";
         //consensus.nSubsidyHalvingInterval = 150;
-        consensus.nSubsidyHalvingInterval = 210000;
+        consensus.nSubsidyHalvingInterval = 10210000;
         consensus.BIP16Exception = uint256();
         consensus.BIP34Height = 100000000; // BIP34 has not activated on regtest (far in the future so block v1 are not rejected in tests)
         consensus.BIP34Hash = uint256();
@@ -345,7 +345,7 @@ public:
         pchMessageStart[3] = 0xda;
         nDefaultPort = 18444;
         //nPruneAfterHeight = 1000;
-        nPruneAfterHeight = 100000;
+        nPruneAfterHeight = 1000000;
 
         genesis = CreateGenesisBlock(1296688602, 2, 0x0207fffff, 1, 50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
