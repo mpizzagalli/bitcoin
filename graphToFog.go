@@ -199,7 +199,7 @@ func launchSherlockFog(scriptFile *os.File, numberOfHosts int, hostHasNode map[i
 			for i:=0; i<numberOfHosts && err == nil; i++ {
 				if hostHasNode[i] {
 					_, err = ipsFile.Write(hostIps[k])
-					if (k>0){
+					if k>0 {
 						k--
 					} else {
 						k = len(hostIps)-1

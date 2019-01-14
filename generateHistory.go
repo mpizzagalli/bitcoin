@@ -26,19 +26,6 @@ type Block struct {
 	NTx int64
 	Parent string
 }
-/*
-type Blockchain struct {
-	Blocks []Block
-	Index	map[string]int
-}
-
-func (b *Blockchain) at(h string) Block {
-	return b.Blocks[b.Index[h]]
-}
-
-func (b *Blockchain) insert(h string) Block {
-	return b.Blocks[b.Index[h]]
-}*/
 
 type DelaySort []Delay
 
@@ -144,15 +131,6 @@ func createBlockChain(baseDir string, nodeAmount int) map[string]Block {
 
 	return blockchain
 }
-/*
-func readHieghtFile() string {
-	if b, err := ioutil.ReadFile(os.Args[3]); err == nil {
-		return string(b)
-	} else {
-		os.Stderr.WriteString(fmt.Sprintf("Failed to parse log file.\n %s\n", err.Error()))
-		return ""
-	}
-}*/
 
 func getHeight(blockchain map[string]Block, heights map[string]int, block *Block, hash string) int {
 
@@ -357,8 +335,6 @@ func writeBlockTimes(blockchain map[string]Block, list [][]string) {
 	writeToFile(blockTimesFile, fmt.Sprintf("Percentage of consecutive intervals below 65s: %f\n", (float64(neigh)/float64(i-30))*100.0))
 
 }
-
-
 
 func createTxFile() (outFile *os.File) {
 	var err error
