@@ -31,14 +31,14 @@ func getAddresses(n int) (addresses [][]string) {
 	return
 }
 
-func execCmd(cmd *exec.Cmd) []byte {
+func execCmd(cmd *exec.Cmd) {
 	var stdErr bytes.Buffer
 	cmd.Stderr = &stdErr
-	stdOut, execErr := cmd.Output()
+	execErr := cmd.Run()
 	if execErr != nil || stdErr.Len() > 0 {
-		os.Stderr.WriteString(fmt.Sprintf("Error executing command.\n %s : %s\n", execErr.Error(), stdErr.String()))
+		os.Stderr.WriteString(fmt.Sprintf("Error executing command.\n%s\n%s\n", execErr.Error(), stdErr.String()))
 	}
-	return  stdOut
+	return
 }
 
 func main() {
@@ -47,9 +47,9 @@ func main() {
 	addresses := getAddresses(n)
 	for j:=0; j<240; j++ {
 		for i := 0; i < n; i++ {
-			_ = execCmd(exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", os.Args[1], "generatetoaddress", "5", addresses[i][0]))
+			execCmd(exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", os.Args[1], "generatetoaddress", "5", addresses[i][0]))
 			time.Sleep(10 * time.Millisecond)
-			_ = execCmd(exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", os.Args[1], "generatetoaddress", "5", addresses[i][1]))
+			execCmd(exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", os.Args[1], "generatetoaddress", "5", addresses[i][1]))
 			time.Sleep(10 * time.Millisecond)
 		}
 	}
