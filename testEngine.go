@@ -36,7 +36,7 @@ type Tx struct {
 	Hex string `json:"hex"`
 }
 
-func getAddresses() (addresses []string) {
+func getAddresses() (addresses []string, unspentOutputs [][]Credit) {
 
 	if addressesBytes, err := ioutil.ReadFile("/home/mgeier/ndecarli/addrN" + os.Args[1]); err == nil {
 		addresses = strings.Split(string(addressesBytes), "\n")
@@ -46,7 +46,9 @@ func getAddresses() (addresses []string) {
 
 	nodeNumber, _ := strconv.ParseInt(os.Args[1], 10, 64)
 
-	time.Sleep(time.Duration(120-nodeNumber) * time.Second)
+	unspentOutputs = getCredit(addresses)
+
+	time.Sleep(time.Duration(240-nodeNumber) * time.Second)
 
 	return
 }
@@ -121,7 +123,7 @@ func execCmd(cmd *exec.Cmd) []byte {
 	return  stdOut
 }
 
-func generateTxs(addresses []string) {
+func generateTxs(addresses []string, unspentOutputs [][]Credit) {
 	i := 0
 	var j [2]int = [2]int{0, 0}
 	templates := [2]string{outputTemplate(addresses[1]), outputTemplate(addresses[0])} // posiciones invertidas porque cada direccion le da plata a la otra
@@ -132,7 +134,7 @@ func generateTxs(addresses []string) {
 	sleepRndGen := rand.New(rand.NewSource(time.Now().UnixNano()))
 	nodeNumber := os.Args[1]
 	var err error
-	unspentOutputs  := make([][]Credit, 1)
+
 	txCount := 0
 
 	sigs := make(chan os.Signal, 1)
@@ -149,6 +151,10 @@ func generateTxs(addresses []string) {
 	for cont {
 
 		if j[i] >= len(unspentOutputs[i]) {
+			if k:=i^1;j[k] < len(unspentOutputs[k]) {
+				i ^= 1
+				continue
+			}
 			idleTimestamp = time.Now().UnixNano()
 			j[0] = 0
 			j[1] = 0
@@ -247,9 +253,9 @@ func getCredit(addresses []string) (credits [][]Credit) {
 
 func main(){
 
-	addresses := getAddresses()
+	addresses, credit := getAddresses()
 
 	go mineBlocks(addresses)
 
-	generateTxs(addresses)
+	generateTxs(addresses, credit)
 }
