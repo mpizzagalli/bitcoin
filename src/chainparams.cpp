@@ -289,7 +289,7 @@ public:
 
         strNetworkID = "regtest";
         //consensus.nSubsidyHalvingInterval = 150;
-        consensus.nSubsidyHalvingInterval = 10210000;
+        consensus.nSubsidyHalvingInterval = 8388608;
         consensus.BIP16Exception = uint256();
         consensus.BIP34Height = 100000000; // BIP34 has not activated on regtest (far in the future so block v1 are not rejected in tests)
         consensus.BIP34Hash = uint256();
@@ -336,8 +336,8 @@ public:
         consensus.nMinimumChainWork = uint256S("0x00");
 
         // By default assume that the signatures in ancestors of this block are valid.
-        //consensus.defaultAssumeValid = uint256S("0x00");
-        consensus.defaultAssumeValid = uint256S("0x19e5bf8620dd967c4596ed78a9a7acd68e56b33053614011eb7e08b1c8a3b95a");
+        consensus.defaultAssumeValid = uint256S("0x00");
+        //consensus.defaultAssumeValid = uint256S("0x19e5bf8620dd967c4596ed78a9a7acd68e56b33053614011eb7e08b1c8a3b95a");
 
         pchMessageStart[0] = 0xfa;
         pchMessageStart[1] = 0xbf;
