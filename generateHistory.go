@@ -12,6 +12,7 @@ import (
 
 const filePrefix = "btcCoreLogN"
 const txPrefix = "txLogN"
+const pingPrefix = "pingLogN"
 const timeFormat = "15:04:05.999999"
 
 type Delay struct {
@@ -25,6 +26,12 @@ type Block struct {
 	DiscoveryDelays DelaySort
 	NTx int64
 	Parent string
+}
+
+type PingPacket struct {
+	SentTimestamp time.Time
+	ReceiveTimestamp time.Time
+	Sender uint16
 }
 
 type DelaySort []Delay
@@ -119,7 +126,7 @@ func computeDelays(blockchain map[string]Block) {
 	}
 }
 
-func createBlockChain(baseDir string, nodeAmount int) map[string]Block {
+func createBlockChain(nodeAmount int) map[string]Block {
 
 	blockchain := make(map[string]Block)
 
@@ -170,7 +177,7 @@ func getHeightList(blockchain map[string]Block) [][]string {
 
 	heights := calculateHeights(blockchain)
 
-	list := make([][]string, 1500)
+	list := make([][]string, 1600)
 
 	for k, v := range heights {
 		if list[v] == nil {
@@ -185,8 +192,8 @@ func getHeightList(blockchain map[string]Block) [][]string {
 func createPropagationFile() (outFile *os.File) {
 	var err error
 
-	if outFile, err = os.Create(os.Args[3]); err != nil {
-		os.Stderr.WriteString(fmt.Sprintf("Failed to create file %s\n %s\n", os.Args[4], err.Error()))
+	if outFile, err = os.Create(os.Args[2]+"history"); err != nil {
+		os.Stderr.WriteString(fmt.Sprintf("Failed to create file %shistory\n %s\n", os.Args[2], err.Error()))
 	}
 
 	return outFile
@@ -198,50 +205,131 @@ func writeToFile(file *os.File, content string) {
 	}
 }
 
-func printPropagationTimes(blockchain map[string]Block, list [][]string) {
+func printPropagationTimes(blockchain map[string]Block, list [][]string, nodeAmount int) {
 
 	file := createPropagationFile()
 
-	//var hashes []string
+	acceptPercentiles := make([]float64, 15)
+	discoveryPercentiles := make([]float64, 15)
+	meanPercentilesDisc := make([]float64, 15)
+	meanPercentilesAcc := make([]float64, 15)
+	amountOfPercentilesDisc := make([]int, 15)
+	amountOfPercentilesAcc := make([]int, 15)
 	var block Block
-	//var found bool
 
-	for i:=0; i<len(list) && len(list[i])>0; i++ {
+	var totWaitTimeAcc uint64 = 0
+	var totWaitTimeDisc uint64 = 0
+	var sampleSizeAcc uint64 = 0
+	var sampleSizeDisc uint64 = 0
+
+	nodeAmount /= 10
+
+	for i:=0; i<len(list) && len(list[i])>0 && i<1501; i++ {
 
 		for j:=0; j<len(list[i]); j++ {
 
 			block, _ = blockchain[list[i][j]]
 
-			//if block, found = blockchain[list[i][j]]; found {
-				writeToFile(file, fmt.Sprintf("%d %s %s %d\n", i, list[i][j], block.Parent, block.NTx))
+			writeToFile(file, fmt.Sprintf("%d %s %s %d\n", i, list[i][j], block.Parent, block.NTx))
 
-				for k:=0; k<len(block.AcceptDelays)-1; k++ {
-					writeToFile(file, fmt.Sprintf("%d: %f s, ", block.AcceptDelays[k].node, block.AcceptDelays[k].delay.Seconds()))
-				}
-				if k:=len(block.AcceptDelays)-1; k>=0 {
-					writeToFile(file, fmt.Sprintf("%d: %f s\n", block.AcceptDelays[k].node, block.AcceptDelays[k].delay.Seconds()))
-				}
+			writeToFile(file,"Discovery times: ")
 
-				for k:=0; k<len(block.DiscoveryDelays)-1; k++ {
-					writeToFile(file, fmt.Sprintf("%d: %f s, ", block.DiscoveryDelays[k].node, block.DiscoveryDelays[k].delay.Seconds()))
+			for k:=0; k<len(block.DiscoveryDelays)-1; k++ {
+				writeToFile(file, fmt.Sprintf("%d: %f s, ", block.DiscoveryDelays[k].node, block.DiscoveryDelays[k].delay.Seconds()))
+				if p:= k+1; k>0 && p%nodeAmount==0 {
+					discoveryPercentiles[p/nodeAmount] = block.DiscoveryDelays[k].delay.Seconds()
 				}
-				if k:=len(block.DiscoveryDelays)-1; k>=0 {
-					writeToFile(file, fmt.Sprintf("%d: %f s\n", block.DiscoveryDelays[k].node, block.DiscoveryDelays[k].delay.Seconds()))
+				totWaitTimeDisc += uint64(block.DiscoveryDelays[k].delay.Nanoseconds()/1000000)
+				sampleSizeDisc++
+			}
+			if k:=len(block.DiscoveryDelays)-1; k>=0 {
+				writeToFile(file, fmt.Sprintf("%d: %f s\n", block.DiscoveryDelays[k].node, block.DiscoveryDelays[k].delay.Seconds()))
+				if p:= k+1; k>0 && p%nodeAmount==0 {
+					discoveryPercentiles[p/nodeAmount] = block.DiscoveryDelays[k].delay.Seconds()
 				}
-			//} else if len(list[i][j]) > 1 {
-		//		os.Stderr.WriteString(fmt.Sprintf("Failed to parse block %s.\n", list[i][j]))
-		//	}
+				totWaitTimeDisc += uint64(block.DiscoveryDelays[k].delay.Nanoseconds()/1000000)
+				sampleSizeDisc++
+			}
+
+			sampleSizeDisc--
+
+			writeToFile(file,"Discovery percentiles: ")
+
+			for k:=1; k<=10 && nodeAmount*k<=len(block.DiscoveryDelays); k++ {
+				writeToFile(file, fmt.Sprintf("%d: %f s, ", k*10, discoveryPercentiles[k]))
+				meanPercentilesDisc[k] += discoveryPercentiles[k]
+				amountOfPercentilesDisc[k]++
+			}
+
+			writeToFile(file,"\n")
+
+			for k:=0; k<len(block.AcceptDelays)-1; k++ {
+				writeToFile(file, fmt.Sprintf("%d: %f s, ", block.AcceptDelays[k].node, block.AcceptDelays[k].delay.Seconds()))
+				if p:= k+1; k>0 && p%nodeAmount==0 {
+					acceptPercentiles[p/nodeAmount] = block.AcceptDelays[k].delay.Seconds()
+				}
+				totWaitTimeAcc += uint64(block.AcceptDelays[k].delay.Nanoseconds()/1000000)
+				sampleSizeAcc++
+			}
+			if k:=len(block.AcceptDelays)-1; k>=0 {
+				writeToFile(file, fmt.Sprintf("%d: %f s\n", block.AcceptDelays[k].node, block.AcceptDelays[k].delay.Seconds()))
+				if p:= k+1; k>0 && p%nodeAmount==0 {
+					acceptPercentiles[p/nodeAmount] = block.AcceptDelays[k].delay.Seconds()
+				}
+				totWaitTimeAcc += uint64(block.AcceptDelays[k].delay.Nanoseconds()/1000000)
+				sampleSizeAcc++
+			}
+
+			sampleSizeAcc--
+
+			writeToFile(file,"Acceptance percentiles: ")
+
+			for k:=1; k<=10 && nodeAmount*k<=len(block.AcceptDelays); k++ {
+				writeToFile(file, fmt.Sprintf("%d: %f s, ", k*10, acceptPercentiles[k]))
+				meanPercentilesAcc[k] += acceptPercentiles[k]
+				amountOfPercentilesAcc[k]++
+			}
+
+			writeToFile(file,"\n")
+
+			if len(block.AcceptDelays) > nodeAmount*10 {
+				fmt.Println(i, list[i][j])
+			}
 
 		}
 	}
+
+	totWaitTimeDisc /= sampleSizeDisc
+
+	writeToFile(file,fmt.Sprintf("Mean Block Discovery Time: %d.%ds\n", totWaitTimeDisc/1000, totWaitTimeDisc%1000))
+
+	totWaitTimeAcc /= sampleSizeAcc
+
+	writeToFile(file,fmt.Sprintf("Mean Block Acceptance Time: %d.%ds\n", totWaitTimeAcc/1000, totWaitTimeAcc%1000))
+
+	writeToFile(file,"Mean Discovery percentiles: ")
+
+	for k:=1; k<=10; k++ {
+		writeToFile(file, fmt.Sprintf("%d: %f s, ", k*10, meanPercentilesDisc[k]/float64(amountOfPercentilesDisc[k])))
+	}
+
+	writeToFile(file,"\n")
+
+	writeToFile(file,"Mean Acceptance percentiles: ")
+
+	for k:=1; k<=10; k++ {
+		writeToFile(file, fmt.Sprintf("%d: %f s, ", k*10, meanPercentilesAcc[k]/float64(amountOfPercentilesAcc[k])))
+	}
+
+	writeToFile(file,"\n")
 
 }
 
 func createBlockTimeFile() (outFile *os.File) {
 	var err error
 
-	if outFile, err = os.Create(os.Args[4]); err != nil {
-		os.Stderr.WriteString(fmt.Sprintf("Failed to create file %s\n %s\n", os.Args[4], err.Error()))
+	if outFile, err = os.Create(os.Args[2]+"blockTimes"); err != nil {
+		os.Stderr.WriteString(fmt.Sprintf("Failed to create file %sblockTimes\n %s\n", os.Args[2], err.Error()))
 	}
 
 	return outFile
@@ -274,7 +362,7 @@ func writeBlockTimes(blockchain map[string]Block, list [][]string) {
 	neigh :=0
 	var lastInterval time.Duration = 75 * time.Second
 
-	for i = 0; i<int64(len(list)) && len(list[i])>0 && i<1201; i++ {
+	for i = 0; i<int64(len(list)) && len(list[i])>0 && i<1501; i++ {
 
 		block = blockchain[list[i][0]]
 
@@ -317,7 +405,7 @@ func writeBlockTimes(blockchain map[string]Block, list [][]string) {
 		d += int64(len(list[i]))
 
 		if i>0 {
-			s += fmt.Sprintf("- Mean Diff: %d seconds\n", ((meanDiff/(d))+500000000)/1000000000)
+			s += fmt.Sprintf("- Mean Block Diff: %d seconds, Mean Height Diff: %d seconds\n", ((meanDiff/(d))+500000000)/1000000000, ((meanDiff/(i))+500000000)/1000000000)
 		} else {
 			s += "\n"
 		}
@@ -327,7 +415,7 @@ func writeBlockTimes(blockchain map[string]Block, list [][]string) {
 		lastTime = block.Time
 	}
 
-	writeToFile(blockTimesFile, fmt.Sprintf("Mean Diff: %d seconds\nMean Percentage of Fullness:%f\n", ((meanDiff/i)+500000000)/1000000000, promprom/float64(i-30)))
+	writeToFile(blockTimesFile, fmt.Sprintf("Mean Diff of Heights: %d seconds\nMean dif of blocks: %d seconds \nMean Percentage of Fullness:%f\n", ((meanDiff/i)+500000000)/1000000000, ((meanDiff/d)+500000000)/1000000000, promprom/float64(i-30)))
 	for j:=0; j<10; j++ {
 		writeToFile(blockTimesFile, fmt.Sprintf("Percentage of blocks above %d of fullness: %f\n", j*10, (float64(avgs[j])/float64(i-30))*100.0))
 	}
@@ -339,8 +427,8 @@ func writeBlockTimes(blockchain map[string]Block, list [][]string) {
 func createTxFile() (outFile *os.File) {
 	var err error
 
-	if outFile, err = os.Create(os.Args[5]); err != nil {
-		os.Stderr.WriteString(fmt.Sprintf("Failed to create file %s\n %s\n", os.Args[4], err.Error()))
+	if outFile, err = os.Create(os.Args[2]+"txIdleTimes"); err != nil {
+		os.Stderr.WriteString(fmt.Sprintf("Failed to create file %stxIdleTimes\n %s\n", os.Args[2], err.Error()))
 	}
 
 	return outFile
@@ -374,27 +462,129 @@ func addTxData(file *os.File, node int) {
 
 }
 
-func printTxData(nodeAmount int64) {
+func printTxData(nodeAmount int) {
 
 	file := createTxFile()
 
-	for i:=0; i<int(nodeAmount); i++ {
+	for i:=0; i<nodeAmount; i++ {
 		addTxData(file, i)
 	}
 
 }
 
-func main(){
+func printBlockchainData(nodeAmount int) {
 
-	nodeAmount, _ := strconv.ParseInt(os.Args[2], 10, 64)
-
-	blockchain := createBlockChain(os.Args[1], int(nodeAmount))
+	blockchain := createBlockChain(nodeAmount)
 
 	list := getHeightList(blockchain)
 
 	writeBlockTimes(blockchain, list)
 
-	printPropagationTimes(blockchain, list)
+	printPropagationTimes(blockchain, list, nodeAmount)
+}
+
+func readPingLogFile(node int) []byte {
+	if b, err := ioutil.ReadFile(fmt.Sprintf("%s%s%d", os.Args[1], pingPrefix, node)); err == nil {
+		return b
+	} else {
+		os.Stderr.WriteString(fmt.Sprintf("Failed to parse log file.\n %s\n", err.Error()))
+		return nil
+	}
+}
+
+func decodeTimestamp(b []byte) (p int64) {
+	p = int64(b[7])
+	p |= int64(b[6]) << 8
+	p |= int64(b[5]) << 16
+	p |= int64(b[4]) << 24
+	p |= int64(b[3]) << 32
+	p |= int64(b[2]) << 40
+	p |= int64(b[1]) << 48
+	p |= int64(b[0]) << 56
+	return p
+}
+
+func decodeSender(b []byte) (p uint16) {
+	p = uint16(b[1])
+	p |= uint16(b[0]) << 8
+	return p
+}
+
+func getPingPackets(node int) []PingPacket {
+	data := readPingLogFile(node)
+
+	var packet PingPacket
+	maxIndex := len(data)-18
+
+	pingPackets := make([]PingPacket, 0, maxIndex+1)
+
+	for i:=0; i<=maxIndex; i+=18 {
+		packet.SentTimestamp = time.Unix(0, decodeTimestamp(data[i:i+8]))
+		packet.ReceiveTimestamp = time.Unix(0, decodeTimestamp(data[i+8:i+16]))
+		packet.Sender = decodeSender(data[i+16:i+18])
+
+		pingPackets = append(pingPackets, packet)
+	}
+
+	return pingPackets
+}
+
+func addPingData(node int, pings [][][]time.Duration) {
+
+	packets := getPingPackets(node)
+
+	for i:=0; i<len(packets); i++ {
+		pings[int(packets[i].Sender)][node] = append(pings[int(packets[i].Sender)][node], packets[i].ReceiveTimestamp.Sub(packets[i].SentTimestamp))
+	}
+}
+
+func createPingFile() (outFile *os.File) {
+	var err error
+
+	if outFile, err = os.Create(os.Args[2]+"pingTimes"); err != nil {
+		os.Stderr.WriteString(fmt.Sprintf("Failed to create file %spingTimes\n %s\n", os.Args[2], err.Error()))
+	}
+
+	return outFile
+}
+
+func printPingData() {
+
+	hostAmount, _ := strconv.Atoi(os.Args[4])
+
+	pings := make([][][]time.Duration, hostAmount)
+
+	for i:=0; i<hostAmount; i++ {
+		pings[i] = make([][]time.Duration, hostAmount)
+		for j:=0; j<hostAmount; j++ {
+			pings[i][j] = make([]time.Duration, 0)
+		}
+	}
+
+	for node:=0; node<hostAmount; node++ {
+		addPingData(node, pings)
+	}
+
+	pingsFile := createPingFile()
+
+	for i:=0; i<hostAmount; i++ {
+		for j:=0; j<hostAmount; j++ {
+			writeToFile(pingsFile, fmt.Sprintf("%d a %d:", i, j))
+			for k:=0; k<len(pings[i][j]); k++ {
+				writeToFile(pingsFile, fmt.Sprintf(" %d", (pings[i][j][k].Nanoseconds()+500000)/1000000))
+			}
+			writeToFile(pingsFile, "\n")
+		}
+	}
+}
+
+func main(){
+
+	nodeAmount, _ := strconv.Atoi(os.Args[3])
+
+	printBlockchainData(nodeAmount)
 
 	printTxData(nodeAmount)
+
+	printPingData()
 }

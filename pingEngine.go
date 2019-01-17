@@ -76,7 +76,7 @@ func ListenIncomingPackets(c *net.UDPConn) {
 		_, senderAddr, _ = c.ReadFromUDP(buff)
 		receptionTime = time.Now().UnixNano()
 		AddLogEntry(buff, encodePacket(receptionTime), PortToNode(senderAddr.Port))
-		if len(Log) >= 8190 || time.Duration(receptionTime - lastFlushTime) > time.Minute * 3 {
+		if len(Log) >= 8190 || time.Duration(receptionTime - lastFlushTime) > time.Minute * 5 {
 			flushBufer(logFile)
 			lastFlushTime = receptionTime
 		}
