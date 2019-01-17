@@ -86,7 +86,7 @@ func mineBlocks(addresses []string) {
 	timestamp := time.Now().UnixNano()
 
 	for i := 0;;i ^= 1 {
-		sleepTime = (rng.ExpFloat64() / simuLambda)*75.0
+		sleepTime = (rng.ExpFloat64() / simuLambda)*37.5
 		sleepSeconds = time.Duration(sleepTime)
 		sleepNanoseconds = time.Duration((sleepTime-float64(sleepSeconds))*1000000000.0)
 		nextBlockTime = time.Duration(timestamp) + sleepSeconds * time.Second + sleepNanoseconds
