@@ -177,7 +177,7 @@ func getHeightList(blockchain map[string]Block) [][]string {
 
 	heights := calculateHeights(blockchain)
 
-	list := make([][]string, 1600)
+	list := make([][]string, 3000)
 
 	for k, v := range heights {
 		if list[v] == nil {
@@ -359,8 +359,8 @@ func writeBlockTimes(blockchain map[string]Block, list [][]string) {
 	
 	avgs := make([]int, 10)
 
-	neigh :=0
-	var lastInterval time.Duration = 75 * time.Second
+	//neigh :=0
+	//var lastInterval time.Duration = 75 * time.Second
 
 	for i = 0; i<int64(len(list)) && len(list[i])>0 && i<1501; i++ {
 
@@ -397,10 +397,10 @@ func writeBlockTimes(blockchain map[string]Block, list [][]string) {
 
 		s += fmt.Sprintf("+%d seconds ", int64(diff.Seconds()+0.5))
 
-		if i>=30 && lastInterval < 65 * time.Second && diff < time.Second * 65 {
+		/*if i>=30 && lastInterval < 65 * time.Second && diff < time.Second * 65 {
 			neigh++
 		}
-		lastInterval = diff
+		lastInterval = diff*/
 
 		d += int64(len(list[i]))
 
@@ -420,7 +420,7 @@ func writeBlockTimes(blockchain map[string]Block, list [][]string) {
 		writeToFile(blockTimesFile, fmt.Sprintf("Percentage of blocks above %d of fullness: %f\n", j*10, (float64(avgs[j])/float64(i-30))*100.0))
 	}
 
-	writeToFile(blockTimesFile, fmt.Sprintf("Percentage of consecutive intervals below 65s: %f\n", (float64(neigh)/float64(i-30))*100.0))
+	//writeToFile(blockTimesFile, fmt.Sprintf("Percentage of consecutive intervals below 65s: %f\n", (float64(neigh)/float64(i-30))*100.0))
 
 }
 
@@ -569,11 +569,13 @@ func printPingData() {
 
 	for i:=0; i<hostAmount; i++ {
 		for j:=0; j<hostAmount; j++ {
-			writeToFile(pingsFile, fmt.Sprintf("%d a %d:", i, j))
-			for k:=0; k<len(pings[i][j]); k++ {
-				writeToFile(pingsFile, fmt.Sprintf(" %d", (pings[i][j][k].Nanoseconds()+500000)/1000000))
+			if i!=j {
+				writeToFile(pingsFile, fmt.Sprintf("%d a %d:", i, j))
+				for k:=0; k<len(pings[i][j]); k++ {
+					writeToFile(pingsFile, fmt.Sprintf(" %d", (pings[i][j][k].Nanoseconds()+500000)/1000000))
+				}
+				writeToFile(pingsFile, "\n")
 			}
-			writeToFile(pingsFile, "\n")
 		}
 	}
 }
