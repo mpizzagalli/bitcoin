@@ -13,7 +13,7 @@ import (
 const filePrefix = "btcCoreLogN"
 const txPrefix = "txLogN"
 const pingPrefix = "pingLogN"
-const timeFormat = "15:04:05.999999"
+const timeFormat = "15:04:05.999"
 
 type Delay struct {
 	delay time.Duration
@@ -155,7 +155,7 @@ func getHeight(blockchain map[string]Block, heights map[string]int, block *Block
 		heights[hash] = p
 		return p
 	} else {
-		fmt.Println(fmt.Sprintf("Found Root with hash %s and parent %s ", hash, block.Parent))
+		fmt.Println(fmt.Sprintf("Found Root with hash %s and parent %s", hash, block.Parent))
 		heights[hash] = 0
 		return 0
 	}
@@ -177,13 +177,14 @@ func getHeightList(blockchain map[string]Block) [][]string {
 
 	heights := calculateHeights(blockchain)
 
-	list := make([][]string, 3000)
+	list := make([][]string, len(heights))
 
 	for k, v := range heights {
 		if list[v] == nil {
-			list[v] = make([]string, 0, 1)
+			list[v] = []string{k}
+		} else {
+			list[v] = append(list[v], k)
 		}
-		list[v] = append(list[v], k)
 	}
 
 	return list
@@ -232,10 +233,10 @@ func printPropagationTimes(blockchain map[string]Block, list [][]string, nodeAmo
 
 			writeToFile(file, fmt.Sprintf("%d %s %s %d\n", i, list[i][j], block.Parent, block.NTx))
 
-			writeToFile(file,"Discovery times: ")
+			writeToFile(file,"Discovery times:")
 
 			for k:=0; k<len(block.DiscoveryDelays)-1; k++ {
-				writeToFile(file, fmt.Sprintf("%d: %f s, ", block.DiscoveryDelays[k].node, block.DiscoveryDelays[k].delay.Seconds()))
+				writeToFile(file, fmt.Sprintf(" %d: %f s,", block.DiscoveryDelays[k].node, block.DiscoveryDelays[k].delay.Seconds()))
 				if p:= k+1; k>0 && p%nodeAmount==0 {
 					discoveryPercentiles[p/nodeAmount] = block.DiscoveryDelays[k].delay.Seconds()
 				}
@@ -253,10 +254,10 @@ func printPropagationTimes(blockchain map[string]Block, list [][]string, nodeAmo
 
 			sampleSizeDisc--
 
-			writeToFile(file,"Discovery percentiles: ")
+			writeToFile(file,"Discovery percentiles:")
 
 			for k:=1; k<=10 && nodeAmount*k<=len(block.DiscoveryDelays); k++ {
-				writeToFile(file, fmt.Sprintf("%d: %f s, ", k*10, discoveryPercentiles[k]))
+				writeToFile(file, fmt.Sprintf(" %d: %f s,", k*10, discoveryPercentiles[k]))
 				meanPercentilesDisc[k] += discoveryPercentiles[k]
 				amountOfPercentilesDisc[k]++
 			}
@@ -359,9 +360,6 @@ func writeBlockTimes(blockchain map[string]Block, list [][]string) {
 	
 	avgs := make([]int, 10)
 
-	//neigh :=0
-	//var lastInterval time.Duration = 75 * time.Second
-
 	for i = 0; i<int64(len(list)) && len(list[i])>0 && i<1501; i++ {
 
 		block = blockchain[list[i][0]]
@@ -385,7 +383,7 @@ func writeBlockTimes(blockchain map[string]Block, list [][]string) {
 			}
 		}
 
-		s := fmt.Sprintf("%d %s %d %f", len(list[i]), time.Unix(0, int64(block.Time)).Format(timeFormat), block.NTx, prom)
+		s := fmt.Sprintf("%d %s %d %.3f", len(list[i]), time.Unix(0, int64(block.Time)).Format(timeFormat), block.NTx, prom)
 
 		diff := block.Time - initTime
 
@@ -396,11 +394,6 @@ func writeBlockTimes(blockchain map[string]Block, list [][]string) {
 		meanDiff += diff.Nanoseconds()
 
 		s += fmt.Sprintf("+%d seconds ", int64(diff.Seconds()+0.5))
-
-		/*if i>=30 && lastInterval < 65 * time.Second && diff < time.Second * 65 {
-			neigh++
-		}
-		lastInterval = diff*/
 
 		d += int64(len(list[i]))
 
@@ -415,12 +408,10 @@ func writeBlockTimes(blockchain map[string]Block, list [][]string) {
 		lastTime = block.Time
 	}
 
-	writeToFile(blockTimesFile, fmt.Sprintf("Mean Diff of Heights: %d seconds\nMean dif of blocks: %d seconds \nMean Percentage of Fullness:%f\n", ((meanDiff/i)+500000000)/1000000000, ((meanDiff/d)+500000000)/1000000000, promprom/float64(i-30)))
+	writeToFile(blockTimesFile, fmt.Sprintf("Mean Diff of Heights: %d seconds\nMean Diff of blocks: %d seconds \nMean Percentage of Fullness:%f\n", ((meanDiff/i)+500000000)/1000000000, ((meanDiff/d)+500000000)/1000000000, promprom/float64(i-30)))
 	for j:=0; j<10; j++ {
 		writeToFile(blockTimesFile, fmt.Sprintf("Percentage of blocks above %d of fullness: %f\n", j*10, (float64(avgs[j])/float64(i-30))*100.0))
 	}
-
-	//writeToFile(blockTimesFile, fmt.Sprintf("Percentage of consecutive intervals below 65s: %f\n", (float64(neigh)/float64(i-30))*100.0))
 
 }
 
@@ -457,7 +448,6 @@ func addTxData(file *os.File, node int) {
 		if len(lines)>9 {
 			writeToFile(file, lines[9]+"\n")
 		}
-
 	}
 
 }
@@ -571,10 +561,11 @@ func printPingData() {
 		for j:=0; j<hostAmount; j++ {
 			if i!=j {
 				writeToFile(pingsFile, fmt.Sprintf("%d a %d:", i, j))
-				for k:=0; k<len(pings[i][j]); k++ {
+				var k int = 0
+				for l:=len(pings[i][j])-1; k<l; k++ {
 					writeToFile(pingsFile, fmt.Sprintf(" %d", (pings[i][j][k].Nanoseconds()+500000)/1000000))
 				}
-				writeToFile(pingsFile, "\n")
+				writeToFile(pingsFile, fmt.Sprintf(" %d\n", (pings[i][j][k].Nanoseconds()+500000)/1000000))
 			}
 		}
 	}
