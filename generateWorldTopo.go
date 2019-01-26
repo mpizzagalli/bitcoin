@@ -125,7 +125,7 @@ func calculateHostsPerCountry(data *DistributionJson, amountOfNodes int) map[str
 	hostsPerCountry := make(map[string]int)
 
 	for i:=0; i<len(data.Pools); i++ {
-		for j:=0; j<len(data.Pools[i].Nodes); j++ {
+		for j:=0; j<len(data.Pools[i].Nodes) && hostsRemaining > 0; j++ {
 			hostsPerCountry[data.Pools[i].Nodes[j].Country]++
 			hostsRemaining--
 		}
@@ -279,7 +279,7 @@ func generateNodes(data *DistributionJson, countryIdtoHostId map[string]int, hos
 
 		r = nodeRndGen.Int63n(int64(len(rndSlice)))
 		nodeB := rndSlice[r]
-		if (nodeA != nodeB) {
+		if nodeA != nodeB {
 			btcNodesList[i].ConnectedTo = append(btcNodesList[i].ConnectedTo, nodeB)
 			btcNodesList[nodeB].ConnectedTo = append(btcNodesList[nodeB].ConnectedTo, i)
 			rndSlice = append(rndSlice[:r], rndSlice[r+1:]...)

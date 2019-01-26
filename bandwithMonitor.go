@@ -19,8 +19,8 @@ func getCurrentByteCount() int64 {
 
 	out, _ := exec.Command("cat", "/proc/net/dev").Output()
 
-	if lines = strings.Split(string(out), "\n"); len(lines)>2 {
-		lines = strings.Split(lines[2], " ")
+	if lines = strings.Split(string(out), "\n"); len(lines)>4 {
+		lines = strings.Split(lines[4], " ")
 		for i, j = 0, 0; i<len(lines) && j < 2; i++ {
 			if len(lines[i])>0 {
 				j++
