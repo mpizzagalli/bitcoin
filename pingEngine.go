@@ -119,16 +119,14 @@ func main(){
 
 		if r >= nodeNumber {r++}
 
-		if targetIp, _ = net.LookupIP("n"+strconv.FormatInt(r, 10)); len(targetIp) == 0 {
-			targetIp, _ = net.LookupIP("localhost")
+		if targetIp, _ = net.LookupIP("n"+strconv.FormatInt(r, 10)); len(targetIp) > 0 {
+			addr.Port = NodeToPort(int(r))
+			addr.IP = targetIp[0]
+
+			b = encodePacket(time.Now().UnixNano())
+
+			c.WriteToUDP(b, &addr)
 		}
-
-		addr.Port = NodeToPort(int(r))
-		addr.IP = targetIp[0]
-
-		b = encodePacket(time.Now().UnixNano())
-
-		c.WriteToUDP(b, &addr)
 
 		r = sleepRndGen.Int63n(1024)
 
