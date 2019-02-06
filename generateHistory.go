@@ -506,6 +506,8 @@ func getPingPackets(node int) []PingPacket {
 	var packet PingPacket
 	maxIndex := len(data)-18
 
+	if maxIndex < 0 {maxIndex = 0}
+
 	pingPackets := make([]PingPacket, 0, maxIndex+1)
 
 	for i:=0; i<=maxIndex; i+=18 {
@@ -565,7 +567,9 @@ func printPingData() {
 				for l:=len(pings[i][j])-1; k<l; k++ {
 					writeToFile(pingsFile, fmt.Sprintf(" %d", (pings[i][j][k].Nanoseconds()+500000)/1000000))
 				}
-				writeToFile(pingsFile, fmt.Sprintf(" %d\n", (pings[i][j][k].Nanoseconds()+500000)/1000000))
+				if k>0 {
+					writeToFile(pingsFile, fmt.Sprintf(" %d\n", (pings[i][j][k].Nanoseconds()+500000)/1000000))
+				}
 			}
 		}
 	}
