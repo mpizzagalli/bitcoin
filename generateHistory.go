@@ -26,6 +26,8 @@ type Block struct {
 	DiscoveryDelays DelaySort
 	NTx int64
 	Parent string
+	Width int16
+	Children int16
 }
 
 type PingPacket struct {
@@ -91,6 +93,8 @@ func addNodeInfo(blockchain map[string]Block, node int){
 			if block, contained = blockchain[entry[1]]; !contained {
 				block.AcceptDelays = make([]Delay, 0, 240)
 				block.DiscoveryDelays = make([]Delay, 0, 240)
+				block.Width = -1
+				block.Children = 0
 			}
 
 			if entry[0]=="0" {
@@ -204,6 +208,79 @@ func writeToFile(file *os.File, content string) {
 	if _, err := file.Write([]byte(content)); err != nil {
 		os.Stderr.WriteString(fmt.Sprintf("Failed writing to %s.\n %s\n", file.Name(), err.Error()))
 	}
+}
+
+func solveWidth(block *Block, blockchain map[string]Block){
+
+
+	parentBlock, ok := blockchain[block.Parent]
+
+	if ok {
+		if parentBlock.Width < 0 {
+			solveWidth(&parentBlock, blockchain)
+		}
+		parentBlock.Children++
+		blockchain[block.Parent] = parentBlock
+		if parentBlock.Children <= 1 {
+			block.Width = parentBlock.Width+1
+		} else {
+			block.Width = 1
+		}
+	} else {
+		block.Width = 1
+	}
+
+	return
+
+}
+
+func updateWidthInfo(blockchain map[string]Block, list [][]string) {
+
+	var i int
+	for i=1499; i<len(list); i++ {
+		if len(list[i])==1 {
+			b := blockchain[list[i][0]]
+			b.Width = 0
+			blockchain[list[i][0]] = b
+			break;
+		}
+	}
+
+	if i==len(list) {
+		fmt.Println("Could not find blockchain tip, assigning randomly")
+		if i>1500 {
+			b := blockchain[list[1500][0]]
+			b.Width = 0
+			blockchain[list[1500][0]] = b
+			i = 1500
+		}else {
+			i--
+			b := blockchain[list[i][0]]
+			b.Width = 0
+			blockchain[list[i][0]] = b
+		}
+	}
+
+	parent := blockchain[list[i][0]].Parent
+
+	var block Block
+	var ok bool
+
+	for block, ok = blockchain[parent]; ok; block, ok = blockchain[parent] {
+		block.Width = 0
+		blockchain[parent] = block
+		parent = block.Parent
+	}
+
+	var hash string
+
+	for hash, block = range(blockchain) {
+		if block.Width < 0 {
+			solveWidth(&block, blockchain)
+			blockchain[hash] = block
+		}
+	}
+
 }
 
 func printPropagationTimes(blockchain map[string]Block, list [][]string, nodeAmount int) {
@@ -338,6 +415,10 @@ func createBlockTimeFile() (outFile *os.File) {
 
 func writeBlockTimes(blockchain map[string]Block, list [][]string) {
 
+	updateWidthInfo(blockchain, list)
+
+	forksInfo := make([]int16, 16)
+
 	blockTimesFile := createBlockTimeFile()
 
 	block := blockchain[list[0][0]]
@@ -352,9 +433,10 @@ func writeBlockTimes(blockchain map[string]Block, list [][]string) {
 
 	var i int64
 	var j int
-	var max time.Duration
 
-	var d int64 = 0;
+	var d int64 = 0
+
+	pendingTimes := make(map[time.Duration]bool)
 
 	promprom := 0.0
 	
@@ -362,15 +444,28 @@ func writeBlockTimes(blockchain map[string]Block, list [][]string) {
 
 	for i = 0; i<int64(len(list)) && len(list[i])>0 && i<1501; i++ {
 
-		block = blockchain[list[i][0]]
-
-		max = block.Time
-
-		for j=1; j<len(list[i]); j++ {
+		for j=0; j<len(list[i]); j++ {
 			tmpBlock = blockchain[list[i][j]]
-			if tmpBlock.Time>max {
-				max = tmpBlock.Time
+			if tmpBlock.Width == 0 {
 				block = tmpBlock
+			} else {
+				forksInfo[tmpBlock.Width]++
+			}
+		}
+
+		for pendingTime, _ := range(pendingTimes) {
+			if pendingTime <= block.Time {
+				d++
+				delete(pendingTimes, pendingTime)
+			}
+		}
+
+		for j=0; j<len(list[i]); j++ {
+			tmpBlock = blockchain[list[i][j]]
+			if tmpBlock.Time <= block.Time {
+				d++
+			} else {
+				pendingTimes[tmpBlock.Time] = true
 			}
 		}
 
@@ -395,8 +490,6 @@ func writeBlockTimes(blockchain map[string]Block, list [][]string) {
 
 		s += fmt.Sprintf("+%d seconds ", int64(diff.Seconds()+0.5))
 
-		d += int64(len(list[i]))
-
 		if i>0 {
 			s += fmt.Sprintf("- Mean Block Diff: %d seconds, Mean Height Diff: %d seconds\n", ((meanDiff/(d))+500000000)/1000000000, ((meanDiff/(i))+500000000)/1000000000)
 		} else {
@@ -411,6 +504,10 @@ func writeBlockTimes(blockchain map[string]Block, list [][]string) {
 	writeToFile(blockTimesFile, fmt.Sprintf("Mean Diff of Heights: %d seconds\nMean Diff of blocks: %d seconds \nMean Percentage of Fullness:%f\n", ((meanDiff/i)+500000000)/1000000000, ((meanDiff/d)+500000000)/1000000000, promprom/float64(i-30)))
 	for j:=0; j<10; j++ {
 		writeToFile(blockTimesFile, fmt.Sprintf("Percentage of blocks above %d of fullness: %f\n", j*10, (float64(avgs[j])/float64(i-30))*100.0))
+	}
+
+	for j:=1; j<len(forksInfo) && forksInfo[j]>0; j++ {
+		writeToFile(blockTimesFile, fmt.Sprintf("Number of Forks of height %d: %d\n", j, forksInfo[j]))
 	}
 
 }
@@ -521,13 +618,15 @@ func getPingPackets(node int) []PingPacket {
 	return pingPackets
 }
 
-func addPingData(node int, pings [][][]time.Duration) {
+func addPingData(node int, pings [][][]int16) {
 
 	packets := getPingPackets(node)
 
 	for i:=0; i<len(packets); i++ {
-		pings[int(packets[i].Sender)][node] = append(pings[int(packets[i].Sender)][node], packets[i].ReceiveTimestamp.Sub(packets[i].SentTimestamp))
+		pings[int(packets[i].Sender)][node] = append(pings[int(packets[i].Sender)][node], int16((packets[i].ReceiveTimestamp.Sub(packets[i].SentTimestamp).Nanoseconds()+500000)/1000000))
 	}
+
+	return
 }
 
 func createPingFile() (outFile *os.File) {
@@ -544,12 +643,12 @@ func printPingData() {
 
 	hostAmount, _ := strconv.Atoi(os.Args[4])
 
-	pings := make([][][]time.Duration, hostAmount)
+	pings := make([][][]int16, hostAmount)
 
 	for i:=0; i<hostAmount; i++ {
-		pings[i] = make([][]time.Duration, hostAmount)
+		pings[i] = make([][]int16, hostAmount)
 		for j:=0; j<hostAmount; j++ {
-			pings[i][j] = make([]time.Duration, 0)
+			pings[i][j] = make([]int16, 0)
 		}
 	}
 
@@ -559,16 +658,19 @@ func printPingData() {
 
 	pingsFile := createPingFile()
 
+	var k int
+	var j int
+
 	for i:=0; i<hostAmount; i++ {
-		for j:=0; j<hostAmount; j++ {
+		for j=0; j<hostAmount; j++ {
 			if i!=j {
 				writeToFile(pingsFile, fmt.Sprintf("%d a %d:", i, j))
-				var k int = 0
+				k = 0
 				for l:=len(pings[i][j])-1; k<l; k++ {
-					writeToFile(pingsFile, fmt.Sprintf(" %d", (pings[i][j][k].Nanoseconds()+500000)/1000000))
+					writeToFile(pingsFile, fmt.Sprintf(" %d", pings[i][j][k]))
 				}
 				if k>0 {
-					writeToFile(pingsFile, fmt.Sprintf(" %d\n", (pings[i][j][k].Nanoseconds()+500000)/1000000))
+					writeToFile(pingsFile, fmt.Sprintf(" %d\n", pings[i][j][k]))
 				}
 			}
 		}
