@@ -237,7 +237,7 @@ func solveWidth(block *Block, blockchain map[string]Block){
 func updateWidthInfo(blockchain map[string]Block, list [][]string) {
 
 	var i int
-	for i=1499; i<len(list); i++ {
+	for i=1249; i<len(list); i++ {
 		if len(list[i])==1 {
 			b := blockchain[list[i][0]]
 			b.Width = 0
@@ -248,11 +248,11 @@ func updateWidthInfo(blockchain map[string]Block, list [][]string) {
 
 	if i==len(list) {
 		fmt.Println("Could not find blockchain tip, assigning randomly")
-		if i>1500 {
-			b := blockchain[list[1500][0]]
+		if i>1250 {
+			b := blockchain[list[1250][0]]
 			b.Width = 0
-			blockchain[list[1500][0]] = b
-			i = 1500
+			blockchain[list[1250][0]] = b
+			i = 1250
 		}else {
 			i--
 			b := blockchain[list[i][0]]
@@ -302,7 +302,7 @@ func printPropagationTimes(blockchain map[string]Block, list [][]string, nodeAmo
 
 	nodeAmount /= 10
 
-	for i:=0; i<len(list) && len(list[i])>0 && i<1501; i++ {
+	for i:=0; i<len(list) && len(list[i])>0 && i<1250; i++ {
 
 		for j:=0; j<len(list[i]); j++ {
 
@@ -442,7 +442,7 @@ func writeBlockTimes(blockchain map[string]Block, list [][]string) {
 	
 	avgs := make([]int, 10)
 
-	for i = 0; i<int64(len(list)) && len(list[i])>0 && i<1501; i++ {
+	for i = 0; i<int64(len(list)) && len(list[i])>0 && i<1250; i++ {
 
 		for j=0; j<len(list[i]); j++ {
 			tmpBlock = blockchain[list[i][j]]
