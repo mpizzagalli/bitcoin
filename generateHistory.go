@@ -27,7 +27,8 @@ type Block struct {
 	NTx int64
 	Parent string
 	Width int16
-	Children int16
+	Height int16
+	//Children int16
 }
 
 type PingPacket struct {
@@ -76,13 +77,15 @@ func getNsec(s string) int64 {
 	return n
 }
 
-func addNodeInfo(blockchain map[string]Block, node int){
+func addNodeInfo(blockchain map[string]Block, node int, lineRegistry *[][]string) {
 
 	lines := getBlockLines(node)
 	
 	var block Block
 	var contained bool
 	var entry []string
+
+	*lineRegistry = append(*lineRegistry, lines)
 
 	for i:=1; i<len(lines); i++ {
 
@@ -94,7 +97,7 @@ func addNodeInfo(blockchain map[string]Block, node int){
 				block.AcceptDelays = make([]Delay, 0, 240)
 				block.DiscoveryDelays = make([]Delay, 0, 240)
 				block.Width = -1
-				block.Children = 0
+				//block.Children = 0
 			}
 
 			if entry[0]=="0" {
@@ -130,17 +133,19 @@ func computeDelays(blockchain map[string]Block) {
 	}
 }
 
-func createBlockChain(nodeAmount int) map[string]Block {
+func createBlockChain(nodeAmount int) (map[string]Block , [][]string) {
 
 	blockchain := make(map[string]Block)
 
+	lineRegistry := make([][]string, 0, 240)
+
 	for i:=0;i<nodeAmount; i++ {
-		addNodeInfo(blockchain, i)
+		addNodeInfo(blockchain, i, &lineRegistry)
 	}
 
 	computeDelays(blockchain)
 
-	return blockchain
+	return blockchain, lineRegistry
 }
 
 func getHeight(blockchain map[string]Block, heights map[string]int, block *Block, hash string) int {
@@ -170,7 +175,7 @@ func calculateHeights(blockchain map[string]Block) map[string]int {
 	heights := make(map[string]int)
 
 	for k, v := range blockchain {
-		getHeight(blockchain, heights, &v, k)
+		_ = getHeight(blockchain, heights, &v, k)
 	}
 
 	return heights
@@ -189,6 +194,9 @@ func getHeightList(blockchain map[string]Block) [][]string {
 		} else {
 			list[v] = append(list[v], k)
 		}
+		blok := blockchain[k]
+		blok.Height = int16(v)
+		blockchain[k] = blok
 	}
 
 	return list
@@ -212,26 +220,18 @@ func writeToFile(file *os.File, content string) {
 
 func solveWidth(block *Block, blockchain map[string]Block){
 
-
-	parentBlock, ok := blockchain[block.Parent]
-
-	if ok {
+	if parentBlock, ok := blockchain[block.Parent]; ok {
 		if parentBlock.Width < 0 {
 			solveWidth(&parentBlock, blockchain)
 		}
-		parentBlock.Children++
+		//parentBlock.Children++
 		blockchain[block.Parent] = parentBlock
-		if parentBlock.Children <= 1 {
-			block.Width = parentBlock.Width+1
-		} else {
-			block.Width = 1
-		}
+		block.Width = parentBlock.Width+1
 	} else {
 		block.Width = 1
 	}
 
 	return
-
 }
 
 func updateWidthInfo(blockchain map[string]Block, list [][]string) {
@@ -322,7 +322,7 @@ func printPropagationTimes(blockchain map[string]Block, list [][]string, nodeAmo
 			}
 			if k:=len(block.DiscoveryDelays)-1; k>=0 {
 				writeToFile(file, fmt.Sprintf("%d: %f s\n", block.DiscoveryDelays[k].node, block.DiscoveryDelays[k].delay.Seconds()))
-				if p:= k+1; k>0 && p%nodeAmount==0 {
+				if p:= k+3; k>0 && ((p-2)%nodeAmount==0 || (p-1)==(nodeAmount*10) || p==nodeAmount*10) {
 					discoveryPercentiles[p/nodeAmount] = block.DiscoveryDelays[k].delay.Seconds()
 				}
 				totWaitTimeDisc += uint64(block.DiscoveryDelays[k].delay.Nanoseconds()/1000000)
@@ -333,13 +333,13 @@ func printPropagationTimes(blockchain map[string]Block, list [][]string, nodeAmo
 
 			writeToFile(file,"Discovery percentiles:")
 
-			for k:=1; k<=10 && nodeAmount*k<=len(block.DiscoveryDelays); k++ {
+			for k:=1; k<=10 && (nodeAmount*k<=len(block.DiscoveryDelays) || (k==10 && len(block.DiscoveryDelays)>=238)); k++ {
 				writeToFile(file, fmt.Sprintf(" %d: %f s,", k*10, discoveryPercentiles[k]))
 				meanPercentilesDisc[k] += discoveryPercentiles[k]
 				amountOfPercentilesDisc[k]++
 			}
 
-			writeToFile(file,"\n")
+			writeToFile(file,"\nAcceptance times:")
 
 			for k:=0; k<len(block.AcceptDelays)-1; k++ {
 				writeToFile(file, fmt.Sprintf("%d: %f s, ", block.AcceptDelays[k].node, block.AcceptDelays[k].delay.Seconds()))
@@ -351,7 +351,7 @@ func printPropagationTimes(blockchain map[string]Block, list [][]string, nodeAmo
 			}
 			if k:=len(block.AcceptDelays)-1; k>=0 {
 				writeToFile(file, fmt.Sprintf("%d: %f s\n", block.AcceptDelays[k].node, block.AcceptDelays[k].delay.Seconds()))
-				if p:= k+1; k>0 && p%nodeAmount==0 {
+				if p:= k+3; k>0 && ((p-2)%nodeAmount==0 || (p-1)==(nodeAmount*10) || p==nodeAmount*10) {
 					acceptPercentiles[p/nodeAmount] = block.AcceptDelays[k].delay.Seconds()
 				}
 				totWaitTimeAcc += uint64(block.AcceptDelays[k].delay.Nanoseconds()/1000000)
@@ -362,7 +362,7 @@ func printPropagationTimes(blockchain map[string]Block, list [][]string, nodeAmo
 
 			writeToFile(file,"Acceptance percentiles: ")
 
-			for k:=1; k<=10 && nodeAmount*k<=len(block.AcceptDelays); k++ {
+			for k:=1; (k<10 && (nodeAmount*k<=len(block.AcceptDelays))) || (k==10 && len(block.AcceptDelays)>=238); k++ {
 				writeToFile(file, fmt.Sprintf("%d: %f s, ", k*10, acceptPercentiles[k]))
 				meanPercentilesAcc[k] += acceptPercentiles[k]
 				amountOfPercentilesAcc[k]++
@@ -491,7 +491,7 @@ func writeBlockTimes(blockchain map[string]Block, list [][]string) {
 		s += fmt.Sprintf("+%d seconds ", int64(diff.Seconds()+0.5))
 
 		if i>0 {
-			s += fmt.Sprintf("- Mean Block Diff: %d seconds, Mean Height Diff: %d seconds\n", ((meanDiff/(d))+500000000)/1000000000, ((meanDiff/(i))+500000000)/1000000000)
+			s += fmt.Sprintf("- Mean Block Diff: %.3f seconds, Mean Height Diff: %.3f seconds\n", float64(((meanDiff/(d))+500000)/1000000)/1000.0, float64(((meanDiff/(i))+500000)/1000000)/1000.0)
 		} else {
 			s += "\n"
 		}
@@ -501,7 +501,7 @@ func writeBlockTimes(blockchain map[string]Block, list [][]string) {
 		lastTime = block.Time
 	}
 
-	writeToFile(blockTimesFile, fmt.Sprintf("Mean Diff of Heights: %d seconds\nMean Diff of blocks: %d seconds \nMean Percentage of Fullness:%f\n", ((meanDiff/i)+500000000)/1000000000, ((meanDiff/d)+500000000)/1000000000, promprom/float64(i-30)))
+	writeToFile(blockTimesFile, fmt.Sprintf("Mean Diff of blocks: %.3f seconds \nMean Diff of Heights: %.3f seconds\nMean Percentage of Fullness: %f\n", float64(((meanDiff/(d))+500000)/1000000)/1000.0, float64(((meanDiff/(i))+500000)/1000000)/1000.0, promprom/float64(i-30)))
 	for j:=0; j<10; j++ {
 		writeToFile(blockTimesFile, fmt.Sprintf("Percentage of blocks above %d of fullness: %f\n", j*10, (float64(avgs[j])/float64(i-30))*100.0))
 	}
@@ -559,15 +559,92 @@ func printTxData(nodeAmount int) {
 
 }
 
+func getWastedHashingPower(blockchain map[string]Block, lineRegistry [][]string) []time.Duration {
+
+	wastedHashingPowers := make([]time.Duration, 0, 240)
+
+	for j:=0; j<len(lineRegistry); j++ {
+
+		var block Block
+
+		var entry []string
+
+		var lastMiningTime time.Duration
+
+		var newMiningStartTime time.Duration
+		var miningOnHeight int16 = -1
+
+		var totalWastedTime time.Duration = 0
+		var miningOnMainChain = true
+
+		for i:=1; i<len(lineRegistry[j]) && miningOnHeight < 1250; i++ {
+
+			entry = strings.Split(lineRegistry[j][i], " ")
+
+			if len(entry)>2 {
+
+				if entry[0]=="0" {
+					newMiningStartTime = time.Duration(getNsec(entry[4]))
+				} else if entry[0]=="1" {
+					newMiningStartTime = time.Duration(getNsec(entry[3]))
+				} else {
+					newMiningStartTime = time.Duration(getNsec(entry[2]))
+				}
+
+				if block = blockchain[entry[1]]; block.Height > miningOnHeight {
+					if !miningOnMainChain {
+						totalWastedTime += (newMiningStartTime-lastMiningTime)
+					} else {
+						totalWastedTime += (newMiningStartTime-block.Time)
+					}
+					lastMiningTime = newMiningStartTime
+					miningOnHeight = block.Height
+					miningOnMainChain = block.Width == 0
+				}
+
+			}
+		}
+
+		wastedHashingPowers = append(wastedHashingPowers, totalWastedTime)
+	}
+
+	return wastedHashingPowers
+}
+
+func createWastedHpFile() (outFile *os.File) {
+	var err error
+
+	if outFile, err = os.Create(os.Args[2]+"wastedTimes"); err != nil {
+		os.Stderr.WriteString(fmt.Sprintf("Failed to create file %spingTimes\n %s\n", os.Args[2], err.Error()))
+	}
+
+	return outFile
+}
+
+func writeWastedHashingPower(blockchain map[string]Block, lineRegistry [][]string)  {
+
+	wastedHashingPowers := getWastedHashingPower(blockchain, lineRegistry)
+
+	wastedHpFile := createWastedHpFile()
+
+	for i:=0; i<len(wastedHashingPowers);i++ {
+		writeToFile(wastedHpFile, fmt.Sprintf("%d : %.3f s\n", i, wastedHashingPowers[i].Seconds()))
+	}
+
+}
+
 func printBlockchainData(nodeAmount int) {
 
-	blockchain := createBlockChain(nodeAmount)
+	blockchain, lineRegistry := createBlockChain(nodeAmount)
 
 	list := getHeightList(blockchain)
 
 	writeBlockTimes(blockchain, list)
 
 	printPropagationTimes(blockchain, list, nodeAmount)
+
+	writeWastedHashingPower(blockchain, lineRegistry)
+
 }
 
 func readPingLogFile(node int) []byte {
@@ -685,5 +762,5 @@ func main(){
 
 	printTxData(nodeAmount)
 
-	printPingData()
+	//printPingData()
 }
