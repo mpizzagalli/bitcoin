@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strings"
 	"sort"
+	"encoding/json"
 )
 
 const filePrefix = "btcCoreLogN"
@@ -234,7 +235,7 @@ func solveWidth(block *Block, blockchain map[string]Block){
 	return
 }
 
-func updateWidthInfo(blockchain map[string]Block, list [][]string) {
+func updateWidthInfo(list [][]string, blockchain map[string]Block) {
 
 	var i int
 	for i=1249; i<len(list); i++ {
@@ -283,7 +284,7 @@ func updateWidthInfo(blockchain map[string]Block, list [][]string) {
 
 }
 
-func printPropagationTimes(blockchain map[string]Block, list [][]string, nodeAmount int) {
+func printPropagationTimes(list [][]string, blockchain map[string]Block, nodeAmount int) {
 
 	file := createPropagationFile()
 
@@ -413,11 +414,11 @@ func createBlockTimeFile() (outFile *os.File) {
 	return outFile
 }
 
-func writeBlockTimes(blockchain map[string]Block, list [][]string) {
+func writeBlockTimes(list [][]string, blockchain map[string]Block) {
 
-	updateWidthInfo(blockchain, list)
+	updateWidthInfo(list, blockchain)
 
-	forksInfo := make([]int16, 16)
+	forksInfo := make([]int16, 2048)
 
 	blockTimesFile := createBlockTimeFile()
 
@@ -621,16 +622,92 @@ func createWastedHpFile() (outFile *os.File) {
 	return outFile
 }
 
-func writeWastedHashingPower(blockchain map[string]Block, lineRegistry [][]string)  {
+func getTestLength(list [][]string, blockchain map[string]Block) time.Duration{
+
+	var startTimestamp time.Duration = 0
+
+	for i:=0; i<len(list[0]) && startTimestamp == 0;i++{
+		if block := blockchain[list[0][i]]; block.Width == 0 {
+			startTimestamp = block.Time
+		}
+	}
+
+	var endTimestamp time.Duration = 0
+
+	for i:=0; i<len(list[1249]) && endTimestamp == 0;i++{
+		if block := blockchain[list[1249][i]]; block.Width == 0 {
+			endTimestamp = block.Time
+		}
+	}
+
+	return endTimestamp - startTimestamp
+}
+
+type GraphJson struct {
+	BtcNodes []btcNode `json:"btcNodes"`
+}
+
+type btcNode struct {
+	Id int `json:"id"`
+	HashingPower float64 `json:"hashingPower"`
+}
+
+func readHashingPowersJson() (graph GraphJson) {
+	if b, err := ioutil.ReadFile("worldJson.json"); err == nil {
+		if err = json.Unmarshal(b, &graph); err != nil {
+			os.Stderr.WriteString(fmt.Sprintf("Failed to parse physical layer json.\n %s\n", err.Error()))
+		}
+	} else {
+		os.Stderr.WriteString(fmt.Sprintf("Failed to parse log file.\n %s\n", err.Error()))
+	}
+
+	return
+}
+
+func getHashingPowers() map[int]float64{
+
+	graphJson := readHashingPowersJson()
+
+	hashingPowers := make(map[int]float64)
+
+	for i:=0; i<len(graphJson.BtcNodes);i++{
+		hashingPowers[graphJson.BtcNodes[i].Id] = graphJson.BtcNodes[i].HashingPower
+	}
+
+	return hashingPowers
+
+}
+
+func writeWastedHashingPower(list [][]string, blockchain map[string]Block, lineRegistry [][]string)  {
 
 	wastedHashingPowers := getWastedHashingPower(blockchain, lineRegistry)
 
 	wastedHpFile := createWastedHpFile()
 
+	testLength := getTestLength(list, blockchain)
+
+	hashingPowers := getHashingPowers()
+
+	totalValidHashingPower := 1.0
+
+	var totalWastedTime time.Duration = 0
+
 	for i:=0; i<len(wastedHashingPowers);i++ {
 		writeToFile(wastedHpFile, fmt.Sprintf("%d : %.3f s\n", i, wastedHashingPowers[i].Seconds()))
+
+		if len(lineRegistry[i])>100 {
+			 totalWastedTime += time.Duration(float64(wastedHashingPowers[i]) * hashingPowers[i])
+		} else {
+			totalValidHashingPower -= hashingPowers[i]
+		}
 	}
 
+	testHours := int64(testLength.Hours())
+	testMinutes := int64(testLength.Minutes())-testHours*60
+	testSeconds := testLength.Seconds()-float64(testHours*3600)-float64(testMinutes*60)
+
+	writeToFile(wastedHpFile, fmt.Sprintf("The test ran for %d:%d:%.3f, which are in total %.3f seconds\n", testHours, testMinutes, testSeconds, testLength.Seconds()))
+	writeToFile(wastedHpFile, fmt.Sprintf("The total time of wasted hashing power was %.3f seconds, which accounts for %f of the total test time\n", totalWastedTime.Seconds()/totalValidHashingPower, ((float64(totalWastedTime)/totalValidHashingPower)/float64(testLength))*100))
 }
 
 func printBlockchainData(nodeAmount int) {
@@ -639,11 +716,11 @@ func printBlockchainData(nodeAmount int) {
 
 	list := getHeightList(blockchain)
 
-	writeBlockTimes(blockchain, list)
+	writeBlockTimes(list, blockchain)
 
-	printPropagationTimes(blockchain, list, nodeAmount)
+	printPropagationTimes(list, blockchain, nodeAmount)
 
-	writeWastedHashingPower(blockchain, lineRegistry)
+	writeWastedHashingPower(list, blockchain, lineRegistry)
 
 }
 
@@ -725,7 +802,7 @@ func printPingData() {
 	for i:=0; i<hostAmount; i++ {
 		pings[i] = make([][]int16, hostAmount)
 		for j:=0; j<hostAmount; j++ {
-			pings[i][j] = make([]int16, 0)
+			pings[i][j] = make([]int16, 0, 2048)
 		}
 	}
 
