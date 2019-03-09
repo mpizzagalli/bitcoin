@@ -839,5 +839,5 @@ func main(){
 
 	printTxData(nodeAmount)
 
-	//printPingData()
+	printPingData()
 }
