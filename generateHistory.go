@@ -16,6 +16,10 @@ const txPrefix = "txLogN"
 const pingPrefix = "pingLogN"
 const timeFormat = "15:04:05.999"
 
+const amountOfBlocks = 1215
+
+var globalTestTime time.Duration
+
 type Delay struct {
 	delay time.Duration
 	node byte
@@ -238,7 +242,7 @@ func solveWidth(block *Block, blockchain map[string]Block){
 func updateWidthInfo(list [][]string, blockchain map[string]Block) {
 
 	var i int
-	for i=1249; i<len(list); i++ {
+	for i=amountOfBlocks-1; i<len(list); i++ {
 		if len(list[i])==1 {
 			b := blockchain[list[i][0]]
 			b.Width = 0
@@ -249,11 +253,11 @@ func updateWidthInfo(list [][]string, blockchain map[string]Block) {
 
 	if i==len(list) {
 		fmt.Println("Could not find blockchain tip, assigning randomly")
-		if i>1250 {
-			b := blockchain[list[1250][0]]
+		if i>amountOfBlocks {
+			b := blockchain[list[amountOfBlocks][0]]
 			b.Width = 0
-			blockchain[list[1250][0]] = b
-			i = 1250
+			blockchain[list[amountOfBlocks][0]] = b
+			i = amountOfBlocks
 		}else {
 			i--
 			b := blockchain[list[i][0]]
@@ -303,7 +307,7 @@ func printPropagationTimes(list [][]string, blockchain map[string]Block, nodeAmo
 
 	nodeAmount /= 10
 
-	for i:=0; i<len(list) && len(list[i])>0 && i<1250; i++ {
+	for i:=0; i<len(list) && len(list[i])>0 && i<amountOfBlocks; i++ {
 
 		for j:=0; j<len(list[i]); j++ {
 
@@ -443,7 +447,7 @@ func writeBlockTimes(list [][]string, blockchain map[string]Block) {
 	
 	avgs := make([]int, 10)
 
-	for i = 0; i<int64(len(list)) && len(list[i])>0 && i<1250; i++ {
+	for i = 0; i<int64(len(list)) && len(list[i])>0 && i<amountOfBlocks; i++ {
 
 		for j=0; j<len(list[i]); j++ {
 			tmpBlock = blockchain[list[i][j]]
@@ -544,7 +548,9 @@ func addTxData(file *os.File, node int) {
 	if len(lines)>1 {
 		lines = strings.Split(lines[1], " ")
 		if len(lines)>9 {
-			writeToFile(file, lines[9]+"\n")
+			num, _ := strconv.ParseFloat(lines[9], 64)
+
+			writeToFile(file, fmt.Sprintf("%s , %f percent\n", lines[9], (num/globalTestTime.Seconds())*100.0))
 		}
 	}
 
@@ -578,7 +584,7 @@ func getWastedHashingPower(blockchain map[string]Block, lineRegistry [][]string)
 		var totalWastedTime time.Duration = 0
 		var miningOnMainChain = true
 
-		for i:=1; i<len(lineRegistry[j]) && miningOnHeight < 1250; i++ {
+		for i:=1; i<len(lineRegistry[j]) && miningOnHeight < amountOfBlocks; i++ {
 
 			entry = strings.Split(lineRegistry[j][i], " ")
 
@@ -634,8 +640,8 @@ func getTestLength(list [][]string, blockchain map[string]Block) time.Duration{
 
 	var endTimestamp time.Duration = 0
 
-	for i:=0; i<len(list[1249]) && endTimestamp == 0;i++{
-		if block := blockchain[list[1249][i]]; block.Width == 0 {
+	for i:=0; i<len(list[amountOfBlocks-1]) && endTimestamp == 0;i++{
+		if block := blockchain[list[amountOfBlocks-1][i]]; block.Width == 0 {
 			endTimestamp = block.Time
 		}
 	}
@@ -705,6 +711,8 @@ func writeWastedHashingPower(list [][]string, blockchain map[string]Block, lineR
 	testHours := int64(testLength.Hours())
 	testMinutes := int64(testLength.Minutes())-testHours*60
 	testSeconds := testLength.Seconds()-float64(testHours*3600)-float64(testMinutes*60)
+
+	globalTestTime = testLength
 
 	writeToFile(wastedHpFile, fmt.Sprintf("The test ran for %d:%d:%.3f, which are in total %.3f seconds\n", testHours, testMinutes, testSeconds, testLength.Seconds()))
 	writeToFile(wastedHpFile, fmt.Sprintf("The total time of wasted hashing power was %.3f seconds, which accounts for %f of the total test time\n", totalWastedTime.Seconds()/totalValidHashingPower, ((float64(totalWastedTime)/totalValidHashingPower)/float64(testLength))*100))
@@ -839,5 +847,5 @@ func main(){
 
 	printTxData(nodeAmount)
 
-	printPingData()
+	//printPingData()
 }
