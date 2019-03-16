@@ -418,6 +418,17 @@ func createBlockTimeFile() (outFile *os.File) {
 	return outFile
 }
 
+func createKevinFile() (outFile *os.File) {
+	var err error
+
+	if outFile, err = os.Create(os.Args[2]+"kevin"); err != nil {
+		os.Stderr.WriteString(fmt.Sprintf("Failed to create file %sblockTimes\n %s\n", os.Args[2], err.Error()))
+	}
+
+	return outFile
+}
+
+
 func writeBlockTimes(list [][]string, blockchain map[string]Block) {
 
 	updateWidthInfo(list, blockchain)
@@ -425,6 +436,8 @@ func writeBlockTimes(list [][]string, blockchain map[string]Block) {
 	forksInfo := make([]int16, 2048)
 
 	blockTimesFile := createBlockTimeFile()
+
+	kevinFile := createKevinFile()
 
 	block := blockchain[list[0][0]]
 
@@ -456,6 +469,7 @@ func writeBlockTimes(list [][]string, blockchain map[string]Block) {
 			} else {
 				forksInfo[tmpBlock.Width]++
 			}
+			writeToFile(kevinFile, fmt.Sprintf("%d %d %d %s %s %d\n", tmpBlock.DiscoveryDelays[0].node, tmpBlock.Time, tmpBlock.NTx, list[i][j], tmpBlock.Parent, tmpBlock.Height))
 		}
 
 		for pendingTime, _ := range(pendingTimes) {
