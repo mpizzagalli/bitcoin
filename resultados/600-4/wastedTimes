@@ -240,3 +240,4 @@
 239 : 5039.228 s
 The test ran for 208:7:29.243, which are in total 749249.243 seconds
 The total time of wasted hashing power was 5694.328 seconds, which accounts for 0.760004 of the total test time
+The effective throughput was 6.619 transactions per second

@@ -429,7 +429,7 @@ func createKevinFile() (outFile *os.File) {
 }
 
 
-func writeBlockTimes(list [][]string, blockchain map[string]Block) {
+func writeBlockTimes(list [][]string, blockchain map[string]Block) int64 {
 
 	updateWidthInfo(list, blockchain)
 
@@ -457,6 +457,8 @@ func writeBlockTimes(list [][]string, blockchain map[string]Block) {
 	pendingTimes := make(map[time.Duration]bool)
 
 	promprom := 0.0
+
+	var totalTransactions int64 = 0
 	
 	avgs := make([]int, 10)
 
@@ -488,6 +490,7 @@ func writeBlockTimes(list [][]string, blockchain map[string]Block) {
 			}
 		}
 
+		totalTransactions += block.NTx
 		prom := float64(block.NTx)/74.83
 
 		if i>=30 {
@@ -529,6 +532,7 @@ func writeBlockTimes(list [][]string, blockchain map[string]Block) {
 		writeToFile(blockTimesFile, fmt.Sprintf("Number of Forks of height %d: %d\n", j, forksInfo[j]))
 	}
 
+	return totalTransactions
 }
 
 func createTxFile() (outFile *os.File) {
@@ -698,7 +702,7 @@ func getHashingPowers() map[int]float64{
 
 }
 
-func writeWastedHashingPower(list [][]string, blockchain map[string]Block, lineRegistry [][]string)  {
+func writeWastedHashingPower(list [][]string, blockchain map[string]Block, lineRegistry [][]string, totalTransactions int64, nodeAmount int)  {
 
 	wastedHashingPowers := getWastedHashingPower(blockchain, lineRegistry)
 
@@ -710,6 +714,8 @@ func writeWastedHashingPower(list [][]string, blockchain map[string]Block, lineR
 
 	totalValidHashingPower := 1.0
 
+	idleNodes := 0.0
+
 	var totalWastedTime time.Duration = 0
 
 	for i:=0; i<len(wastedHashingPowers);i++ {
@@ -719,7 +725,14 @@ func writeWastedHashingPower(list [][]string, blockchain map[string]Block, lineR
 			 totalWastedTime += time.Duration(float64(wastedHashingPowers[i]) * hashingPowers[i])
 		} else {
 			totalValidHashingPower -= hashingPowers[i]
+			idleNodes += 1.0
 		}
+	}
+
+	txPowerRatio := 1.0
+	if idleNodes > 0.5 {
+		floatNodeAmount := float64(nodeAmount)
+		txPowerRatio = (floatNodeAmount-idleNodes)/floatNodeAmount
 	}
 
 	testHours := int64(testLength.Hours())
@@ -730,6 +743,7 @@ func writeWastedHashingPower(list [][]string, blockchain map[string]Block, lineR
 
 	writeToFile(wastedHpFile, fmt.Sprintf("The test ran for %d:%d:%.3f, which are in total %.3f seconds\n", testHours, testMinutes, testSeconds, testLength.Seconds()))
 	writeToFile(wastedHpFile, fmt.Sprintf("The total time of wasted hashing power was %.3f seconds, which accounts for %f of the total test time\n", totalWastedTime.Seconds()/totalValidHashingPower, ((float64(totalWastedTime)/totalValidHashingPower)/float64(testLength))*100))
+	writeToFile(wastedHpFile, fmt.Sprintf("The effective throughput was %.3f transactions per second\n", (float64(totalTransactions)/testLength.Seconds())/txPowerRatio))
 }
 
 func printBlockchainData(nodeAmount int) {
@@ -738,11 +752,11 @@ func printBlockchainData(nodeAmount int) {
 
 	list := getHeightList(blockchain)
 
-	writeBlockTimes(list, blockchain)
+	totalTransactions := writeBlockTimes(list, blockchain)
 
 	printPropagationTimes(list, blockchain, nodeAmount)
 
-	writeWastedHashingPower(list, blockchain, lineRegistry)
+	writeWastedHashingPower(list, blockchain, lineRegistry, totalTransactions, nodeAmount)
 
 }
 
