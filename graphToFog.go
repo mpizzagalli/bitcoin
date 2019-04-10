@@ -45,7 +45,7 @@ func addSemaphore(scriptFile *os.File, nodes []btcNode) {
 	writeLineToFile(scriptFile, "run n0 netns n0 sleep 30s")
 
 	for i:=0; i<len(nodes); i++ {
-		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d /usr/bin/go run /home/mgeier/ndecarli/semaphore.go %d", nodes[i].Host, nodes[i].Host, nodes[i].Id))
+		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d /usr/local/go/bin/go run /home/mgeier/ndecarli/semaphore.go %d", nodes[i].Host, nodes[i].Host, nodes[i].Id))
 	}
 
 	writeLineToFile(scriptFile, "")
@@ -149,7 +149,7 @@ func makeBlockChain(scriptFile *os.File, nodes []btcNode, hostHasNode map[int]bo
 		}
 	}
 
-	writeLineToFile(scriptFile,fmt.Sprintf("\nrun n0 netns n0 /usr/bin/go run /home/mgeier/ndecarli/generateBlockchain.go %d\n", len(nodes)))
+	writeLineToFile(scriptFile,fmt.Sprintf("\nrun n0 netns n0 /usr/local/go/bin/go run /home/mgeier/ndecarli/generateBlockchain.go %d\n", len(nodes)))
 
 	addSemaphore(scriptFile, nodes)
 
@@ -165,17 +165,17 @@ func makeBlockChain(scriptFile *os.File, nodes []btcNode, hostHasNode map[int]bo
 func startEngines(scriptFile *os.File, topology *GraphJson) {
 
 	for i:=0; i<len(topology.BtcNodes); i++ {
-		writeLineToFile(scriptFile, fmt.Sprintf("run n%d netns n%d /usr/bin/go run /home/mgeier/ndecarli/launcher.go /usr/bin/go run /home/mgeier/ndecarli/testEngine.go %d %f", topology.BtcNodes[i].Host, topology.BtcNodes[i].Host, topology.BtcNodes[i].Id, topology.BtcNodes[i].HashingPower))
+		writeLineToFile(scriptFile, fmt.Sprintf("run n%d netns n%d /usr/local/go/bin/go run /home/mgeier/ndecarli/launcher.go /usr/local/go/bin/go run /home/mgeier/ndecarli/testEngine.go %d %f", topology.BtcNodes[i].Host, topology.BtcNodes[i].Host, topology.BtcNodes[i].Id, topology.BtcNodes[i].HashingPower))
 		writeLineToFile(scriptFile, "\nrun n0 netns n0 sleep 1s")
 	}
 
 	writeLineToFile(scriptFile, "")
 
 	for i:=1; i<topology.Network.Hosts; i++ {
-		writeLineToFile(scriptFile, fmt.Sprintf("run n%d netns n%d /usr/bin/go run /home/mgeier/ndecarli/launcher.go /usr/bin/go run /home/mgeier/ndecarli/pingEngine.go %d %d", i, i, topology.Network.Hosts, i))
+		writeLineToFile(scriptFile, fmt.Sprintf("run n%d netns n%d /usr/local/go/bin/go run /home/mgeier/ndecarli/launcher.go /usr/local/go/bin/go run /home/mgeier/ndecarli/pingEngine.go %d %d", i, i, topology.Network.Hosts, i))
 	}
 
-	writeLineToFile(scriptFile, fmt.Sprintf("run n0 netns n0 /usr/bin/go run /home/mgeier/ndecarli/pingEngine.go %d 0", topology.Network.Hosts))
+	writeLineToFile(scriptFile, fmt.Sprintf("run n0 netns n0 /usr/local/go/bin/go run /home/mgeier/ndecarli/pingEngine.go %d 0", topology.Network.Hosts))
 }
 
 func teardown(scriptFile *os.File, nodes []btcNode) {
