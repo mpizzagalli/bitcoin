@@ -18,8 +18,8 @@ import (
 )
 
 const txFee float64 = 0.000002
-const txSleepMaxAggregate = int64(time.Millisecond * 500)
-const txSleepMinimum = time.Millisecond * 5760
+const txSleepMaxAggregate = int64(time.Millisecond * 32000)
+const txSleepMinimum = time.Millisecond * 112000
 
 type UnspentOutput struct {
 	Address string `json:"address"`
@@ -48,7 +48,7 @@ func getAddresses() (addresses []string, unspentOutputs [][]Credit) {
 
 	unspentOutputs = getCredit(addresses)
 
-	time.Sleep(time.Duration(240-nodeNumber) * time.Second)
+	time.Sleep(time.Duration(420-nodeNumber) * time.Second)
 
 	return
 }
@@ -86,7 +86,7 @@ func mineBlocks(addresses []string) {
 	timestamp := time.Now().UnixNano()
 
 	for i := 0;;i ^= 1 {
-		sleepTime = (rng.ExpFloat64() / simuLambda)*150.0
+		sleepTime = (rng.ExpFloat64() / simuLambda)*600.0
 		sleepSeconds = time.Duration(sleepTime)
 		sleepNanoseconds = time.Duration((sleepTime-float64(sleepSeconds))*1000000000.0)
 		nextBlockTime = time.Duration(timestamp) + sleepSeconds * time.Second + sleepNanoseconds
