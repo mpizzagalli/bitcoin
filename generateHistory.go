@@ -41,12 +41,34 @@ type PingPacket struct {
 	ReceiveTimestamp time.Time
 	Sender uint16
 }
+type TxBlock struct {
+	Start time.Duration
+	End time.Duration
+	Amount int64
+}
+
+type Event struct {
+	Timestamp time.Duration
+	IsBlock bool
+}
+
+type EventSort []Event
+
+func (a EventSort) Len() int           { return len(a) }
+func (a EventSort) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a EventSort) Less(i, j int) bool { return a[i].Timestamp < a[j].Timestamp || (a[i].Timestamp == a[j].Timestamp && a[i].IsBlock)}
 
 type DelaySort []Delay
 
 func (a DelaySort) Len() int           { return len(a) }
 func (a DelaySort) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a DelaySort) Less(i, j int) bool { return a[i].delay < a[j].delay }
+
+type durationSort []time.Duration
+
+func (a durationSort) Len() int           { return len(a) }
+func (a durationSort) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a durationSort) Less(i, j int) bool { return a[i] < a[j] }
 
 func readLogFile(node int) string {
 	if b, err := ioutil.ReadFile(fmt.Sprintf("%s%s%d", os.Args[1], filePrefix, node)); err == nil {
@@ -452,6 +474,11 @@ func writeBlockTimes(list [][]string, blockchain map[string]Block) int64 {
 	var i int64
 	var j int
 
+	var carriedAmount int64 = 0
+	var lastNonFullBlockTime time.Duration = lastTime
+	txBlocks := make([]TxBlock, 0, amountOfBlocks)
+	events := make([]Event, 0, amountOfBlocks*4096)
+
 	var d int64 = 0
 
 	pendingTimes := make(map[time.Duration]bool)
@@ -502,6 +529,10 @@ func writeBlockTimes(list [][]string, blockchain map[string]Block) int64 {
 
 		s := fmt.Sprintf("%d %s %d %.3f", len(list[i]), time.Unix(0, int64(block.Time)).Format(timeFormat), block.NTx, prom)
 
+		if i>=30 {
+			s += fmt.Sprintf(" %.3f", promprom/float64(i-29))
+		}
+
 		diff := block.Time - initTime
 
 		s += fmt.Sprintf(" %d:%d:%d ", int64(diff.Hours()), int64(diff.Minutes())%60, int64(diff.Seconds()+0.5)%60)
@@ -514,17 +545,39 @@ func writeBlockTimes(list [][]string, blockchain map[string]Block) int64 {
 
 		if i>0 {
 			s += fmt.Sprintf("- Mean Block Diff: %.3f seconds, Mean Height Diff: %.3f seconds\n", float64(((meanDiff/(d))+500000)/1000000)/1000.0, float64(((meanDiff/(i))+500000)/1000000)/1000.0)
+			if block.NTx < 7482 {
+				txBlocks = append(txBlocks, TxBlock{Start:lastNonFullBlockTime, End:block.Time, Amount:block.NTx+carriedAmount})
+				lastNonFullBlockTime = block.Time
+				carriedAmount = 0
+			} else {
+				carriedAmount += block.NTx
+			}
 		} else {
 			s += "\n"
+			lastNonFullBlockTime = block.Time
 		}
+
+		events = append(events, Event{Timestamp:block.Time, IsBlock:true})
 
 		writeToFile(blockTimesFile, s)
 
 		lastTime = block.Time
 	}
 
-	writeToFile(blockTimesFile, fmt.Sprintf("Mean Diff of blocks: %.3f seconds \nMean Diff of Heights: %.3f seconds\nMean Percentage of Fullness: %f\n", float64(((meanDiff/(d))+500000)/1000000)/1000.0, float64(((meanDiff/(i))+500000)/1000000)/1000.0, promprom/float64(i-30)))
-	for j:=0; j<10; j++ {
+	writeToFile(blockTimesFile, fmt.Sprintf("Mean Diff of blocks: %.3f seconds \nMean Diff of Heights: %.3f seconds\nBlocks Mean Percentage of Fullness: %f\n", float64(((meanDiff/(d))+500000)/1000000)/1000.0, float64(((meanDiff/(i))+500000)/1000000)/1000.0, promprom/float64(i-30)))
+
+	for j:=0; j<len(txBlocks); j++ {
+		step := (txBlocks[j].End- txBlocks[j].Start)/time.Duration(txBlocks[j].Amount)
+		for t,k :=txBlocks[j].Start+1,txBlocks[j].Amount; k>0 ;t,k = t+step, k-1 {
+			events = append(events, Event{Timestamp:t, IsBlock:false})
+		}
+	}
+
+	TxMedian, TxMean := calculateTxConfirmationTimes(events)
+
+	writeToFile(blockTimesFile, fmt.Sprintf("Median tx confirmation time was %f seconds\nAverage tx confirmation time was %f seconds\n", TxMedian.Seconds(), TxMean.Seconds()))
+
+	for j:=1; j<10; j++ {
 		writeToFile(blockTimesFile, fmt.Sprintf("Percentage of blocks above %d of fullness: %f\n", j*10, (float64(avgs[j])/float64(i-30))*100.0))
 	}
 
@@ -746,6 +799,30 @@ func writeWastedHashingPower(list [][]string, blockchain map[string]Block, lineR
 	writeToFile(wastedHpFile, fmt.Sprintf("The effective throughput was %.3f transactions per second\n", (float64(totalTransactions)/testLength.Seconds())/txPowerRatio))
 }
 
+func calculateTxConfirmationTimes(eventHistory []Event) (time.Duration, time.Duration) {
+
+	sort.Sort(EventSort(eventHistory))
+
+	cTimes := make([]time.Duration, 0, len(eventHistory))
+	var tot time.Duration = 0
+
+	for i, j := 0, 1; j<len(eventHistory); j++ {
+		for j<len(eventHistory) && !eventHistory[j].IsBlock {j++}
+		for k:=0;i<j && k<=7483;i++ {
+			if !eventHistory[i].IsBlock {
+				confirmationTime := eventHistory[j].Timestamp-eventHistory[i].Timestamp
+				tot += confirmationTime/1000
+				cTimes = append(cTimes, confirmationTime)
+				k++
+			}
+		}
+	}
+
+	sort.Sort(durationSort(cTimes))
+
+	return cTimes[len(cTimes)/2], (tot/time.Duration(len(cTimes))*1000)
+}
+
 func printBlockchainData(nodeAmount int) {
 
 	blockchain, lineRegistry := createBlockChain(nodeAmount)
@@ -873,7 +950,7 @@ func main(){
 
 	printBlockchainData(nodeAmount)
 
-	printTxData(nodeAmount)
+	//printTxData(nodeAmount)
 
 	//printPingData()
 }

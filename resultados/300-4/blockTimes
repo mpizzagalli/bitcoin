@@ -1215,8 +1215,9 @@
 1 22:38:41.36 7483 100.000 111:13:41 +740 seconds - Mean Block Diff: 313.074 seconds, Mean Height Diff: 329.836 seconds
 Mean Diff of blocks: 313.074 seconds 
 Mean Diff of Heights: 329.565 seconds
-Mean Percentage of Fullness: 55.733316
-Percentage of blocks above 0 of fullness: 100.000000
+Blocks Mean Percentage of Fullness: 55.733316
+Median tx confirmation time was 307.676484 seconds
+Average tx confirmation time was 416.639599 seconds
 Percentage of blocks above 10 of fullness: 88.776371
 Percentage of blocks above 20 of fullness: 77.637131
 Percentage of blocks above 30 of fullness: 67.341772

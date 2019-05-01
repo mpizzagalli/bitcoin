@@ -1,0 +1,3 @@
+bitcoin-cli -regtest createrawtransaction '[{"txid":"d66492939aac6beb0c2dc882d1657d10e30c68d0c3a778815e90f6506643fd8c","vout":0}]' '[{"2MxDTxhGzDKKS4eK7gXcdC6BWewkmMEWNyL":9.9999980}, {"2NA8qHPzJmbJ2yTRMTvfLs9g8LNffYkHUK9":9.9999980}, {"2N1nTEi7HCR81vEZ8bjjWZdWPeoWwtLmJLc":10.0}, {"2N9nb9hNL6LvTHN4hYVQfdi1WWm5AkKutUV":10.0}, {"2MxP5SuRPHz2PEzD1nB7n6VTqEdmhbYmaN9":10.0}]'
+
+bitcoin-cli -regtest createrawtransaction '[{"txid":"37b79f265ebf66010c852d92369e0073050117deb90c7c242994758474c7a826","vout":0}]' '[{"2N9nb9hNL6LvTHN4hYVQfdi1WWm5AkKutUV":9.9999960}]'

@@ -32,7 +32,7 @@ type btcNode struct {
 	ConnectedTo []int `json:"connectedTo"`
 }
 
-var hostIps = [4][]byte{[]byte("10.1.10.119\n"), []byte("10.1.10.120\n"), []byte("10.1.10.137\n"), []byte("10.1.10.138\n")}
+var hostIps = [7][]byte{[]byte("10.1.10.119\n"), []byte("10.1.10.120\n"), []byte("10.1.10.137\n"), []byte("10.1.10.138\n"), []byte("10.1.10.162\n"), []byte("10.1.10.163\n"), []byte("10.1.10.166\n")}
 
 func writeLineToFile(file *os.File, content string) {
 	if _, err := file.Write([]byte(content+"\n")); err != nil {
