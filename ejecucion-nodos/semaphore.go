@@ -7,7 +7,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"time"
+	Config "../config"
 )
+
+var nodeExecutionDir = Config.GetConfiguration().NodeExecutionDir
 
 type BlockchainInfo struct {
 	Blocks int64 `json:"blocks"`
@@ -28,7 +31,7 @@ func haveToWait() bool {
 	var stdOut []byte
 	var info BlockchainInfo
 
-	stdOut = execCmd(exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", os.Args[1], "getblockchaininfo"))
+	stdOut = execCmd(exec.Command("bash", nodeExecutionDir+"/bitcoindo.sh", os.Args[1], "getblockchaininfo"))
 
 	if err := json.Unmarshal(stdOut, &info); err != nil {
 		os.Stderr.WriteString(fmt.Sprintf("Error unmarshaling signedtransaction json.\n %s\n", err.Error()))

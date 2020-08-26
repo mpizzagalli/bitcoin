@@ -1,16 +1,22 @@
 package main
 
 import (
-		"strconv"
-		"os"
-		"os/exec"
-		"io/ioutil"
-		"strings"
-		"fmt"
-		"bytes"
-		"time"
-		//"encoding/json"
+	"bytes"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"os/exec"
+	"strconv"
+	"strings"
+	"time"
+
+	//"encoding/json"
+	Config "../config"
 )
+
+var config = Config.GetConfiguration()
+var nodeExecutionDir = config.NodeExecutionDir
+var addressesDir = config.AddressesDir
 
 type Block struct {
 	Tx []string `json:"tx"`
@@ -29,8 +35,8 @@ func getAmountOfNodes() int {
 }
 
 func getAddresses(n int) (addresses [][]string) {
-	for i:=0; i<n; i++ {
-		if addressesBytes, err := ioutil.ReadFile(fmt.Sprintf("/home/mgeier/ndecarli/addrN%d", i)); err == nil {
+	for i := 0; i < n; i++ {
+		if addressesBytes, err := ioutil.ReadFile(fmt.Sprintf(addressesDir+"/addrN%d", i)); err == nil {
 			addresses = append(addresses, strings.Split(string(addressesBytes), "\n"))
 		} else {
 			os.Stderr.WriteString(fmt.Sprintf("Failed to parse addresses file.\n %s\n", err.Error()))
@@ -48,6 +54,7 @@ func execCmd(cmd *exec.Cmd) {
 	}
 	return
 }
+
 /*
 const txInputTemplate = "[{\"txid\":\"%s\",\"vout\":0}]"
 const txOutputTemplate = "[{\"%s\":9.9999980}, {\"%s\":9.9999980}, {\"%s\":10.0}, {\"%s\":10.0}, {\"%s\":10.0}]"
@@ -117,11 +124,15 @@ func main() {
 	var output2 []byte
 	var output3 []byte
 	var output4 []byte*/
-	for j:=0; j<240; j++ {
+	for j := 0; j < 1; j++ {
 		for i := 0; i < n; i++ {
-			execCmd(exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", os.Args[1], "generatetoaddress", "5", addresses[i][0]))
+			a := exec.Command("bash", nodeExecutionDir+"/bitcoindo.sh", os.Args[1], "generatetoaddress", "5", addresses[i][0])
+			fmt.Println(a.String())
+			// execCmd(a)
 			time.Sleep(10 * time.Millisecond)
-			execCmd(exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", os.Args[1], "generatetoaddress", "5", addresses[i][1]))
+			b := exec.Command("bash", nodeExecutionDir+"/bitcoindo.sh", os.Args[1], "generatetoaddress", "5", addresses[i][1])
+			fmt.Println(b.String())
+			// execCmd(b)
 			time.Sleep(10 * time.Millisecond)
 			/*multiplyTransactions(output3, i, addresses)
 			multiplyTransactions(output4, i, addresses)

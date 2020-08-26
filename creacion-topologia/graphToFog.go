@@ -5,9 +5,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"encoding/json"
-	"os/exec"
-	"bytes"
+	Config "../config"
 )
+
+var config = Config.GetConfiguration()
+var nodeExecutionDir = config.NodeExecutionDir
+var addressesDir = config.AddressesDir
+var sherlockFogDir = config.SherlockfogDir
+var topologyCreationDir = config.TopologyCreationDir
 
 type GraphJson struct {
 	Network network `json:"network"`
@@ -45,7 +50,7 @@ func addSemaphore(scriptFile *os.File, nodes []btcNode) {
 	writeLineToFile(scriptFile, "run n0 netns n0 sleep 30s")
 
 	for i:=0; i<len(nodes); i++ {
-		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d /usr/local/go/bin/go run /home/mgeier/ndecarli/semaphore.go %d", nodes[i].Host, nodes[i].Host, nodes[i].Id))
+		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d /usr/local/go/bin/go run "+nodeExecutionDir+"/semaphore.go %d", nodes[i].Host, nodes[i].Host, nodes[i].Id))
 	}
 
 	writeLineToFile(scriptFile, "")
@@ -96,7 +101,7 @@ func makeLogicalLayer(scriptFile *os.File, nodes []btcNode) map[int]bool {
 	hostHasNode := make(map[int]bool)
 
 	for i:=0; i<len(nodes); i++ {
-		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash /home/mgeier/ndecarli/invokeBitcoin.sh %d -dificulta=0 -dbcache=3072",nodes[i].Host,nodes[i].Host,nodes[i].Id))//-loadblock=/home/mgeier/ndecarli/blk00000.dat -loadblock=/home/mgeier/ndecarli/blk00001.dat
+		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash "+nodeExecutionDir+"/invokeBitcoin.sh %d -dificulta=0 -dbcache=3072",nodes[i].Host,nodes[i].Host,nodes[i].Id))//-loadblock=/home/mgeier/ndecarli/blk00000.dat -loadblock=/home/mgeier/ndecarli/blk00001.dat
 		nodeIdToHost[nodes[i].Id] = nodes[i].Host
 		hostHasNode[nodes[i].Host] = true
 	}
@@ -107,7 +112,7 @@ func makeLogicalLayer(scriptFile *os.File, nodes []btcNode) map[int]bool {
 
 	for i:=0; i<len(nodes); i++ {
 		for j:=0; j<len(nodes[i].ConnectedTo); j++{
-			writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash /home/mgeier/ndecarli/connectNodes.sh %d %d n%d", nodes[i].Host, nodes[i].Host, nodes[i].Id, nodes[i].ConnectedTo[j], nodeIdToHost[nodes[i].ConnectedTo[j]]))
+			writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash "+nodeExecutionDir+"/connectNodes.sh %d %d n%d", nodes[i].Host, nodes[i].Host, nodes[i].Id, nodes[i].ConnectedTo[j], nodeIdToHost[nodes[i].ConnectedTo[j]]))
 		}
 	}
 
@@ -116,20 +121,20 @@ func makeLogicalLayer(scriptFile *os.File, nodes []btcNode) map[int]bool {
 
 func makeBlockChain(scriptFile *os.File, nodes []btcNode, hostHasNode map[int]bool) {
 
-	writeLineToFile(scriptFile,fmt.Sprintf("\nrun n0 netns n0 bash /home/mgeier/ndecarli/invokeBitcoin.sh %d -dificulta=0 -dbcache=3072\n", len(nodes)))//-loadblock=/home/mgeier/ndecarli/blk00000.dat -loadblock=/home/mgeier/ndecarli/blk00001.dat
+	writeLineToFile(scriptFile,fmt.Sprintf("\nrun n0 netns n0 bash "+nodeExecutionDir+"/invokeBitcoin.sh %d -dificulta=0 -dbcache=3072\n", len(nodes)))//-loadblock=/home/mgeier/ndecarli/blk00000.dat -loadblock=/home/mgeier/ndecarli/blk00001.dat
 
 	addSemaphore(scriptFile, []btcNode{btcNode{Id: len(nodes), Host:0}})
 
 	for i:=0; i<len(nodes); i++ {
-		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash /home/mgeier/ndecarli/connectNodes.sh %d %d n0", nodes[i].Host, nodes[i].Host, nodes[i].Id, len(nodes)))
-		writeLineToFile(scriptFile,fmt.Sprintf("run n0 netns n0 bash /home/mgeier/ndecarli/connectNodes.sh %d %d n%d", len(nodes), nodes[i].Id, nodes[i].Host))
+		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash "+nodeExecutionDir+"/connectNodes.sh %d %d n0", nodes[i].Host, nodes[i].Host, nodes[i].Id, len(nodes)))
+		writeLineToFile(scriptFile,fmt.Sprintf("run n0 netns n0 bash "+nodeExecutionDir+"/connectNodes.sh %d %d n%d", len(nodes), nodes[i].Id, nodes[i].Host))
 	}
 
 	writeLineToFile(scriptFile, "")
 
 	for i, j := 0, 0; i<len(nodes) && j<len(hostIps); i++ {
 		if hostHasNode[i] {
-			writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d rm -f /home/mgeier/ndecarli/addrN*", i, i))
+			writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d rm -f "+addressesDir+"/addrN*", i, i))
 			j++
 		}
 	}
@@ -137,23 +142,23 @@ func makeBlockChain(scriptFile *os.File, nodes []btcNode, hostHasNode map[int]bo
 	writeLineToFile(scriptFile, "")
 
 	for i:=0; i<len(nodes); i++ {
-		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash /home/mgeier/ndecarli/bitcoindo.sh %d getnewaddress > /home/mgeier/ndecarli/addrN%d", nodes[i].Host, nodes[i].Host, nodes[i].Id, nodes[i].Id))
-		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash /home/mgeier/ndecarli/bitcoindo.sh %d getnewaddress >> /home/mgeier/ndecarli/addrN%d\n", nodes[i].Host, nodes[i].Host, nodes[i].Id, nodes[i].Id))
+		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash "+nodeExecutionDir+"/bitcoindo.sh %d getnewaddress > "+addressesDir+"/addrN%d", nodes[i].Host, nodes[i].Host, nodes[i].Id, nodes[i].Id))
+		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash "+nodeExecutionDir+"/bitcoindo.sh %d getnewaddress >> "+addressesDir+"/addrN%d\n", nodes[i].Host, nodes[i].Host, nodes[i].Id, nodes[i].Id))
 
 	}
 
 	for i, j := 0, 0; i<len(nodes) && j<len(hostIps); i++ {
 		if hostHasNode[i] {
-			writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d scp -q -o StrictHostKeyChecking=no /home/mgeier/ndecarli/addrN* n0:/home/mgeier/ndecarli/", i, i))//, nodes[i].Id, nodes[i].Id))
+			writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d scp -q -o StrictHostKeyChecking=no "+addressesDir+"/addrN* n0:"+addressesDir, i, i))//, nodes[i].Id, nodes[i].Id))
 			j++
 		}
 	}
 
-	writeLineToFile(scriptFile,fmt.Sprintf("\nrun n0 netns n0 /usr/local/go/bin/go run /home/mgeier/ndecarli/generateBlockchain.go %d\n", len(nodes)))
+	writeLineToFile(scriptFile,fmt.Sprintf("\nrun n0 netns n0 /usr/local/go/bin/go run "+nodeExecutionDir+"/generateBlockchain.go %d\n", len(nodes)))
 
 	addSemaphore(scriptFile, nodes)
 
-	writeLineToFile(scriptFile,fmt.Sprintf("run n0 netns n0 bash /home/mgeier/ndecarli/bitcoindo.sh %d stop\n", len(nodes)))
+	writeLineToFile(scriptFile,fmt.Sprintf("run n0 netns n0 bash "+nodeExecutionDir+"/bitcoindo.sh %d stop\n", len(nodes)))
 
 	writeLineToFile(scriptFile, "\nrun n0 netns n0 sleep 1m")
 
@@ -165,17 +170,17 @@ func makeBlockChain(scriptFile *os.File, nodes []btcNode, hostHasNode map[int]bo
 func startEngines(scriptFile *os.File, topology *GraphJson) {
 
 	for i:=0; i<len(topology.BtcNodes); i++ {
-		writeLineToFile(scriptFile, fmt.Sprintf("run n%d netns n%d /usr/local/go/bin/go run /home/mgeier/ndecarli/launcher.go /usr/local/go/bin/go run /home/mgeier/ndecarli/testEngine.go %d %f", topology.BtcNodes[i].Host, topology.BtcNodes[i].Host, topology.BtcNodes[i].Id, topology.BtcNodes[i].HashingPower))
+		writeLineToFile(scriptFile, fmt.Sprintf("run n%d netns n%d /usr/local/go/bin/go run "+nodeExecutionDir+"/launcher.go /usr/local/go/bin/go run "+nodeExecutionDir+"/testEngine.go %d %f", topology.BtcNodes[i].Host, topology.BtcNodes[i].Host, topology.BtcNodes[i].Id, topology.BtcNodes[i].HashingPower))
 		writeLineToFile(scriptFile, "\nrun n0 netns n0 sleep 1s")
 	}
 
 	writeLineToFile(scriptFile, "")
 
 	for i:=1; i<topology.Network.Hosts; i++ {
-		writeLineToFile(scriptFile, fmt.Sprintf("run n%d netns n%d /usr/local/go/bin/go run /home/mgeier/ndecarli/launcher.go /usr/local/go/bin/go run /home/mgeier/ndecarli/pingEngine.go %d %d", i, i, topology.Network.Hosts, i))
+		writeLineToFile(scriptFile, fmt.Sprintf("run n%d netns n%d /usr/local/go/bin/go run "+nodeExecutionDir+"/launcher.go /usr/local/go/bin/go run "+nodeExecutionDir+"/pingEngine.go %d %d", i, i, topology.Network.Hosts, i))
 	}
 
-	writeLineToFile(scriptFile, fmt.Sprintf("run n0 netns n0 /usr/local/go/bin/go run /home/mgeier/ndecarli/pingEngine.go %d 0", topology.Network.Hosts))
+	writeLineToFile(scriptFile, fmt.Sprintf("run n0 netns n0 /usr/local/go/bin/go run "+nodeExecutionDir+"/pingEngine.go %d 0", topology.Network.Hosts))
 }
 
 func teardown(scriptFile *os.File, nodes []btcNode) {
@@ -183,7 +188,7 @@ func teardown(scriptFile *os.File, nodes []btcNode) {
 	writeLineToFile(scriptFile, "")
 
 	for i:=0; i<len(nodes); i++ {
-		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash /home/mgeier/ndecarli/bitcoindo.sh %d stop", nodes[i].Host,nodes[i].Host,nodes[i].Id))
+		writeLineToFile(scriptFile,fmt.Sprintf("run n%d netns n%d bash "+nodeExecutionDir+"/bitcoindo.sh %d stop", nodes[i].Host,nodes[i].Host,nodes[i].Id))
 	}
 
 	writeLineToFile(scriptFile, "\nrun n0 netns n0 sleep 1m")
@@ -210,17 +215,7 @@ func launchSherlockFog(scriptFile *os.File, numberOfHosts int, hostHasNode map[i
 					j %= len(hostIps)
 				}
 			}
-			if err == nil {
-				launchFog := exec.Command(/*"bash", "-c", */"python3", "/home/mgeier/repos/sherlockfog/sherlockfog.py", "/home/mgeier/ndecarli/"+scriptFile.Name(), "--real-host-list=/home/mgeier/ndecarli/"+ipsFilename, "--cpu-exclusive=False")//, "> sherlockOut")
-				var stdErr bytes.Buffer
-				launchFog.Stderr = &stdErr
-				b, err := launchFog.Output()
-				if err != nil {
-					os.Stderr.WriteString(fmt.Sprintf("Failed to launch sherlock fog.\n%s : %s\n", err.Error(), stdErr.String()))
-				}
-				fmt.Println(string(b))
-				fmt.Println(stdErr.String())
-			} else {
+			if err != nil {
 				os.Stderr.WriteString(fmt.Sprintf("Failed to write ips file.\n %s\n", err.Error()))
 			}
 		} else {

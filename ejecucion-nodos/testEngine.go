@@ -15,11 +15,22 @@ import (
 	"encoding/binary"
 	"os/signal"
 	"syscall"
+	Config "../config"
+	Utils "../utils"
 )
+
+// FIXME: Capaz convendria comentar los logs... total esta info no va a ser usada para nada
+// FIXME: Hay un archivo de log pero que no se crea... que onda eso?
+// FIXME: Es una paja que tarde tanto en generar las cosas, hay cosas que no entiendo porque, pero las otras, deberia ser por config, tener dos versiones, por un flag de debug o que onda?
 
 const txFee float64 = 0.000002
 const txSleepMaxAggregate = int64(time.Millisecond * 32000)
 const txSleepMinimum = time.Millisecond * 112000
+
+var config = Config.GetConfiguration()
+var nodeExecutionDir = config.NodeExecutionDir
+var addressesDir = config.AddressesDir
+var blockIntervalInSeconds = config.BlockIntervalInSeconds
 
 type UnspentOutput struct {
 	Address string `json:"address"`
@@ -38,7 +49,7 @@ type Tx struct {
 
 func getAddresses() (addresses []string, unspentOutputs [][]Credit) {
 
-	if addressesBytes, err := ioutil.ReadFile("/home/mgeier/ndecarli/addrN" + os.Args[1]); err == nil {
+	if addressesBytes, err := ioutil.ReadFile(addressesDir+"/addrN" + os.Args[1]); err == nil {
 		addresses = strings.Split(string(addressesBytes), "\n")
 	} else {
 		os.Stderr.WriteString(fmt.Sprintf("Failed to parse address file.\n %s\n", err.Error()))
@@ -48,11 +59,13 @@ func getAddresses() (addresses []string, unspentOutputs [][]Credit) {
 
 	unspentOutputs = getCredit(addresses)
 
+	// Nota: Muy molesto para correr pruebas
 	time.Sleep(time.Duration(420-nodeNumber) * time.Second)
 
 	return
 }
 
+// Para obtener nuestro numero de nodo
 func getNodeNumber() int {
 	n, e := strconv.Atoi(os.Args[1])
 	if e != nil {
@@ -61,16 +74,7 @@ func getNodeNumber() int {
 	return n
 }
 
-func createRng() *rand.Rand {
-	// ugly hack to make all nodes use a different seed: get the seed from crypto/rand
-	buf := make([]byte, 8)
-	_, _ = crand.Read(buf)
-
-	seed := int64(binary.LittleEndian.Uint64(buf))
-
-	return rand.New(rand.NewSource(seed))
-}
-
+// Mina bloques de acuerdo al hashing power asignado (simuLambda)
 func mineBlocks(addresses []string) {
 
 	nodeNumber := os.Args[1]
@@ -81,12 +85,13 @@ func mineBlocks(addresses []string) {
 	var sleepNanoseconds time.Duration
 	var nextBlockTime time.Duration
 
-	rng := createRng()
+	rng := Utils.CreateRng()
 
 	timestamp := time.Now().UnixNano()
 
 	for i := 0;;i ^= 1 {
-		sleepTime = (rng.ExpFloat64() / simuLambda)*600.0
+		// Hardcodeado que el tiempo entre bloques sea propocional a los 10 min
+		sleepTime = (rng.ExpFloat64() / simuLambda)*blockIntervalInSeconds
 		sleepSeconds = time.Duration(sleepTime)
 		sleepNanoseconds = time.Duration((sleepTime-float64(sleepSeconds))*1000000000.0)
 		nextBlockTime = time.Duration(timestamp) + sleepSeconds * time.Second + sleepNanoseconds
@@ -95,7 +100,8 @@ func mineBlocks(addresses []string) {
 
 		timestamp = time.Now().UnixNano()
 
-		_ = exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", nodeNumber, "generatetoaddress", "1", addresses[i]).Run()
+		os.Stdout.WriteString(fmt.Sprintf("[testEngine] %s: Mining a block!\n", nodeNumber))
+		_ = exec.Command("bash", nodeExecutionDir+"/bitcoindo.sh", nodeNumber, "generatetoaddress", "1", addresses[i]).Run()
 	}
 }
 
@@ -111,16 +117,6 @@ func txOutput(template string, txCredit float64) string {
 
 func outputTemplate(address string) string {
 	return "{\""+address+"\":%f}"
-}
-
-func execCmd(cmd *exec.Cmd) []byte {
-	var stdErr bytes.Buffer
-	cmd.Stderr = &stdErr
-	stdOut, execErr := cmd.Output()
-	if execErr != nil || stdErr.Len() > 0 {
-		os.Stderr.WriteString(fmt.Sprintf("Error executing command.\n %s : %s\n", execErr.Error(), stdErr.String()))
-	}
-	return  stdOut
 }
 
 func generateTxs(addresses []string, unspentOutputs [][]Credit) {
@@ -181,15 +177,16 @@ func generateTxs(addresses []string, unspentOutputs [][]Credit) {
 
 		creditToUse = &unspentOutputs[i][j[i]]
 
-		stdOut = execCmd(exec.Command("bash", "/home/mgeier/ndecarli/bitcoindoc.sh", nodeNumber, "createrawtransaction", txInput(creditToUse), txOutput(templates[i], creditToUse.Amount)))
+		stdOut = Utils.ExecCmd(exec.Command("bash", nodeExecutionDir+"/bitcoindoc.sh", nodeNumber, "createrawtransaction", txInput(creditToUse), txOutput(templates[i], creditToUse.Amount)))
 
-		stdOut = execCmd(exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", nodeNumber, "signrawtransactionwithwallet", string(stdOut)))
+		stdOut = Utils.ExecCmd(exec.Command("bash", nodeExecutionDir+"/bitcoindo.sh", nodeNumber, "signrawtransactionwithwallet", string(stdOut)))
 
 		if err = json.Unmarshal(stdOut, &tx); err != nil {
 			os.Stderr.WriteString(fmt.Sprintf("Error unmarshaling signedtransaction json.\n %s\n", err.Error()))
 		}
 
-		if err = exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", nodeNumber, "sendrawtransaction", tx.Hex).Run(); err != nil {
+		os.Stdout.WriteString(fmt.Sprintf("[testEngine] %s: Sending a tx!\n", nodeNumber))
+		if err = exec.Command("bash", nodeExecutionDir+"/bitcoindo.sh", nodeNumber, "sendrawtransaction", tx.Hex).Run(); err != nil {
 			os.Stderr.WriteString(fmt.Sprintf("Error executing command: %s\n", err.Error()))
 		} else {
 			txCount += 1
@@ -224,7 +221,7 @@ func generateTxs(addresses []string, unspentOutputs [][]Credit) {
 
 func getCredit(addresses []string) (credits [][]Credit) {
 
-	btcCmd := exec.Command("bash", "/home/mgeier/ndecarli/bitcoindo.sh", os.Args[1], "credit")
+	btcCmd := exec.Command("bash", nodeExecutionDir+"/bitcoindo.sh", os.Args[1], "credit")
 
 	var outputs []UnspentOutput
 
@@ -251,9 +248,17 @@ func getCredit(addresses []string) (credits [][]Credit) {
 	return credits
 }
 
+/*
+	Para levantar mas rapidamente:
+	- Comentar el tiempo de espera inicial al cargar las addresses
+	- Disminuir el tiempo entre bloques de 10min a algo corto
+	- Disminuir el tiempo hasta que se empieza a generar la primer tx
+ */
+// Manda txs al nodo y mina bloques incluyendolas, hasta que se mata al nodo con una señal de sigterm
 func main(){
 
 	addresses, credit := getAddresses()
+	os.Stdout.WriteString("[testEngine] Finished getting addresses, starting the whole process\n")
 
 	go mineBlocks(addresses)
 
