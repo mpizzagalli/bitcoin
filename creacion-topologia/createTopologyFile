@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Parametros
+numnodes=${2:-1}
+
+# Generate first json file (FIXME: unhardcode the input file)
+g++ genJson.cpp -o .exec-results/genJson -std=c++11
+./.exec-results/genJson < btcNodesCountryDistribution > .exec-results/btcNodesCountryDistribution.json
+
+# Generate second json file (FIXME: unhardcode the number of nodes)
+/usr/local/go/bin/go run generateWorldTopo.go .exec-results/worldTopology .exec-results/btcNodesCountryDistribution.json $numnodes
+
+# Generate the fog file
+/usr/local/go/bin/go run graphToFog.go .exec-results/worldTopology .exec-results/worldTopology.json
+
+# Launch sherlock fog with the fog file from previous step
+# /usr/local/go/bin/go run launchSherlockfog.go .exec-results/worldTopology.fog .exec-results/worldTopologyips.txt
