@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"os"
 	"math/rand"
+	"fmt"
 )
 
 const basePort int = 11000
@@ -74,6 +75,7 @@ func ListenIncomingPackets(c *net.UDPConn) {
 	lastFlushTime := time.Now().UnixNano()
 	for {
 		_, senderAddr, _ = c.ReadFromUDP(buff)
+		//os.Stdout.WriteString(fmt.Sprintf("[pingEngine]: Received ping, log has length %d\n", len(Log)))
 		receptionTime = time.Now().UnixNano()
 		AddLogEntry(buff, encodePacket(receptionTime), PortToNode(senderAddr.Port))
 		if len(Log) >= 8190 || time.Duration(receptionTime - lastFlushTime) > time.Minute * 5 {
@@ -89,6 +91,15 @@ func flushBufer(logFile *os.File){
 	}
 }
 
+/*
+	Envia mensajes de ping a otros binarios exactamente iguales en otras maquinas
+	A medida que recive pings los registra en un archivo, el cual solo puede ser leido mediante parseando-resultados/decodePings.go
+	Tarda un poco en que haya algo en este archivo, cada 8192 lineas es que se flushea el buffer a disco
+
+	Parametros:
+	- Numero total de nodos
+	- Id del nodo al que este archivo esta asociado
+ */
 func main(){
 
 	if len(os.Args) < 3 {
@@ -119,13 +130,18 @@ func main(){
 
 		if r >= nodeNumber {r++}
 
+		//os.Stdout.WriteString(fmt.Sprintf("[pingEngine] %d: Attempting to send stuff\n", nodeNumber))
+		// Esto requiere que la conversion entre puerto e ip este registrada en algun lado
+		// Asumo que para esto requerimos utilizar sherlockfog, por lo que localmente no se puede testear sin cambiar el codigo
 		if targetIp, _ = net.LookupIP("n"+strconv.FormatInt(r, 10)); len(targetIp) > 0 {
 			addr.Port = NodeToPort(int(r))
+			// Para pruebas locales cambiar esto por net.ParseIP("127.0.0.1")
 			addr.IP = targetIp[0]
 
 			b = encodePacket(time.Now().UnixNano())
 
 			c.WriteToUDP(b, &addr)
+			//os.Stdout.WriteString(fmt.Sprintf("[pingEngine] %d: Sending ping to %d\n", nodeNumber, r))
 		}
 
 		r = sleepRndGen.Int63n(1024)

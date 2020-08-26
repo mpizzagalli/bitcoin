@@ -14,6 +14,7 @@ struct country {
 
 map<string, double> innerLat;
 
+// Parsea la informacion que se contiene de los paises, es decir su id, proporcion y latencias internas
 void parseCountries() {
 	cout << "\t\"country_distribution\":[\n";
 
@@ -41,11 +42,15 @@ void parseCountries() {
 			*/
 			if ((cnt >= 23 && id != "BLR") || id == "GEO" || id == "ISL") { 
 				if (id == "USA") {
+					// Se distribuyen los nodos de estados unidos en las regiones E y O
+					// Estas tienen inner latencies hardcodeadas
 					v.push_back({"USA-E", ((double)cnt)*0.7});
 					innerLat["USA-E"] = 20.0;
 					v.push_back({"USA-W", ((double)cnt)*0.3});
 					innerLat["USA-W"] = 40.0;
 				} else if (id == "CHN") {
+					// Se distribuyen los nodos de china en las regiones N y S
+					// Estas tienen inner latencies hardcodeadas
 					v.push_back({"CHN-N", ((double)cnt)*0.7});
 					innerLat["CHN-N"] = 26.0;
 					v.push_back({"CHN-S", ((double)cnt)*0.3});
@@ -85,6 +90,7 @@ void printLatency(string &a, string &b, double latency) {
 	cout << "\t\t}";
 }
 
+// Parsea la informacion de latencias externas entre paises
 void parseLatencies(){
 	cout << "\t\"country_latency\":[\n";
 
@@ -214,6 +220,7 @@ void outputPool(string &id, double share, int n){
 	cout << "\t\t}";
 }
 
+// Parsea la informacion de los pools, hashing power y de donde son los nodos del pool y su hashing power proporsional
 void parsePools(){
 	cout << "\t\"pool_distribution\":[\n";
 
@@ -232,6 +239,25 @@ void parsePools(){
 	cout << "\n\t]\n";
 }
 
+/*
+	Parametros:
+	- Input texto plano
+	- Output json con informacion parseada
+
+	Input:
+		Cantidad de paises
+		[Id pais | Nombre pais | # nodos en pais | inner latency]
+
+		Cantidad de paises conectados entre si
+		Id de paises conectados a algun otro
+		[Latencias a cada uno de los otros paises]
+
+		[Id pool | Proporsion hashing power | Cantidad de nodos | [Id pais | Proporsion hp en pool]]
+	Output json:
+		Distribucion de paises: Id | Share de nodos vs red | inner latency / 2
+		Latencias entre paises: Pais A | Pais B | Latencia
+		Hashing power de los pools: Id | Proporsion hashing power | [Id pais | Proporsion hp en pool]
+ */
 int main(){
 	
 	cout << "{" << endl;

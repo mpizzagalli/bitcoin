@@ -32,6 +32,14 @@ void printPercentileTimes(string &tmp){
 	times.clear();
 }
 
+// Parses lines of format
+//		id | hash | parent | # tx | (??? | time | ???)* | (??? | time2 | ???)*
+// Printing for each
+//		id | hash | parent | # tx
+//		(time at intervals)*
+//		last time | avg time 
+//		(time2 at intervals)*
+//		last time2 | avg time2
 int main(){
 	
 	int i = 0;

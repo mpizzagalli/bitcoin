@@ -17,6 +17,7 @@ type block struct {
 	Time time.Time
 }
 
+// Creates a file using the i-th program parameter as it's path
 func createFile(i int) (blkchnFile *os.File) {
 	var err error
 
@@ -27,6 +28,7 @@ func createFile(i int) (blkchnFile *os.File) {
 	return blkchnFile
 }
 
+// Returns the string of the passed log file (first parameter)
 func readLogFile() string {
 	if b, err := ioutil.ReadFile(os.Args[1]); err == nil {
 		return string(b)
@@ -36,6 +38,8 @@ func readLogFile() string {
 	}
 }
 
+// Returns between 1152000 (if not it doesn't do anything) and 1154482 (remainder are ignored)
+// lines from the log file
 func getBlockLines() (val []string) {
 	data := readLogFile()
 	s := strings.Split(data, "\n")
@@ -43,9 +47,11 @@ func getBlockLines() (val []string) {
 	if max > len(s) {
 		max = len(s)
 	}
-	if len(s)>1152000 {
+	// Note that if this min is changed then it should be at least of value 1 due to "Starting bitcoin client at"
+	const min = 1152000
+	if len(s)>min {
 		val = make([]string, 0)
-		for i:=1152000; i<max; i++ {
+		for i:=min; i<max; i++ {
 			if len(s[i]) > 0 && s[i][0] != '2' {
 				buff := make([]byte, len(s[i]))
 				_ = copy(buff, s[i])
@@ -56,20 +62,27 @@ func getBlockLines() (val []string) {
 	return
 }
 
+// Parses a string number to a int64
 func getNsec(s string) int64 {
 	n, _ := strconv.ParseInt(s, 10, 64)
 	return n
 }
 
+// Returns the block level of a given entry
+// FIXME: This is really inefficient as it doesn't save useful block level calculations
 func resolveLevel(i int, blockLevel map[string]int, lines []string, entry []string) int {
 
+	// If the block level of the parent was already calculated just return 1 plus it
 	if h, b := blockLevel[entry[2]]; b {
 		return h+1
 	}
 
+	// Searches for the parent of the entry passed
+	// FIXME: The parent entry should be backwards... why does this search forward?
+	//		  If properly called this line is never reached as the parent should have been already parsed
 	for j := i+1; j<len(lines); j++ {
 		if parentEntry := strings.Split(lines[j], " "); len(parentEntry)>2 && parentEntry[0] != "2" && parentEntry[1] == entry[2] {
-			return  resolveLevel(j, blockLevel, lines, parentEntry)+1
+			return resolveLevel(j, blockLevel, lines, parentEntry)+1
 		}
 	}
 
@@ -78,12 +91,15 @@ func resolveLevel(i int, blockLevel map[string]int, lines []string, entry []stri
 	return 0
 }
 
+// Obtains some of the entries in the parameter log file sorted by "block level"
 func parseLog() [][]block {
 
+	// Map: block hash -> block level (proportional to block number)
 	blockLevel := make(map[string]int)
 
 	lines := getBlockLines()
 
+	// FIXME: If there're less lines than the minimum this fails as lines is empty
 	entry := strings.Split(lines[0], " ")
 
 	blockLevel[entry[1]] = -1
@@ -94,6 +110,7 @@ func parseLog() [][]block {
 
 		entry = strings.Split(lines[i], " ")
 
+		// Parse only if it's a log of a mined/received block
 		if entry[0] != "2" && len(entry)>2 {
 
 			h := resolveLevel(i, blockLevel, lines, entry)
@@ -103,9 +120,9 @@ func parseLog() [][]block {
 				blockChain[h] = make([]block, 0)
 			}
 
+			// Creates an entry with the line data for returning
 			if entry[0]=="0" {
 				blockChain[h] = append(blockChain[h], block{Hash:entry[1], Parent:entry[2], Time:time.Unix(0, getNsec(entry[4]))})
-
 			} else {
 				blockChain[h] = append(blockChain[h], block{Hash:entry[1], Parent:entry[2], Time:time.Unix(0, getNsec(entry[3]))})
 			}
@@ -115,12 +132,14 @@ func parseLog() [][]block {
 	return blockChain
 }
 
+// Writes a line to the passed file
 func writeToFile(file *os.File, content string) {
 	if _, err := file.Write([]byte(content)); err != nil {
 		os.Stderr.WriteString(fmt.Sprintf("Failed writing to %s.\n %s\n", file.Name(), err.Error()))
 	}
 }
 
+// Writes the hashes of the blocks on a file separated by spaces, one line per level
 func writeChain(chain [][]block) {
 
 	blkchnFile := createFile(2)
@@ -134,6 +153,8 @@ func writeChain(chain [][]block) {
 	}
 }
 
+// Parses the first block of at most 1200 levels of the blockchain, writing into a file:
+//		timestamp | time since first level | time since previous level | mean diff between levels (till this one)
 func writeHeightTime(chain [][]block) {
 
 	heightFile := createFile(3)
@@ -146,23 +167,31 @@ func writeHeightTime(chain [][]block) {
 
 	var i int64
 
+	// This parses at most the first 1200 levels of the blockchain, with only the first entry from each
 	for i = 0; i<int64(len(chain)) && len(chain[i])>0 && i<1200; i++ {
 
+		// s << timestamp of the first block of the level
 		s := fmt.Sprintf("%d %s", len(chain[i]), chain[i][0].Time.Format(timeFormat))
 
+		// diff <- time since the first entry
 		diff := chain[i][0].Time.Sub(initTime)
 
+		// s << time since the first entry
 		s += fmt.Sprintf(" %d:%d:%d ", int64(diff.Hours()), int64(diff.Minutes())%60, int64(diff.Seconds()+0.5)%60)
 
+		// diff <- time since the previous entry
 		diff = chain[i][0].Time.Sub(lastTime)
 
+		// meanDiff <- accumlator of diferences
 		meanDiff += diff.Nanoseconds()
 
+		// s << time since the previous entry
 		s += fmt.Sprintf("+%d seconds ", int64(diff.Seconds()+0.5))
 
 
 
 		if (i>0) {
+			// s << mean difference between blocks
 			s += fmt.Sprintf("- Mean Diff: %d seconds\n", ((meanDiff/(i))+500000000)/1000000000)
 		} else {
 			s += "\n"
@@ -178,6 +207,12 @@ func writeHeightTime(chain [][]block) {
 }
 
 
+/*
+	Parameters:
+	- Input node log file (btcCoreLogN_)
+	- Output block hashes file (by level)
+	- Output processed block timestamps file (by level)
+ */
 func main(){
 	chain := parseLog()
 

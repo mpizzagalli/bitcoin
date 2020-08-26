@@ -11,6 +11,7 @@ import (
 const timeFormat = "15:04:05.999999"
 var nodeNumber int64
 
+// Reads the specified pings file (according to selected node)
 func readPingsLogFile() []byte {
 	if b, err := ioutil.ReadFile(fmt.Sprintf("%spingLogN%d",os.Args[2], nodeNumber)); err == nil {
 		return b
@@ -20,6 +21,7 @@ func readPingsLogFile() []byte {
 	}
 }
 
+// Creates a file for the output of the ping decoding
 func createFile() (scriptFile *os.File) {
 	var err error
 
@@ -74,6 +76,13 @@ func decodeLog(log []byte, scriptFile *os.File) {
 	}
 }
 
+/*
+	Parameters:
+	- Path to folder for outputing the results
+		Logs of lines: Packet from node at port $PORT had a delay of $DELAY at $RECEIVE_TIME
+	- Path to folder with input ping logs
+	- Node number being analized
+*/
 func main(){
 
 	if len(os.Args) < 4 {

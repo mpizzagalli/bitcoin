@@ -80,6 +80,7 @@ func createFile() (scriptFile *os.File) {
 	return scriptFile
 }
 
+// Parseo del archivo de input a un objeto DistributionJson
 func parseJson() (topology DistributionJson) {
 
 	if jsonBytes, err := ioutil.ReadFile(os.Args[2]); err != nil {
@@ -90,6 +91,7 @@ func parseJson() (topology DistributionJson) {
 	return
 }
 
+// Parseo de la cantidad de nodos BTC que deseamos tener
 func parseAmountOfBtcNodes() int {
 
 	var err error
@@ -118,12 +120,15 @@ func minimum(a int, b int) int {
 	}
 }
 
+// Dada una cantidad de nodos, se los distribuyen entre los paises de acuerdo a los pools y la proporsion de nodos por pais
 func calculateHostsPerCountry(data *DistributionJson, amountOfNodes int) map[string]int {
 
 	hostsRemaining := amountOfNodes
 
+	// Mapa: Pais -> cantidad de nodos
 	hostsPerCountry := make(map[string]int)
 
+	// Utiliza nodos para tener uno por pool por pais (ya ordenados por proporicion de la red)
 	for i:=0; i<len(data.Pools); i++ {
 		for j:=0; j<len(data.Pools[i].Nodes) && hostsRemaining > 0; j++ {
 			hostsPerCountry[data.Pools[i].Nodes[j].Country]++
@@ -133,18 +138,23 @@ func calculateHostsPerCountry(data *DistributionJson, amountOfNodes int) map[str
 
 	nodesAmnt := float64(amountOfNodes)
 
+	// Guarda en la data la cantidad de nodos que corresponderia a cada pais
 	for i:=0; i<len(data.CountryDistribution); i++ {
 		data.CountryDistribution[i].BtcNodes = data.CountryDistribution[i].NetworkShare * nodesAmnt
 	}
 
+	// Ordena los paises
 	sort.Sort(data.CountryDistribution)
 
 	var z int = -1
 
+	// Aumenta la cantidad de nodos de algunos paises, de acuerdo a la proporsion que deberian tener
 	for i := 0; i < len(data.CountryDistribution); i++ {
 		desiredAmount := int(data.CountryDistribution[i].BtcNodes)
 		if (desiredAmount == 0) {z=i}
+		// Maximo entre cantidad de nodos x pools y cantidad por proporsion
 		effectiveAmount := maximum(hostsPerCountry[data.CountryDistribution[i].Id], desiredAmount)
+		// Libera temporalmente la cantidad de nodos por pool
 		hostsRemaining += hostsPerCountry[data.CountryDistribution[i].Id]
 		effectiveAmount = minimum(effectiveAmount, hostsRemaining)
 		hostsRemaining -= effectiveAmount
@@ -152,6 +162,7 @@ func calculateHostsPerCountry(data *DistributionJson, amountOfNodes int) map[str
 		hostsPerCountry[data.CountryDistribution[i].Id] = effectiveAmount
 	}
 
+	// Distribuye el resto de los nodos disponibles entre los paises a los que le falte
 	for z>=0 && hostsRemaining>0 {
 		if (data.CountryDistribution[z].BtcNodes > 0) {
 			data.CountryDistribution[z].BtcNodes -= 1.0
@@ -165,6 +176,7 @@ func calculateHostsPerCountry(data *DistributionJson, amountOfNodes int) map[str
 
 	z=len(data.CountryDistribution)-1
 
+	// Si quedan aun mas se distribuyen uniformemente entre los paises
 	for hostsRemaining>0 {
 		hostsRemaining--
 		hostsPerCountry[data.CountryDistribution[z].Id]++
@@ -178,14 +190,17 @@ func calculateHostsPerCountry(data *DistributionJson, amountOfNodes int) map[str
 	return hostsPerCountry
 }
 
+// Configuraciones de los nodos router de cada pais, incluyendo su conexion a los nodos de cada uno de los otros paises
 func generateNetwork(data *DistributionJson, amountOfNodes int) (hostNetwork network, countryIdtoHostId map[string]int, hostsPerCountry map[string]int) {
 
 	hostsPerCountry = calculateHostsPerCountry(data, amountOfNodes)
 
 	hostNetwork.Connections = make([]NetworkConnection, 0)
 
+	// Mapa de id de pais a id de nodo de routeo asociado + 1
 	countryIdtoHostId = make(map[string]int)
 
+	// Mapa de id de pais a mapa de id de pais a bool, para marcar si agregamos una conexion o no
 	addedConnections := make(map[string]map[string]bool)
 
 	for i, j := 0, 0; i< len(data.CountryDistribution); i++ {
@@ -203,12 +218,13 @@ func generateNetwork(data *DistributionJson, amountOfNodes int) (hostNetwork net
 		}
 	}
 
+	// Agregamos ejes tal como esta configurado en CountryLatency
 	for i:=0; i<len(data.CountryLatency); i++ {
 
 		countryA := data.CountryLatency[i].A
 		countryB := data.CountryLatency[i].B
 		
-		//Agregamos el enlace si ambos paises tienen hosts y no agregamos el inverso
+		// Agregamos el enlace entre routers si ambos paises tienen hosts y no agregamos el inverso
 		if hostsPerCountry[countryA] > 0 && hostsPerCountry[countryB] > 0 && (!addedConnections[countryB][countryA]) {
 
 			hostA := countryIdtoHostId[countryA]-1
@@ -232,8 +248,11 @@ func generateNodes(data *DistributionJson, countryIdtoHostId map[string]int, hos
 
 	hpLeft := 1.0
 
-	for i:=0; i<len(data.Pools); i++ {
-		for j:=0; j<len(data.Pools[i].Nodes); j++ {
+	// Agrega de un nodo por cada uno de los mineros de los pools
+	// Se realiza esto mientras haya nodos disponibles de los configurados
+	// @precambio: no se hacian chequeos de amountOfNodes en ninguno de los dos fors, ocasionando que minimo 45 nodos sean necesarios (por los datos reales utilizados)
+	for i:=0; i<len(data.Pools) && amountOfNodes>0; i++ {
+		for j:=0; j<len(data.Pools[i].Nodes) && amountOfNodes>0; j++ {
 			nodeId := len(btcNodesList)
 			nodeHp := data.Pools[i].HPShare * data.Pools[i].Nodes[j].PoolShare
 			hpLeft -= nodeHp
@@ -241,12 +260,14 @@ func generateNodes(data *DistributionJson, countryIdtoHostId map[string]int, hos
 			hostsPerCountry[data.Pools[i].Nodes[j].Country]--
 			countryIdtoHostId[data.Pools[i].Nodes[j].Country]++
 			btcNodesList = append(btcNodesList, btcNode{Id:nodeId, HashingPower:nodeHp, Host:nodeHost})
+			amountOfNodes--
 		}
-		amountOfNodes -= len(data.Pools[i].Nodes)
 	}
-	
+
+	// Aunque esta division pueda quedar en indefinido (o negativo) la variable no se usara en ese caso
 	meanHpPerNode := hpLeft/float64(amountOfNodes)
 
+	// Agrega los nodos restantes con hp distribuido uniformemente
 	for k, v := range hostsPerCountry {
 		for ; v>0; v-- {
 			nodeId := len(btcNodesList)
@@ -263,6 +284,7 @@ func generateNodes(data *DistributionJson, countryIdtoHostId map[string]int, hos
 
 	rndSlice := make([]int, 0)
 
+	// Agregamos ejes aleatorios entre los nodos
 	for j:=1; j<len(btcNodesList); j++ {
 
 		i := indexOrder[j-1]
@@ -302,6 +324,16 @@ func writeTopology(hostNetwork network, nodes []btcNode) {
 	}
 }
 
+/*
+	Crea topologia:
+	- Nodos router (conectados entre ellos como especificado y con los nodos de cada pais) 
+	- Nodos BTC con cierto hashing power (conectados entre ellos de forma medio aleatoria)
+
+	Parametros:
+	- Nombre del archivo de output
+	- Nombre del archivo de input (igual al producido por genJson.cpp)
+	- Cantidad de nodos
+ */
 func main(){
 
 	if len(os.Args) < 4 {

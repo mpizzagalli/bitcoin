@@ -11,6 +11,12 @@ import (
 
 const flushInterval = 1024
 
+/*
+	Utiliza /proc/net/dev para loggear la cantidad de bytes recividos por la ultima de las interfaces.
+	Es decir, de la siguiente tabla lo que logguea es Interfaces[n-1].Receive.bytes
+		Inter-|   Receive                                                |  Transmit
+		face  |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed
+*/
 func getCurrentByteCount() int64 {
 
 	var lines []string
@@ -49,6 +55,10 @@ func createFile() (scriptFile *os.File) {
 	return scriptFile
 }
 
+/*
+	Ejecutable (sin parametros) que loggea el bandwith utilizado actualmente (de forma pelada y raw)
+	Este logging no se hace de forma inmediata sino que luego de las flushInterval mediciones
+ */
 func main() {
 
 	var act int64
@@ -66,6 +76,7 @@ func main() {
 
 		act = getCurrentByteCount()
 
+		//os.Stdout.WriteString(fmt.Sprintf("[bandwithMonitor] Registre la bandwith, tamaño del buffer\n", len(buff)))
 		if buff = append(buff, act-prev); len(buff)>=flushInterval {
 			printBuffer(buff, logFile)
 			buff = make([]int64, 0, flushInterval)

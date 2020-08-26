@@ -26,13 +26,13 @@ type Delay struct {
 }
 
 type Block struct {
-	AcceptDelays DelaySort
-	Time time.Duration
-	DiscoveryDelays DelaySort
-	NTx int64
-	Parent string
-	Width int16
-	Height int16
+	AcceptDelays DelaySort		// Mined or broadcasted block time
+	Time time.Duration			// Mined time
+	DiscoveryDelays DelaySort	// Mined or broadcasted header time
+	NTx int64					// # of txs
+	Parent string				// Parent block
+	Width int16					// Distance to the main chain (FIXME: to be confirmed)
+	Height int16				// Height of the block (or block number)
 	//Children int16
 }
 
@@ -70,6 +70,7 @@ func (a durationSort) Len() int           { return len(a) }
 func (a durationSort) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a durationSort) Less(i, j int) bool { return a[i] < a[j] }
 
+// Reads the log file of a node into a string
 func readLogFile(node int) string {
 	if b, err := ioutil.ReadFile(fmt.Sprintf("%s%s%d", os.Args[1], filePrefix, node)); err == nil {
 		return string(b)
@@ -79,6 +80,7 @@ func readLogFile(node int) string {
 	}
 }
 
+// Gets the lines of the node log file
 func getBlockLines(node int) (val []string) {
 	data := readLogFile(node)
 	/*s := strings.Split(data, "\n")
@@ -99,11 +101,14 @@ func getBlockLines(node int) (val []string) {
 	return strings.Split(data, "\n")
 }
 
+// Get time in nanosecond from string
 func getNsec(s string) int64 {
 	n, _ := strconv.ParseInt(s, 10, 64)
 	return n
 }
 
+// Fills blockchain with block info (on delays and mining info)
+// Fills lineRegistry with the node log lines
 func addNodeInfo(blockchain map[string]Block, node int, lineRegistry *[][]string) {
 
 	lines := getBlockLines(node)
@@ -118,8 +123,10 @@ func addNodeInfo(blockchain map[string]Block, node int, lineRegistry *[][]string
 
 		entry = strings.Split(lines[i], " ")
 
+		// FIXME: Why is this check needed? Aren't all expected lines to fullfil this?
 		if len(entry)>2 {
 
+			// If it's the first time we spot the block (as we are traversing all nodes logs) we initialize stuff
 			if block, contained = blockchain[entry[1]]; !contained {
 				block.AcceptDelays = make([]Delay, 0, 240)
 				block.DiscoveryDelays = make([]Delay, 0, 240)
@@ -127,16 +134,16 @@ func addNodeInfo(blockchain map[string]Block, node int, lineRegistry *[][]string
 				//block.Children = 0
 			}
 
-			if entry[0]=="0" {
+			if entry[0]=="0" { // Mined block
 				block.AcceptDelays = append(block.AcceptDelays, Delay{time.Duration(getNsec(entry[4])), byte(node)})
 				block.Time = time.Duration(getNsec(entry[4]))
 				block.DiscoveryDelays = append(block.DiscoveryDelays, Delay{time.Duration(getNsec(entry[4])), byte(node)})
 				block.NTx, _ = strconv.ParseInt(entry[3], 10, 64)
 				block.Parent = entry[2]
-			} else if entry[0]=="1" {
+			} else if entry[0]=="1" { // Broadcasted block
 				block.AcceptDelays = append(block.AcceptDelays, Delay{time.Duration(getNsec(entry[3])), byte(node)})
 				block.Parent = entry[2]
-			} else {
+			} else { // Broadcasted block header
 				block.DiscoveryDelays = append(block.DiscoveryDelays, Delay{time.Duration(getNsec(entry[2])), byte(node)})
 			}
 
@@ -146,6 +153,7 @@ func addNodeInfo(blockchain map[string]Block, node int, lineRegistry *[][]string
 
 }
 
+// Converts the AcceptTimes and DiscoveryTimes into proper sorted delays
 func computeDelays(blockchain map[string]Block) {
 
 	for _, v := range blockchain {
@@ -160,6 +168,7 @@ func computeDelays(blockchain map[string]Block) {
 	}
 }
 
+// Gets the node logs lines and blocks info (mostly concerning delays)
 func createBlockChain(nodeAmount int) (map[string]Block , [][]string) {
 
 	blockchain := make(map[string]Block)
@@ -175,6 +184,7 @@ func createBlockChain(nodeAmount int) (map[string]Block , [][]string) {
 	return blockchain, lineRegistry
 }
 
+// Calculates the height of a given block (any block hash not found is the genesis)
 func getHeight(blockchain map[string]Block, heights map[string]int, block *Block, hash string) int {
 
 	if h, ok := heights[hash]; ok {
@@ -197,6 +207,7 @@ func getHeight(blockchain map[string]Block, heights map[string]int, block *Block
 	}
 }
 
+// Calculates the heights of every block processed
 func calculateHeights(blockchain map[string]Block) map[string]int {
 
 	heights := make(map[string]int)
@@ -208,6 +219,7 @@ func calculateHeights(blockchain map[string]Block) map[string]int {
 	return heights
 }
 
+// Returns the blocks per height, while updating the blockchain data structure with it
 func getHeightList(blockchain map[string]Block) [][]string {
 	//return strings.Split(readHieghtFile(), "\n")
 
@@ -245,6 +257,7 @@ func writeToFile(file *os.File, content string) {
 	}
 }
 
+// Solves the width (steps to main chain) for a selected block (off the main chain)
 func solveWidth(block *Block, blockchain map[string]Block){
 
 	if parentBlock, ok := blockchain[block.Parent]; ok {
@@ -261,8 +274,11 @@ func solveWidth(block *Block, blockchain map[string]Block){
 	return
 }
 
+// Updates the width (distance to the main chain) of every block
 func updateWidthInfo(list [][]string, blockchain map[string]Block) {
 
+	// FIXME: this doesn't seem to work as it's a bit arbitrary
+	// Finds the tip of the chain
 	var i int
 	for i=amountOfBlocks-1; i<len(list); i++ {
 		if len(list[i])==1 {
@@ -293,6 +309,7 @@ func updateWidthInfo(list [][]string, blockchain map[string]Block) {
 	var block Block
 	var ok bool
 
+	// Sets width to 0 for the prefix that coins the block
 	for block, ok = blockchain[parent]; ok; block, ok = blockchain[parent] {
 		block.Width = 0
 		blockchain[parent] = block
@@ -301,6 +318,7 @@ func updateWidthInfo(list [][]string, blockchain map[string]Block) {
 
 	var hash string
 
+	// Calculates the width of the remaining of the blocks
 	for hash, block = range(blockchain) {
 		if block.Width < 0 {
 			solveWidth(&block, blockchain)
@@ -430,6 +448,7 @@ func printPropagationTimes(list [][]string, blockchain map[string]Block, nodeAmo
 
 }
 
+// Creates a blockTimes file on the output folder
 func createBlockTimeFile() (outFile *os.File) {
 	var err error
 
@@ -440,6 +459,7 @@ func createBlockTimeFile() (outFile *os.File) {
 	return outFile
 }
 
+// Creates a kevin file on the output folder
 func createKevinFile() (outFile *os.File) {
 	var err error
 
@@ -450,7 +470,7 @@ func createKevinFile() (outFile *os.File) {
 	return outFile
 }
 
-
+// Writes output to blockTimes and kevin files
 func writeBlockTimes(list [][]string, blockchain map[string]Block) int64 {
 
 	updateWidthInfo(list, blockchain)
@@ -494,13 +514,17 @@ func writeBlockTimes(list [][]string, blockchain map[string]Block) int64 {
 		for j=0; j<len(list[i]); j++ {
 			tmpBlock = blockchain[list[i][j]]
 			if tmpBlock.Width == 0 {
+				// Obtains the main chain block
 				block = tmpBlock
 			} else {
+				// Updates the fork info
 				forksInfo[tmpBlock.Width]++
 			}
+			// FIXME: Isn't the height repeated here?
 			writeToFile(kevinFile, fmt.Sprintf("%d %d %d %s %s %d\n", tmpBlock.DiscoveryDelays[0].node, tmpBlock.Time, tmpBlock.NTx, list[i][j], tmpBlock.Parent, tmpBlock.Height))
 		}
 
+		// FIXME: Only d update is ever used
 		for pendingTime, _ := range(pendingTimes) {
 			if pendingTime <= block.Time {
 				d++
@@ -508,6 +532,7 @@ func writeBlockTimes(list [][]string, blockchain map[string]Block) int64 {
 			}
 		}
 
+		// FIXME: Only d update is ever used
 		for j=0; j<len(list[i]); j++ {
 			tmpBlock = blockchain[list[i][j]]
 			if tmpBlock.Time <= block.Time {
@@ -527,14 +552,19 @@ func writeBlockTimes(list [][]string, blockchain map[string]Block) int64 {
 			}
 		}
 
+		// Writes to blockTimes:
+		//	# blocks for level | Time of the main chain block | # txs main chain block | Nearness of # of txs to BTC metric
 		s := fmt.Sprintf("%d %s %d %.3f", len(list[i]), time.Unix(0, int64(block.Time)).Format(timeFormat), block.NTx, prom)
 
+		// Writes to blockTimes different averages with # of txs
 		if i>=30 {
 			s += fmt.Sprintf(" %.3f", promprom/float64(i-29))
 		}
 
 		diff := block.Time - initTime
 
+		// Writes to block times
+		//	Time since first block
 		s += fmt.Sprintf(" %d:%d:%d ", int64(diff.Hours()), int64(diff.Minutes())%60, int64(diff.Seconds()+0.5)%60)
 
 		diff = block.Time - lastTime
@@ -543,6 +573,7 @@ func writeBlockTimes(list [][]string, blockchain map[string]Block) int64 {
 
 		s += fmt.Sprintf("+%d seconds ", int64(diff.Seconds()+0.5))
 
+		// Writes to block times averages of times between blocks
 		if i>0 {
 			s += fmt.Sprintf("- Mean Block Diff: %.3f seconds, Mean Height Diff: %.3f seconds\n", float64(((meanDiff/(d))+500000)/1000000)/1000.0, float64(((meanDiff/(i))+500000)/1000000)/1000.0)
 			if block.NTx < 7482 {
@@ -564,8 +595,10 @@ func writeBlockTimes(list [][]string, blockchain map[string]Block) int64 {
 		lastTime = block.Time
 	}
 
+	// Writes to block times averages of times between blocks and fullness of it's bodies
 	writeToFile(blockTimesFile, fmt.Sprintf("Mean Diff of blocks: %.3f seconds \nMean Diff of Heights: %.3f seconds\nBlocks Mean Percentage of Fullness: %f\n", float64(((meanDiff/(d))+500000)/1000000)/1000.0, float64(((meanDiff/(i))+500000)/1000000)/1000.0, promprom/float64(i-30)))
 
+	// Adds events for the blocks not full of txs
 	for j:=0; j<len(txBlocks); j++ {
 		step := (txBlocks[j].End- txBlocks[j].Start)/time.Duration(txBlocks[j].Amount)
 		for t,k :=txBlocks[j].Start+1,txBlocks[j].Amount; k>0 ;t,k = t+step, k-1 {
@@ -575,12 +608,15 @@ func writeBlockTimes(list [][]string, blockchain map[string]Block) int64 {
 
 	TxMedian, TxMean := calculateTxConfirmationTimes(events)
 
+	// Writes to block times average confirmation time
 	writeToFile(blockTimesFile, fmt.Sprintf("Median tx confirmation time was %f seconds\nAverage tx confirmation time was %f seconds\n", TxMedian.Seconds(), TxMean.Seconds()))
 
+	// Writes to block times percentage of blocks above fullness
 	for j:=1; j<10; j++ {
 		writeToFile(blockTimesFile, fmt.Sprintf("Percentage of blocks above %d of fullness: %f\n", j*10, (float64(avgs[j])/float64(i-30))*100.0))
 	}
 
+	// Writes to block times number of forks at each height
 	for j:=1; j<len(forksInfo) && forksInfo[j]>0; j++ {
 		writeToFile(blockTimesFile, fmt.Sprintf("Number of Forks of height %d: %d\n", j, forksInfo[j]))
 	}
@@ -588,6 +624,7 @@ func writeBlockTimes(list [][]string, blockchain map[string]Block) int64 {
 	return totalTransactions
 }
 
+// NOT USED
 func createTxFile() (outFile *os.File) {
 	var err error
 
@@ -598,6 +635,7 @@ func createTxFile() (outFile *os.File) {
 	return outFile
 }
 
+// NOT USED
 func readTxFile(node int) string {
 	if b, err := ioutil.ReadFile(fmt.Sprintf("%s%s%d", os.Args[1], txPrefix, node)); err == nil {
 		return string(b)
@@ -607,11 +645,13 @@ func readTxFile(node int) string {
 	}
 }
 
+// NOT USED
 func getTxLogLines(node int) (val []string) {
 	data := readTxFile(node)
 	return strings.Split(data, "\n")
 }
 
+// NOT USED
 func addTxData(file *os.File, node int) {
 
 	lines := getTxLogLines(node)
@@ -627,6 +667,7 @@ func addTxData(file *os.File, node int) {
 
 }
 
+// NOT USED
 func printTxData(nodeAmount int) {
 
 	file := createTxFile()
@@ -837,6 +878,7 @@ func printBlockchainData(nodeAmount int) {
 
 }
 
+// NOT USED
 func readPingLogFile(node int) []byte {
 	if b, err := ioutil.ReadFile(fmt.Sprintf("%s%s%d", os.Args[1], pingPrefix, node)); err == nil {
 		return b
@@ -846,6 +888,7 @@ func readPingLogFile(node int) []byte {
 	}
 }
 
+// NOT USED
 func decodeTimestamp(b []byte) (p int64) {
 	p = int64(b[7])
 	p |= int64(b[6]) << 8
@@ -858,12 +901,14 @@ func decodeTimestamp(b []byte) (p int64) {
 	return p
 }
 
+// NOT USED
 func decodeSender(b []byte) (p uint16) {
 	p = uint16(b[1])
 	p |= uint16(b[0]) << 8
 	return p
 }
 
+// NOT USED
 func getPingPackets(node int) []PingPacket {
 	data := readPingLogFile(node)
 
@@ -885,6 +930,7 @@ func getPingPackets(node int) []PingPacket {
 	return pingPackets
 }
 
+// NOT USED
 func addPingData(node int, pings [][][]int16) {
 
 	packets := getPingPackets(node)
@@ -896,6 +942,7 @@ func addPingData(node int, pings [][][]int16) {
 	return
 }
 
+// NOT USED
 func createPingFile() (outFile *os.File) {
 	var err error
 
@@ -906,6 +953,7 @@ func createPingFile() (outFile *os.File) {
 	return outFile
 }
 
+// NOT USED
 func printPingData() {
 
 	hostAmount, _ := strconv.Atoi(os.Args[4])
@@ -944,6 +992,19 @@ func printPingData() {
 	}
 }
 
+/*
+	Parameters:
+	- Input files folder: btcCoreLogN_
+	- Output files folder:
+		blockTimes:
+			Times between blocks
+			Fullness of blocks
+			Confirmation time of txs
+			Number of forks per height
+		kevin (por nivel):
+			Nodo minero | Timestamp | # txs | Numero de bloque | Parent hash | Numero de bloque
+	- Number of nodes
+ */
 func main(){
 
 	nodeAmount, _ := strconv.Atoi(os.Args[3])
