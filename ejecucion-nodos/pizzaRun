@@ -83,25 +83,24 @@ echo "Generamos una blockchain inicial"
 $gobin run $scriptdir/generateBlockchain.go $numnodes
 sleep 30s
 
-# echo "Esperamos que los nodos se estabilicen despues de recibir la blockchain inicial"
-# for (( nodeId=0; nodeId<$numnodes; nodeId++ ))
-# do
-#     $gobin run $scriptdir/semaphore.go $nodeId
-# done
+echo "Esperamos que los nodos se estabilicen despues de recibir la blockchain inicial"
+for (( nodeId=0; nodeId<$numnodes; nodeId++ ))
+do
+    $gobin run $scriptdir/semaphore.go $nodeId
+done
 
-# echo "Mato al nodo del historial"
-# bash $scriptdir/bitcoindo.sh $numnodes stop
-# sleep 1m
+echo "Mato al nodo del historial"
+bash $scriptdir/bitcoindo.sh $numnodes stop
+sleep 1m
 
-# # FIXME: Tengo algun forma de ver las cosas que loggea esto?
-# echo "Genero bloques y txs en cada uno de los nodos"
-# echo "Mentira no voy a correr nada, ya podes cortar esto..."
-# # nodeshp=$(bc -l <<< "1.0/$numnodes")
-# # for (( nodeId=0; nodeId<$numnodes; nodeId++ ))
-# # do
-# #     $gobin run $scriptdir/launcher.go $gobin run $scriptdir/testEngine.go $nodeId $nodeshp
-# #     sleep 1s
-# # done
+# FIXME: Tengo algun forma de ver las cosas que loggea esto?
+echo "Genero bloques y txs en cada uno de los nodos"
+nodeshp=$(bc -l <<< "1.0/$numnodes")
+for (( nodeId=0; nodeId<$numnodes; nodeId++ ))
+do
+    $gobin run $scriptdir/launcher.go $gobin run $scriptdir/testEngine.go $nodeId $nodeshp
+    sleep 1s
+done
 
 # Paro a los nodos BTC ante un SIGINT o un SIGTERM
 stopAllBTCNodes() {

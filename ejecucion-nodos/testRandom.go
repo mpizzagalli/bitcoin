@@ -35,15 +35,10 @@ func mineBlocks() {
 	for i := 0; ; i ^= 1 {
 		// Hardcodeado que el tiempo entre bloques sea propocional a los 10 min
 		random := rng.ExpFloat64()
-		// fmt.Println(random)
 		sleepTime = (random / simuLambda) * blockIntervalInSeconds
-		// fmt.Println("sleepTime: ", sleepTime)
 		sleepSeconds = time.Duration(sleepTime)
-		// fmt.Println("sleepSeconds: ", sleepSeconds)
 		sleepNanoseconds = time.Duration((sleepTime - float64(sleepSeconds)) * 1000000000.0)
-		// fmt.Println("sleepNanoseconds: ", sleepNanoseconds)
 		nextBlockTime = time.Duration(timestamp) + sleepSeconds*time.Second + sleepNanoseconds
-		// fmt.Println("nextBlockTime: ", nextBlockTime)
 
 		time.Sleep(nextBlockTime - time.Duration(time.Now().UnixNano()))
 

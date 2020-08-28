@@ -124,15 +124,15 @@ func main() {
 	var output2 []byte
 	var output3 []byte
 	var output4 []byte*/
-	for j := 0; j < 1; j++ {
+	for j := 0; j < 240; j++ {
 		for i := 0; i < n; i++ {
 			a := exec.Command("bash", nodeExecutionDir+"/bitcoindo.sh", os.Args[1], "generatetoaddress", "5", addresses[i][0])
-			fmt.Println(a.String())
-			// execCmd(a)
+			// fmt.Println(a.String())
+			execCmd(a)
 			time.Sleep(10 * time.Millisecond)
 			b := exec.Command("bash", nodeExecutionDir+"/bitcoindo.sh", os.Args[1], "generatetoaddress", "5", addresses[i][1])
-			fmt.Println(b.String())
-			// execCmd(b)
+			// fmt.Println(b.String())
+			execCmd(b)
 			time.Sleep(10 * time.Millisecond)
 			/*multiplyTransactions(output3, i, addresses)
 			multiplyTransactions(output4, i, addresses)
