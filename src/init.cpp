@@ -843,7 +843,8 @@ void InitLogging()
     fLogIPs = gArgs.GetBoolArg("-logips", DEFAULT_LOGIPS);
 
     int64_t nodeNumber = (gArgs.GetArg("-rpcport", 11000) - 8330) >> 1;
-    BCLog::InitStream(nodeNumber);
+    int64_t startingLogBlock = gArgs.GetArg("-start-log-at", 576000);
+    BCLog::InitStream(nodeNumber, startingLogBlock);
 
     std::string version_string = FormatFullVersion();
 #ifdef DEBUG
