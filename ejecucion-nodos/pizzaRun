@@ -33,7 +33,7 @@ find . -name 'btcCoreLogN*' -delete
 echo "Empiezo $numnodes nodo(s) BTC"
 for (( nodeId=0; nodeId<$numnodes; nodeId++ ))
 do
-    bash $scriptdir/invokeBitcoin.sh $nodeId -dificulta=0 -dbcache=3072
+    bash $scriptdir/invokeBitcoin.sh $nodeId -dificulta=0 -dbcache=3072 -start-log-at=7000
     # if (($nodeId<$numselfishnodes)); then
     #     bash $scriptdir/invokeBitcoin.sh $nodeId -dificulta=0 -dbcache=3072 -selfish-mine
     # else

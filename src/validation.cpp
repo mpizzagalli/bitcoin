@@ -602,7 +602,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
 
     // Check for conflicts with in-memory transactions
     std::set<uint256> setConflicts;
-    /*for (const CTxIn &txin : tx.vin)
+    for (const CTxIn &txin : tx.vin)
     {
         auto itConflicting = pool.mapNextTx.find(txin.prevout);
         if (itConflicting != pool.mapNextTx.end())
@@ -641,7 +641,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
                 setConflicts.insert(ptxConflicting->GetHash());
             }
         }
-    }*/
+    }
 
     {
         CCoinsView dummy;
@@ -1006,8 +1006,8 @@ static bool AcceptToMemoryPoolWithTime(const CChainParams& chainparams, CTxMemPo
     }
     // After we've (potentially) uncached entries, ensure our coins cache is still within its size limits
     CValidationState stateDummy;
-    //FlushStateToDisk(chainparams, stateDummy, FlushStateMode::PERIODIC);//FlushStateMode::NONE
-    FlushStateToDisk(chainparams, stateDummy, FlushStateMode::IF_NEEDED);//FlushStateMode::NONE
+    FlushStateToDisk(chainparams, stateDummy, FlushStateMode::PERIODIC);
+    // FlushStateToDisk(chainparams, stateDummy, FlushStateMode::IF_NEEDED);//FlushStateMode::NONE
     return res;
 }
 
@@ -2150,8 +2150,8 @@ bool static FlushStateToDisk(const CChainParams& chainparams, CValidationState &
         if (nLastFlush == 0) {
             nLastFlush = nNow;
         }
-        //int64_t nMempoolSizeMax = gArgs.GetArg("-maxmempool", DEFAULT_MAX_MEMPOOL_SIZE) * 1000000;
-        int64_t nMempoolSizeMax = DEFAULT_MAX_MEMPOOL_SIZE * 1000000;
+        int64_t nMempoolSizeMax = gArgs.GetArg("-maxmempool", DEFAULT_MAX_MEMPOOL_SIZE) * 1000000;
+        // int64_t nMempoolSizeMax = DEFAULT_MAX_MEMPOOL_SIZE * 1000000;
         int64_t cacheSize = pcoinsTip->DynamicMemoryUsage();
         int64_t nTotalSpace = nCoinCacheUsage + std::max<int64_t>(nMempoolSizeMax - nMempoolUsage, 0);
         // The cache is large and we're within 10% and 10 MiB of the limit, but we have time now (not in the middle of a block processing).
