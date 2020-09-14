@@ -13,12 +13,12 @@ type Configuration struct {
 
 // FIXME: Maybe this can be derived from the current location of this file?
 // Allows runnning all the scripts using this from anywhere
-var projectRoot = "/Users/mpizzagali/Tesis/btc-core"
+var projectToolingRoot = "/Users/mpizzagali/Tesis/btc-core/tooling"
 var config = Configuration{
-	NodeExecutionDir:    projectRoot + "/ejecucion-nodos",
-	AddressesDir:        projectRoot + "/ejecucion-nodos/.exec-results",
-	SherlockfogDir:      projectRoot + "/sherlockfog",
-	TopologyCreationDir: projectRoot + "/creacion-topologia",
+	NodeExecutionDir:    projectToolingRoot + "/ejecucion-nodos",
+	AddressesDir:        projectToolingRoot + "/ejecucion-nodos/.exec-results",
+	SherlockfogDir:      projectToolingRoot + "/sherlockfog",
+	TopologyCreationDir: projectToolingRoot + "/creacion-topologia",
 
 	BlockIntervalInSeconds: 20.0,
 }

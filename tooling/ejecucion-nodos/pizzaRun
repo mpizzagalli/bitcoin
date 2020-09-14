@@ -24,7 +24,7 @@ numselfishnodes=${3:-0}
 
 # Constantes
 gobin=go
-scriptdir=/Users/mpizzagali/Tesis/btc-core/ejecucion-nodos
+scriptdir=/Users/mpizzagali/Tesis/btc-core/tooling/ejecucion-nodos
 datadir=$scriptdir/.exec-results/data-0
 addressesdir=$scriptdir/.exec-results
 logdir=$scriptdir/logs
@@ -67,7 +67,7 @@ do
 done
 
 echo "Comienzo el nodo que genera el historial y lo conecto al resto de los nodos"
-bash $scriptdir/invokeBitcoin.sh $numnodes -dificulta=0 -dbcache=3072
+bash $scriptdir/invokeBitcoin.sh $numnodes -dificulta=0 -dbcache=3072 -log-folder=$runlogdir
 sleep 30s
 echo "Vamos a esperar que el nodo que genera el historial se estabilice"
 $gobin run $scriptdir/semaphore.go $numnodes
