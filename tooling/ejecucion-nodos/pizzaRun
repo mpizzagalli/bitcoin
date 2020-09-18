@@ -21,6 +21,7 @@ fi
 numnodes=${1:-1}
 runName=${2:-"test"}
 numselfishnodes=${3:-0}
+startLogAt=$(($numnodes*2400))
 
 # Constantes
 gobin=go
@@ -41,7 +42,7 @@ mkdir $runlogdir
 echo "Empiezo $numnodes nodo(s) BTC"
 for (( nodeId=0; nodeId<$numnodes; nodeId++ ))
 do
-    bash $scriptdir/invokeBitcoin.sh $nodeId -dificulta=0 -dbcache=3072 -start-log-at=7000 -log-folder=$runlogdir
+    bash $scriptdir/invokeBitcoin.sh $nodeId -dificulta=0 -dbcache=3072 -start-log-at=$startLogAt -log-folder=$runlogdir
     # if (($nodeId<$numselfishnodes)); then
     #     bash $scriptdir/invokeBitcoin.sh $nodeId -dificulta=0 -dbcache=3072 -selfish-mine
     # else
