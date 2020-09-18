@@ -37,9 +37,10 @@ std::ofstream logFile;
 unsigned int startLogAtBlock;
 unsigned int firstLoggedBlock;
 
-void BCLog::InitStream(int64_t nodeNumber, int64_t startingLogBlock, std::string destinationFolder) {
+void BCLog::InitStream(int64_t nodeNumber, int64_t startingLogBlock, std::string destinationFolder, int64_t miningMode) {
     logFile = std::ofstream(destinationFolder+"/btcCoreLogN"+i64tostr(nodeNumber), std::ios_base::out | std::ios_base::app );
     logFile << "Starting bitcoin client at " << std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count() << std::endl;
+    logFile << "Starting bitcoin client wih mining mode: " << miningMode << std::endl;
     startLogAtBlock = startingLogBlock;
     logFile << "Going to silence the log until block number: " << startLogAtBlock << std::endl;
     firstLoggedBlock = 0;

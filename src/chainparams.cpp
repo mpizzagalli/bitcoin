@@ -284,7 +284,7 @@ public:
  */
 class CRegTestParams : public CChainParams {
 public:
-    CRegTestParams(double desiredSimuLambda, uint32_t regtestDifficulty) {
+    CRegTestParams(double desiredSimuLambda, uint32_t regtestDifficulty, int64_t desiredMiningMode) {
         consensus.simuLambda = desiredSimuLambda;
 
         strNetworkID = "regtest";
@@ -382,6 +382,8 @@ public:
 
         /* enable fallback fee on regtest */
         m_fallback_fee_enabled = true;
+
+        miningMode = desiredMiningMode;
     }
 };
 
@@ -392,26 +394,26 @@ const CChainParams &Params() {
     return *globalChainParams;
 }
 
-std::unique_ptr<CChainParams> CreateChainParams(const std::string& chain, uint32_t regtestDifficulty, double simuLambda)
+std::unique_ptr<CChainParams> CreateChainParams(const std::string& chain, uint32_t regtestDifficulty, double simuLambda, int64_t desiredMiningMode)
 {
     if (chain == CBaseChainParams::MAIN)
         return std::unique_ptr<CChainParams>(new CMainParams());
     else if (chain == CBaseChainParams::TESTNET)
         return std::unique_ptr<CChainParams>(new CTestNetParams());
     else if (chain == CBaseChainParams::REGTEST)
-        return std::unique_ptr<CChainParams>(new CRegTestParams(simuLambda, regtestDifficulty));
+        return std::unique_ptr<CChainParams>(new CRegTestParams(simuLambda, regtestDifficulty, desiredMiningMode));
     throw std::runtime_error(strprintf("%s: Unknown chain %s.", __func__, chain));
 }
 
 void SelectParams(const std::string& network)
 {
-    SelectParams(network, 0, -1.0);
+    SelectParams(network, 0, -1.0, 0);
 }
 
-void SelectParams(const std::string& network, uint32_t regtestDifficulty, double simuLambda)
+void SelectParams(const std::string& network, uint32_t regtestDifficulty, double simuLambda, int64_t desiredMiningMode)
 {
     SelectBaseParams(network);
-    globalChainParams = CreateChainParams(network, regtestDifficulty, simuLambda);
+    globalChainParams = CreateChainParams(network, regtestDifficulty, simuLambda, desiredMiningMode);
 }
 
 void UpdateVersionBitsParameters(Consensus::DeploymentPos d, int64_t nStartTime, int64_t nTimeout)

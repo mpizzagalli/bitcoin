@@ -102,11 +102,13 @@ static bool AppInit(int argc, char* argv[])
         }
         // Check for -testnet or -regtest parameter (Params() calls are only valid after this clause)
         try {
+            fprintf(stdout, "src/bitcoind.cpp command line parsing");
             int64_t regtestDifficulty = gArgs.GetArg("-dificulta", 0);
             std::string desiredSimuLambda = gArgs.GetArg("-simuLambda", "-1");
             double simuLambda;
+            int64_t miningMode = gArgs.GetArg("-mining-mode", 0);
             ParseDouble(desiredSimuLambda, &simuLambda);
-            SelectParams(gArgs.GetChainName(), regtestDifficulty, simuLambda);
+            SelectParams(gArgs.GetChainName(), regtestDifficulty, simuLambda, miningMode);
         } catch (const std::exception& e) {
             fprintf(stderr, "Error: %s\n", e.what());
             return false;

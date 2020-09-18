@@ -481,7 +481,9 @@ bool ArgsManager::IsArgKnown(const std::string& key, std::string& error)
         if (arg_map.second.count(arg_no_net)) return true;
     }
 
-    return arg_no_net == std::string("-dificulta") || arg_no_net == std::string("-simuLambda") || arg_no_net == std::string("-start-log-at") || arg_no_net == std::string("-log-folder");
+    return arg_no_net == std::string("-dificulta") || arg_no_net == std::string("-simuLambda") || 
+           arg_no_net == std::string("-start-log-at") || arg_no_net == std::string("-log-folder") || 
+           arg_no_net == std::string("-mining-mode");
 }
 
 std::vector<std::string> ArgsManager::GetArgs(const std::string& strArg) const
