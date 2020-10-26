@@ -42,7 +42,7 @@ mkdir $runlogdir
 echo "Empiezo $numnodes nodo(s) BTC"
 for (( nodeId=0; nodeId<$numnodes; nodeId++ ))
 do
-    bash $scriptdir/invokeBitcoin.sh $nodeId -dificulta=0 -dbcache=3072 -start-log-at=$startLogAt -log-folder=$runlogdir
+    bash $scriptdir/invokeBitcoin.sh $nodeId -dificulta=0 -dbcache=3072 -start-log-at=$startLogAt -log-folder=$runlogdir -mining-mode=$(($nodeId%2))
     # if (($nodeId<$numselfishnodes)); then
     #     bash $scriptdir/invokeBitcoin.sh $nodeId -dificulta=0 -dbcache=3072 -selfish-mine
     # else

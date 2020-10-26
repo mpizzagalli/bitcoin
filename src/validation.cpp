@@ -189,6 +189,9 @@ public:
 
     void UnloadBlockIndex();
 
+    CBlockIndex* privateChainActiveTip();
+    int privateChainActiveHeight();
+
 private:
     bool ActivateBestChainStep(CValidationState& state, const CChainParams& chainparams, CBlockIndex* pindexMostWork, const std::shared_ptr<const CBlock>& pblock, bool& fInvalidFound, ConnectTrace& connectTrace);
     bool ConnectTip(CValidationState& state, const CChainParams& chainparams, CBlockIndex* pindexNew, const std::shared_ptr<const CBlock>& pblock, ConnectTrace& connectTrace, DisconnectedBlockTransactions &disconnectpool);
@@ -4863,3 +4866,19 @@ public:
         mapBlockIndex.clear();
     }
 } instance_of_cmaincleanup;
+
+CBlockIndex* privateChainActiveTip() {
+    if (Params().MiningMode() > 0) {
+        return chainActive.Tip();
+    } else {
+        return chainActive.Tip();
+    }
+};
+
+int privateChainActiveHeight() {
+    if (Params().MiningMode() > 0) {
+        return chainActive.Height();
+    } else {
+        return chainActive.Height();
+    }
+};
