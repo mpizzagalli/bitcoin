@@ -3555,6 +3555,14 @@ bool CChainState::AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CVali
 
 bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<const CBlock> pblock, bool fForceProcessing, bool *fNewBlock)
 {
+    if (chainparams.MiningMode() > 0) {
+        ProcessNewBlockAsSelfishMiner(chainparams, pblock, fForceProcessing, fNewBlock, chainparams.MiningMode());
+    }
+    return ProcessNewBlock2(chainparams, pblock, fForceProcessing, fNewBlock);
+}
+
+bool ProcessNewBlock2(const CChainParams& chainparams, const std::shared_ptr<const CBlock> pblock, bool fForceProcessing, bool *fNewBlock)
+{
     AssertLockNotHeld(cs_main);
 
     {
@@ -4886,3 +4894,10 @@ int privateChainActiveHeight() {
     }
 };
 
+bool ProcessNewBlockAsSelfishMiner(const CChainParams& chainparams, const std::shared_ptr<const CBlock> pblock, bool fForceProcessing, bool *fNewBlock, int miningMode) {
+    return ProcessNewBlockAsStandardSelfishMiner(chainparams, pblock, fForceProcessing, fNewBlock);
+};
+
+bool ProcessNewBlockAsStandardSelfishMiner (const CChainParams& chainparams, const std::shared_ptr<const CBlock> pblock, bool fForceProcessing, bool *fNewBlock) {
+    return ProcessNewBlock2(chainparams, pblock, fForceProcessing, fNewBlock);
+};
