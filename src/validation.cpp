@@ -4867,9 +4867,11 @@ public:
     }
 } instance_of_cmaincleanup;
 
+std::vector<CBlockIndex*> privateChain;
+
 CBlockIndex* privateChainActiveTip() {
     if (Params().MiningMode() > 0) {
-        return chainActive.Tip();
+        return privateChain.size() > 0 ? privateChain[privateChain.size() - 1] : chainActive.Tip();
     } else {
         return chainActive.Tip();
     }
@@ -4877,8 +4879,10 @@ CBlockIndex* privateChainActiveTip() {
 
 int privateChainActiveHeight() {
     if (Params().MiningMode() > 0) {
-        return chainActive.Height();
+        return privateChainActiveTip()->nHeight;
+        // return chainActive.Height() + privateChain.size();
     } else {
         return chainActive.Height();
     }
 };
+
