@@ -4900,4 +4900,23 @@ bool ProcessNewBlockAsSelfishMiner(const CChainParams& chainparams, const std::s
 
 bool ProcessNewBlockAsStandardSelfishMiner (const CChainParams& chainparams, const std::shared_ptr<const CBlock> pblock, bool fForceProcessing, bool *fNewBlock) {
     return ProcessNewBlock2(chainparams, pblock, fForceProcessing, fNewBlock);
+    // Aca tengo que re-implementar o mejor dicho proxear el ProcessNewBlock pero con la logica de minado egoista
+    // if (el bloque lo mine yo) {
+    //     agrego el bloque a la cadena privada
+    //     if (cadena publica + 1 == cadena privada y vengo de una prueba de suerte) {
+    //         publico el bloque nuevo para ganar el empate del que veniamo
+    //     }
+    // } else {
+    //     if (altura bloque nuevo (todavia no lo sume) > cadena privada) {
+    //         agrego el bloque nuevo a la cadena publica 
+    //         vacio toda la cadena privada y me pongo a minar sobre la publica
+    //     } else if (altura bloque nuevo (todavia no lo sume) == cadena privada) {
+    //         publico todos mis bloques y pruebo suerte // check de donde estoy sacando el padre para minar
+    //     } else if (altura bloque nuevo (todavia no lo sume) + 1 == cadena privada) {
+    //         publico todos mis bloques y gano el conflicto
+    //     } else {
+    //         publico solo mi primer bloque no publicado
+    //     }
+    // }
+    if ()
 };
