@@ -28,7 +28,7 @@ const txSleepMinimum = time.Millisecond * 112000
 var config = Config.GetConfiguration()
 var nodeExecutionDir = config.NodeExecutionDir
 var addressesDir = config.AddressesDir
-var blockIntervalInSeconds = 10.0
+var blockIntervalInSeconds = config.BlockIntervalInSeconds
 
 type UnspentOutput struct {
 	Address string `json:"address"`

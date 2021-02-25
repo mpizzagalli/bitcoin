@@ -844,7 +844,8 @@ void InitLogging()
 
     int64_t nodeNumber = (gArgs.GetArg("-rpcport", 11000) - 8330) >> 1;
     int64_t startingLogBlock = gArgs.GetArg("-start-log-at", 576000);
-    BCLog::InitStream(nodeNumber, startingLogBlock);
+    std::string destinationFolder = gArgs.GetArg("-log-folder", "logs");
+    BCLog::InitStream(nodeNumber, startingLogBlock, destinationFolder);
 
     std::string version_string = FormatFullVersion();
 #ifdef DEBUG

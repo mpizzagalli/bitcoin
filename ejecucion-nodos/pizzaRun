@@ -19,21 +19,29 @@ fi
 
 # Parametros
 numnodes=${1:-1}
-numselfishnodes=${2:-0}
+runName=${2:-"test"}
+numselfishnodes=${3:-0}
 
 # Constantes
 gobin=go
 scriptdir=/Users/mpizzagali/Tesis/btc-core/ejecucion-nodos
 datadir=$scriptdir/.exec-results/data-0
 addressesdir=$scriptdir/.exec-results
+logdir=$scriptdir/logs
 
-echo "Borramos los archivos de log de corridas viejas"
-find . -name 'btcCoreLogN*' -delete
+runlogdir=$scriptdir/logs/$(date +'%Y%m%d%H%M%S')-$runName
+
+echo "Going to create the folder $runlogdir to save the results inside for nodes $numnodes"
+
+mkdir $runlogdir
+
+# echo "Borramos los archivos de log de corridas viejas"
+# find . -name 'btcCoreLogN*' -delete
 
 echo "Empiezo $numnodes nodo(s) BTC"
 for (( nodeId=0; nodeId<$numnodes; nodeId++ ))
 do
-    bash $scriptdir/invokeBitcoin.sh $nodeId -dificulta=0 -dbcache=3072 -start-log-at=7000
+    bash $scriptdir/invokeBitcoin.sh $nodeId -dificulta=0 -dbcache=3072 -start-log-at=7000 -log-folder=$runlogdir
     # if (($nodeId<$numselfishnodes)); then
     #     bash $scriptdir/invokeBitcoin.sh $nodeId -dificulta=0 -dbcache=3072 -selfish-mine
     # else
