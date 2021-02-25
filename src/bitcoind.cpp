@@ -20,7 +20,6 @@
 #include <httprpc.h>
 #include <utilstrencodings.h>
 #include <walletinitinterface.h>
-//#include <arith_uint256.h>
 
 #include <boost/thread.hpp>
 

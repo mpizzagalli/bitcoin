@@ -34,11 +34,14 @@ const std::string discoveryTxt= "0 ";
 const std::string receptionTxt = "1 ";
 const std::string headerTxt = "2 ";
 std::ofstream logFile;
+unsigned int startLogAtBlock;
 unsigned int firstLoggedBlock;
 
-void BCLog::InitStream(int64_t nodeNumber) {
+void BCLog::InitStream(int64_t nodeNumber, int64_t startingLogBlock) {
     logFile = std::ofstream("btcCoreLogN"+i64tostr(nodeNumber), std::ios_base::out | std::ios_base::app );
     logFile << "Starting bitcoin client at " << std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count() << std::endl;
+    startLogAtBlock = startingLogBlock;
+    logFile << "Going to silence the log until block number: " << startLogAtBlock << std::endl;
     firstLoggedBlock = 0;
 }
 /*
@@ -56,7 +59,7 @@ void BCLog::WriteIntoThesisLogFile(const std::string &text, std::string &headerH
 
 void BCLog::LogNewBlockDiscovered(std::string headerHash, std::string parentHash, int64_t txAmount)
 {
-    if (++firstLoggedBlock > 576000){
+    if (++firstLoggedBlock > startLogAtBlock){
         auto timestamp = std::chrono::system_clock::now().time_since_epoch().count();
 
         logFile << discoveryTxt << headerHash << ' ' << parentHash << ' ' << txAmount << ' ' << timestamp << std::endl;
@@ -65,7 +68,7 @@ void BCLog::LogNewBlockDiscovered(std::string headerHash, std::string parentHash
 
 void BCLog::LogNewBlockReceived(std::string headerHash, std::string parentHash)
 {
-    if (firstLoggedBlock > 576000){
+    if (firstLoggedBlock > startLogAtBlock){
         auto timestamp = std::chrono::system_clock::now().time_since_epoch().count();
 
         logFile << receptionTxt << headerHash << ' ' << parentHash << ' ' << timestamp << std::endl;
@@ -74,7 +77,7 @@ void BCLog::LogNewBlockReceived(std::string headerHash, std::string parentHash)
 
 void BCLog::LogNewHeaderReceived(std::string headerHash)
 {
-    if (++firstLoggedBlock > 576000) {
+    if (++firstLoggedBlock > startLogAtBlock) {
         auto timestamp = std::chrono::system_clock::now().time_since_epoch().count();
 
         logFile << headerTxt << headerHash << ' ' << timestamp << std::endl;

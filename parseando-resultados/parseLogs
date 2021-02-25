@@ -1,0 +1,34 @@
+#!/bin/bash
+# Dado:
+# - Directorio con logs de nodo (btcCoreLogN*) y de ping (pingLogN*)
+# - Numero de nodo
+# Genera archivos con los resultados del experimento para ese nodo
+# FIXME: Generalizar para que funcione para todos los nodos?
+
+logDirectory=$1
+nodeId=$2
+nodeLogsFile=$logDirectory/btcCoreLogN$nodeId
+
+resultDirectory=.exec-results
+
+echo "Borramos los resultados de corridas previas"
+rm $resultDirectory/*
+
+echo "Compilamos los archivos necesarios para el parseo"
+g++ parseLog.cpp -o $resultDirectory/parseLog -std=c++11
+g++ medianTimes.cpp -o $resultDirectory/medianTimes -std=c++11
+
+echo "Resultado 1: Armar un resumen de lo que paso con los bloques"
+.exec-results/parseLog < $nodeLogsFile > $resultDirectory/simulationSummary
+
+echo "Resultado 2: Parsear la chain generada por los nodos (no funciona para cualquier corrida)"
+# /usr/local/go/bin/go run parseBlockchain.go $nodeLogsFile .exec-results/chainHashes $resultDirectory/chainTimestamps
+
+echo "Resultado 3: Algo que no tiene utilidad por ahora"
+# .exec-results/medianTimes < $nodeLogsFile
+
+echo "Resultado 4: Algo que no se para que sirve FIXME"
+# /usr/local/go/bin/go run generateHistory.go ../ejecucion-nodos $resultDirectory/archivo1 2 2
+
+echo "Resultado 5: Parsear los logging de pings generados con pingEngine"
+/usr/local/go/bin/go run decodePings.go $resultDirectory/ $logDirectory/ $nodeId
