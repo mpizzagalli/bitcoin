@@ -189,6 +189,9 @@ public:
 
     void UnloadBlockIndex();
 
+    CBlockIndex* privateChainActiveTip();
+    int privateChainActiveHeight();
+
 private:
     bool ActivateBestChainStep(CValidationState& state, const CChainParams& chainparams, CBlockIndex* pindexMostWork, const std::shared_ptr<const CBlock>& pblock, bool& fInvalidFound, ConnectTrace& connectTrace);
     bool ConnectTip(CValidationState& state, const CChainParams& chainparams, CBlockIndex* pindexNew, const std::shared_ptr<const CBlock>& pblock, ConnectTrace& connectTrace, DisconnectedBlockTransactions &disconnectpool);
@@ -3552,6 +3555,14 @@ bool CChainState::AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CVali
 
 bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<const CBlock> pblock, bool fForceProcessing, bool *fNewBlock)
 {
+    if (chainparams.MiningMode() > 0) {
+        ProcessNewBlockAsSelfishMiner(chainparams, pblock, fForceProcessing, fNewBlock, chainparams.MiningMode());
+    }
+    return ProcessNewBlock2(chainparams, pblock, fForceProcessing, fNewBlock);
+}
+
+bool ProcessNewBlock2(const CChainParams& chainparams, const std::shared_ptr<const CBlock> pblock, bool fForceProcessing, bool *fNewBlock)
+{
     AssertLockNotHeld(cs_main);
 
     {
@@ -4863,3 +4874,49 @@ public:
         mapBlockIndex.clear();
     }
 } instance_of_cmaincleanup;
+
+std::vector<CBlockIndex*> privateChain;
+
+CBlockIndex* privateChainActiveTip() {
+    if (Params().MiningMode() > 0) {
+        return privateChain.size() > 0 ? privateChain[privateChain.size() - 1] : chainActive.Tip();
+    } else {
+        return chainActive.Tip();
+    }
+};
+
+int privateChainActiveHeight() {
+    if (Params().MiningMode() > 0) {
+        return privateChainActiveTip()->nHeight;
+        // return chainActive.Height() + privateChain.size();
+    } else {
+        return chainActive.Height();
+    }
+};
+
+bool ProcessNewBlockAsSelfishMiner(const CChainParams& chainparams, const std::shared_ptr<const CBlock> pblock, bool fForceProcessing, bool *fNewBlock, int miningMode) {
+    return ProcessNewBlockAsStandardSelfishMiner(chainparams, pblock, fForceProcessing, fNewBlock);
+};
+
+bool ProcessNewBlockAsStandardSelfishMiner (const CChainParams& chainparams, const std::shared_ptr<const CBlock> pblock, bool fForceProcessing, bool *fNewBlock) {
+    return ProcessNewBlock2(chainparams, pblock, fForceProcessing, fNewBlock);
+    // Aca tengo que re-implementar o mejor dicho proxear el ProcessNewBlock pero con la logica de minado egoista
+    // if (el bloque lo mine yo) {
+    //     agrego el bloque a la cadena privada
+    //     if (cadena publica + 1 == cadena privada y vengo de una prueba de suerte) {
+    //         publico el bloque nuevo para ganar el empate del que veniamo
+    //     }
+    // } else {
+    //     if (altura bloque nuevo (todavia no lo sume) > cadena privada) {
+    //         agrego el bloque nuevo a la cadena publica 
+    //         vacio toda la cadena privada y me pongo a minar sobre la publica
+    //     } else if (altura bloque nuevo (todavia no lo sume) == cadena privada) {
+    //         publico todos mis bloques y pruebo suerte // check de donde estoy sacando el padre para minar
+    //     } else if (altura bloque nuevo (todavia no lo sume) + 1 == cadena privada) {
+    //         publico todos mis bloques y gano el conflicto
+    //     } else {
+    //         publico solo mi primer bloque no publicado
+    //     }
+    // }
+    if ()
+};

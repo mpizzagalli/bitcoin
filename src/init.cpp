@@ -845,7 +845,8 @@ void InitLogging()
     int64_t nodeNumber = (gArgs.GetArg("-rpcport", 11000) - 8330) >> 1;
     int64_t startingLogBlock = gArgs.GetArg("-start-log-at", 576000);
     std::string destinationFolder = gArgs.GetArg("-log-folder", "logs");
-    BCLog::InitStream(nodeNumber, startingLogBlock, destinationFolder);
+    int64_t miningMode = gArgs.GetArg("-mining-mode", 0); // Maybe I can get this from chainParams instead of the args?
+    BCLog::InitStream(nodeNumber, startingLogBlock, destinationFolder, miningMode);
 
     std::string version_string = FormatFullVersion();
 #ifdef DEBUG

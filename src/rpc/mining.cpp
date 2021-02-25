@@ -131,18 +131,14 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
 
     static const int nInnerLoopCount = 0x10000;
 
-    int nHeight;
-    {   // Don't keep cs_main locked
-        LOCK(cs_main);
-        nHeight = chainActive.Height();
-    }
+    int count = 0;
 
-    int nHeightEnd = nHeight+nGenerate;
+    int countEnd = count + nGenerate;
 
     unsigned int nExtraNonce = 0;
     UniValue blockHashes(UniValue::VARR);
 
-    while (nHeight < nHeightEnd && !ShutdownRequested())
+    while (count < countEnd && !ShutdownRequested())
     {
         std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript, true/*, desiredDifficulty*/));
         if (!pblocktemplate.get())
@@ -151,7 +147,12 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
         CBlock *pblock = &pblocktemplate->block;
         {
             LOCK(cs_main);
-            IncrementExtraNonce(pblock, chainActive.Tip(), nExtraNonce);
+            // TODO: Si estoy en selfish tengo que ver la punta de la cadena privada
+            if (Params().MiningMode() > 0) {
+                IncrementExtraNonce(pblock, privateChainActiveHeight(), nExtraNonce);
+            } else {
+                IncrementExtraNonce(pblock, chainActive.Height(), nExtraNonce);
+            }
         }
 
         while (/*nMaxTries > 0 &&*/ pblock->nNonce < nInnerLoopCount && !CheckProofOfWork(pblock->GetHash(), pblock->nBits, Params().GetConsensus())) {
@@ -169,7 +170,7 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
         std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(*pblock);
         if (!ProcessNewBlock(Params(), shared_pblock, true, nullptr))
             throw JSONRPCError(RPC_INTERNAL_ERROR, "ProcessNewBlock, block not accepted");
-        ++nHeight;
+        ++count;
         blockHashes.push_back(pblock->GetHash().GetHex());
 
         //mark script as important because it was used at least for one coinbase output if the script came from the wallet

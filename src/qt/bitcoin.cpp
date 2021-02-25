@@ -657,9 +657,11 @@ int main(int argc, char *argv[])
 
     // Check for -testnet or -regtest parameter (Params() calls are only valid after this clause)
     try {
+        fprintf(stdout, "src/qt/bitcoin.cpp command line parsing"); // I think I wont need this.
         int64_t regtestDifficulty = gArgs.GetArg("-dificulta", 0);
-        int64_t simuLambda = gArgs.GetArg("-simuLambda", -1);
-        node->selectParams(gArgs.GetChainName(), regtestDifficulty, simuLambda);
+        int64_t simuLambda = gArgs.GetArg("-simuLambda", -1); // simuLambda is supposed to be a double
+        int64_t miningMode = gArgs.GetArg("-mining-mode", 0);
+        node->selectParams(gArgs.GetChainName(), regtestDifficulty, simuLambda, miningMode);
         //node->selectParams(gArgs.GetChainName());
     } catch(std::exception &e) {
         QMessageBox::critical(0, QObject::tr(PACKAGE_NAME), QObject::tr("Error: %1").arg(e.what()));

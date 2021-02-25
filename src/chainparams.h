@@ -82,6 +82,7 @@ public:
     const CCheckpointData& Checkpoints() const { return checkpointData; }
     const ChainTxData& TxData() const { return chainTxData; }
     void UpdateVersionBitsParameters(Consensus::DeploymentPos d, int64_t nStartTime, int64_t nTimeout);
+    int64_t MiningMode() const { return miningMode; }
 protected:
     CChainParams() {}
 
@@ -101,6 +102,7 @@ protected:
     CCheckpointData checkpointData;
     ChainTxData chainTxData;
     bool m_fallback_fee_enabled;
+    int64_t miningMode = 0;
 };
 
 /**
@@ -108,7 +110,7 @@ protected:
  * @returns a CChainParams* of the chosen chain.
  * @throws a std::runtime_error if the chain is not supported.
  */
-std::unique_ptr<CChainParams> CreateChainParams(const std::string& chain, uint32_t regtestDifficulty = 0x0207fffff, double simuLambda = -1.0);
+std::unique_ptr<CChainParams> CreateChainParams(const std::string& chain, uint32_t regtestDifficulty = 0x0207fffff, double simuLambda = -1.0, int64_t desiredMiningMode = 0);
 
 /**
  * Return the currently selected parameters. This won't change after app
@@ -120,7 +122,7 @@ const CChainParams &Params();
  * Sets the params returned by Params() to those for the given BIP70 chain name.
  * @throws std::runtime_error when the chain is not supported.
  */
-void SelectParams(const std::string& chain, uint32_t regtestDifficulty, double simuLambda);
+void SelectParams(const std::string& chain, uint32_t regtestDifficulty, double simuLambda, int64_t desiredMiningMode);
 
 void SelectParams(const std::string& chain);
 
