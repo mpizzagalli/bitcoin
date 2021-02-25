@@ -21,10 +21,11 @@ fi
 numnodes=${1:-1}
 runName=${2:-"test"}
 numselfishnodes=${3:-0}
+startLogAt=$(($numnodes*2400))
 
 # Constantes
 gobin=go
-scriptdir=/Users/mpizzagali/Tesis/btc-core/ejecucion-nodos
+scriptdir=/Users/mpizzagali/Tesis/btc-core/tooling/ejecucion-nodos
 datadir=$scriptdir/.exec-results/data-0
 addressesdir=$scriptdir/.exec-results
 logdir=$scriptdir/logs
@@ -41,7 +42,7 @@ mkdir $runlogdir
 echo "Empiezo $numnodes nodo(s) BTC"
 for (( nodeId=0; nodeId<$numnodes; nodeId++ ))
 do
-    bash $scriptdir/invokeBitcoin.sh $nodeId -dificulta=0 -dbcache=3072 -start-log-at=7000 -log-folder=$runlogdir
+    bash $scriptdir/invokeBitcoin.sh $nodeId -dificulta=0 -dbcache=3072 -start-log-at=$startLogAt -log-folder=$runlogdir
     # if (($nodeId<$numselfishnodes)); then
     #     bash $scriptdir/invokeBitcoin.sh $nodeId -dificulta=0 -dbcache=3072 -selfish-mine
     # else
@@ -67,7 +68,7 @@ do
 done
 
 echo "Comienzo el nodo que genera el historial y lo conecto al resto de los nodos"
-bash $scriptdir/invokeBitcoin.sh $numnodes -dificulta=0 -dbcache=3072
+bash $scriptdir/invokeBitcoin.sh $numnodes -dificulta=0 -dbcache=3072 -log-folder=$runlogdir
 sleep 30s
 echo "Vamos a esperar que el nodo que genera el historial se estabilice"
 $gobin run $scriptdir/semaphore.go $numnodes

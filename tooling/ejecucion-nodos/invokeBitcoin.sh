@@ -4,7 +4,7 @@ baseport=8330
 offset=$1
 rpcp=$(($baseport+$offset*2+1))
 cport=$(($baseport+$offset*2))
-scriptdir=/Users/mpizzagali/Tesis/btc-core/ejecucion-nodos
+scriptdir=/Users/mpizzagali/Tesis/btc-core/tooling/ejecucion-nodos
 runningdir=$scriptdir/.exec-results/data-$1
 rm -rf $runningdir
 mkdir -p $runningdir
