@@ -3419,6 +3419,7 @@ bool CChainState::AcceptBlockHeader(const CBlockHeader& block, CValidationState&
         }
     }
     if (pindex == nullptr)
+        // paso por aca normalmente?
         pindex = AddToBlockIndex(block);
 
     if (ppindex)
@@ -3484,9 +3485,15 @@ bool CChainState::AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CVali
     CBlockIndex *pindexDummy = nullptr;
     CBlockIndex *&pindex = ppindex ? *ppindex : pindexDummy;
 
+    fprintf(stdout, "AcceptBlock before AcceptBlockHeader\n");
+    fprintf(stdout, "currentTip: %s\n", chainActive.Tip()->ToString());
+
+
     if (!AcceptBlockHeader(block, state, chainparams, &pindex))
         return false;
 
+    fprintf(stdout, "AcceptBlock after AcceptBlockHeader\n");
+    fprintf(stdout, "currentTip: %s\n", chainActive.Tip()->ToString());
     // Try to process all requested blocks that we don't have, but only
     // process an unrequested block if it's new and has enough work to
     // advance our tip, and isn't too many blocks ahead.
@@ -3533,6 +3540,9 @@ bool CChainState::AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CVali
     if (!IsInitialBlockDownload() && chainActive.Tip() == pindex->pprev)
         GetMainSignals().NewPoWValidBlock(pindex, pblock);
 
+    fprintf(stdout, "AcceptBlock: antes de SaveBlockToDisk\n");
+    fprintf(stdout, "currentTip: %s\n", chainActive.Tip()->ToString());
+
     // Write block to history file
     if (fNewBlock) *fNewBlock = true;
     try {
@@ -3549,6 +3559,9 @@ bool CChainState::AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CVali
     FlushStateToDisk(chainparams, state, FlushStateMode::NONE);
 
     CheckBlockIndex(chainparams.GetConsensus());
+
+    fprintf(stdout, "AcceptBlock: despues de CheckBlockIndex\n");
+    fprintf(stdout, "currentTip: %s\n", chainActive.Tip()->ToString());
 
     return true;
 }
@@ -4895,28 +4908,69 @@ int privateChainActiveHeight() {
 };
 
 bool ProcessNewBlockAsSelfishMiner(const CChainParams& chainparams, const std::shared_ptr<const CBlock> pblock, bool fForceProcessing, bool *fNewBlock, int miningMode) {
-    return ProcessNewBlockAsStandardSelfishMiner(chainparams, pblock, fForceProcessing, fNewBlock);
+    return ProcessNewBlock2(chainparams, pblock, fForceProcessing, fNewBlock);
 };
 
-bool ProcessNewBlockAsStandardSelfishMiner (const CChainParams& chainparams, const std::shared_ptr<const CBlock> pblock, bool fForceProcessing, bool *fNewBlock) {
-    return ProcessNewBlock2(chainparams, pblock, fForceProcessing, fNewBlock);
-    // Aca tengo que re-implementar o mejor dicho proxear el ProcessNewBlock pero con la logica de minado egoista
-    // if (el bloque lo mine yo) {
-    //     agrego el bloque a la cadena privada
-    //     if (cadena publica + 1 == cadena privada y vengo de una prueba de suerte) {
-    //         publico el bloque nuevo para ganar el empate del que veniamo
-    //     }
-    // } else {
-    //     if (altura bloque nuevo (todavia no lo sume) > cadena privada) {
-    //         agrego el bloque nuevo a la cadena publica 
-    //         vacio toda la cadena privada y me pongo a minar sobre la publica
-    //     } else if (altura bloque nuevo (todavia no lo sume) == cadena privada) {
-    //         publico todos mis bloques y pruebo suerte // check de donde estoy sacando el padre para minar
-    //     } else if (altura bloque nuevo (todavia no lo sume) + 1 == cadena privada) {
-    //         publico todos mis bloques y gano el conflicto
-    //     } else {
-    //         publico solo mi primer bloque no publicado
-    //     }
-    // }
-    if ()
-};
+// bool ProcessNewBlockAsStandardSelfishMiner (const CChainParams& chainparams, const std::shared_ptr<const CBlock> pblock, bool fForceProcessing, bool *fNewBlock) {
+//     // Aca tengo que re-implementar o mejor dicho proxear el ProcessNewBlock pero con la logica de minado egoista
+//     // Logica basica del paper Moyority is not enough
+//     if (fNewBlock == nullptr) { // el bloque lo mine yo
+//         // agrego el bloque a la cadena privada
+//         if (publicChainActiveHeight() + 1 == privateChainActiveHeight() && ) { // la cadena publica se puso a 1 de alcanzarme y vengo de una prueba de suerte
+//             // publico el bloque nuevo para ganar el empate del que veniamo
+//         }
+//     } else { // el bloque lo mino otro
+//         if (pblock.heigth > privateChainActiveHeight()) { // la cadena publica me esta ganando
+//             // agrego el bloque nuevo a la cadena publica 
+//             // vacio toda la cadena privada y me pongo a minar sobre la publica
+//             cleanPrivateChain()
+//             return ProcessNewBlock2(chainparams, pblock, fForceProcessing, fNewBlock);
+//         } else if (pblock.heigth == privateChainActiveHeight()) { // la cadena publica me alcanzo
+//             // publico todos mis bloques y pruebo suerte
+//         } else if (pblock.heigth + 1 == privateChainActiveHeight()) { // la cadena publica se puso a 1 de alcanzarme
+//             // publico todos mis bloques y gano el conflicto
+//         } else { // le cadena publica esta a mas de 2 de distancia
+//             // publico solo mi primer bloque no publicado
+//         }
+//     }
+// };
+
+// bool ProcessNewBlock2(const CChainParams& chainparams, const std::shared_ptr<const CBlock> pblock, bool fForceProcessing, bool *fNewBlock)
+// {
+//     AssertLockNotHeld(cs_main);
+
+//     {
+//         CBlockIndex *pindex = nullptr;
+//         if (fNewBlock) *fNewBlock = false;
+//         CValidationState state;
+//         // Ensure that CheckBlock() passes before calling AcceptBlock, as
+//         // belt-and-suspenders.
+//         bool ret = CheckBlock(*pblock, state, chainparams.GetConsensus());
+
+//         LOCK(cs_main);
+
+//         if (ret) {
+//             // Store to disk
+//             ret = g_chainstate.AcceptBlock(pblock, state, chainparams, &pindex, fForceProcessing, nullptr, fNewBlock);
+//         }
+//         if (!ret) {
+//             GetMainSignals().BlockChecked(*pblock, state);
+//             return error("%s: AcceptBlock FAILED (%s)", __func__, FormatStateMessage(state));
+//         }
+//     }
+
+//     if (fNewBlock) {
+//         if (*fNewBlock)
+//             BCLog::LogNewBlockReceived(pblock->GetHash().ToString(), pblock->hashPrevBlock.ToString());
+//     } else {
+//         BCLog::LogNewBlockDiscovered(pblock->GetHash().ToString(), pblock->hashPrevBlock.ToString(), pblock->vtx.size());
+//     }
+
+//     NotifyHeaderTip();
+
+//     CValidationState state; // Only used to report errors, not invalidity - ignore it
+//     if (!g_chainstate.ActivateBestChain(state, chainparams, pblock))
+//         return error("%s: ActivateBestChain failed (%s)", __func__, FormatStateMessage(state));
+
+//     return true;
+// }
