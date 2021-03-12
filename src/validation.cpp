@@ -3479,21 +3479,24 @@ bool CChainState::AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CVali
 {
     const CBlock& block = *pblock;
 
+    BCLog::LogGeneric("AcceptBlock start, block:");
+    BCLog::LogGeneric(block.ToString());
+
     if (fNewBlock) *fNewBlock = false;
     AssertLockHeld(cs_main);
 
     CBlockIndex *pindexDummy = nullptr;
     CBlockIndex *&pindex = ppindex ? *ppindex : pindexDummy;
 
-    fprintf(stdout, "AcceptBlock before AcceptBlockHeader\n");
-    fprintf(stdout, "currentTip: %s\n", chainActive.Tip()->ToString());
+    BCLog::LogGeneric("AcceptBlock before AcceptBlockHeader, currentTip:");
+    BCLog::LogGeneric(chainActive.Tip()->ToString());
 
 
     if (!AcceptBlockHeader(block, state, chainparams, &pindex))
         return false;
 
-    fprintf(stdout, "AcceptBlock after AcceptBlockHeader\n");
-    fprintf(stdout, "currentTip: %s\n", chainActive.Tip()->ToString());
+    BCLog::LogGeneric("AcceptBlock after AcceptBlockHeader, currentTip:");
+    BCLog::LogGeneric(chainActive.Tip()->ToString());
     // Try to process all requested blocks that we don't have, but only
     // process an unrequested block if it's new and has enough work to
     // advance our tip, and isn't too many blocks ahead.
@@ -3540,8 +3543,8 @@ bool CChainState::AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CVali
     if (!IsInitialBlockDownload() && chainActive.Tip() == pindex->pprev)
         GetMainSignals().NewPoWValidBlock(pindex, pblock);
 
-    fprintf(stdout, "AcceptBlock: antes de SaveBlockToDisk\n");
-    fprintf(stdout, "currentTip: %s\n", chainActive.Tip()->ToString());
+    BCLog::LogGeneric("AcceptBlock: antes de SaveBlockToDisk, currentTip:");
+    BCLog::LogGeneric(chainActive.Tip()->ToString());
 
     // Write block to history file
     if (fNewBlock) *fNewBlock = true;
@@ -3560,8 +3563,8 @@ bool CChainState::AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CVali
 
     CheckBlockIndex(chainparams.GetConsensus());
 
-    fprintf(stdout, "AcceptBlock: despues de CheckBlockIndex\n");
-    fprintf(stdout, "currentTip: %s\n", chainActive.Tip()->ToString());
+    BCLog::LogGeneric("AcceptBlock: despues de CheckBlockIndex, currentTip:");
+    BCLog::LogGeneric(chainActive.Tip()->ToString());
 
     return true;
 }
@@ -3578,6 +3581,9 @@ bool ProcessNewBlock2(const CChainParams& chainparams, const std::shared_ptr<con
 {
     AssertLockNotHeld(cs_main);
 
+    BCLog::LogGeneric("ProcessNewBlock2 before CheckBlock, currentTip:");
+    BCLog::LogGeneric(chainActive.Tip()->ToString());
+
     {
         CBlockIndex *pindex = nullptr;
         if (fNewBlock) *fNewBlock = false;
@@ -3586,11 +3592,18 @@ bool ProcessNewBlock2(const CChainParams& chainparams, const std::shared_ptr<con
         // belt-and-suspenders.
         bool ret = CheckBlock(*pblock, state, chainparams.GetConsensus());
 
+
+        BCLog::LogGeneric("ProcessNewBlock2 before AcceptBlock, currentTip:");
+        BCLog::LogGeneric(chainActive.Tip()->ToString());
+
         LOCK(cs_main);
 
         if (ret) {
             // Store to disk
             ret = g_chainstate.AcceptBlock(pblock, state, chainparams, &pindex, fForceProcessing, nullptr, fNewBlock);
+
+            BCLog::LogGeneric("ProcessNewBlock2 after AcceptBlock, currentTip:");
+            BCLog::LogGeneric(chainActive.Tip()->ToString());
         }
         if (!ret) {
             GetMainSignals().BlockChecked(*pblock, state);
@@ -3605,11 +3618,20 @@ bool ProcessNewBlock2(const CChainParams& chainparams, const std::shared_ptr<con
         BCLog::LogNewBlockDiscovered(pblock->GetHash().ToString(), pblock->hashPrevBlock.ToString(), pblock->vtx.size());
     }
 
+    BCLog::LogGeneric("ProcessNewBlock2 before NotifyHeaderTip, currentTip:");
+    BCLog::LogGeneric(chainActive.Tip()->ToString());
+
     NotifyHeaderTip();
+
+    BCLog::LogGeneric("ProcessNewBlock2 before ActivateBestChain, currentTip:");
+    BCLog::LogGeneric(chainActive.Tip()->ToString());
 
     CValidationState state; // Only used to report errors, not invalidity - ignore it
     if (!g_chainstate.ActivateBestChain(state, chainparams, pblock))
         return error("%s: ActivateBestChain failed (%s)", __func__, FormatStateMessage(state));
+
+    BCLog::LogGeneric("ProcessNewBlock2 after ActivateBestChain , currentTip:");
+    BCLog::LogGeneric(chainActive.Tip()->ToString());
 
     return true;
 }

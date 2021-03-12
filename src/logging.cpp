@@ -33,6 +33,7 @@ static int FileWriteStr(const std::string &str, FILE *fp)
 const std::string discoveryTxt= "0 ";
 const std::string receptionTxt = "1 ";
 const std::string headerTxt = "2 ";
+const std::string genericDebug = "DEBUG: ";
 std::ofstream logFile;
 unsigned int startLogAtBlock;
 unsigned int firstLoggedBlock;
@@ -57,6 +58,13 @@ void BCLog::WriteIntoThesisLogFile(const std::string &text, std::string &headerH
 
     logFile << timestamp << std::endl;
 }*/
+
+void BCLog::LogGeneric(std::string message)
+{
+    auto timestamp = std::chrono::system_clock::now().time_since_epoch().count();
+
+    logFile << genericDebug << message << ' ' << timestamp << std::endl;
+}
 
 void BCLog::LogNewBlockDiscovered(std::string headerHash, std::string parentHash, int64_t txAmount)
 {
