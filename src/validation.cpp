@@ -3479,8 +3479,8 @@ bool CChainState::AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CVali
 {
     const CBlock& block = *pblock;
 
-    BCLog::LogGeneric("AcceptBlock start, block:");
-    BCLog::LogGeneric(block.ToString());
+    // BCLog::LogGeneric("AcceptBlock start, block:");
+    // BCLog::LogGeneric(block.ToString());
 
     if (fNewBlock) *fNewBlock = false;
     AssertLockHeld(cs_main);
@@ -3488,15 +3488,15 @@ bool CChainState::AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CVali
     CBlockIndex *pindexDummy = nullptr;
     CBlockIndex *&pindex = ppindex ? *ppindex : pindexDummy;
 
-    BCLog::LogGeneric("AcceptBlock before AcceptBlockHeader, currentTip:");
-    BCLog::LogGeneric(chainActive.Tip()->ToString());
+    // BCLog::LogGeneric("AcceptBlock before AcceptBlockHeader, currentTip:");
+    // BCLog::LogGeneric(chainActive.Tip()->ToString());
 
 
     if (!AcceptBlockHeader(block, state, chainparams, &pindex))
         return false;
 
-    BCLog::LogGeneric("AcceptBlock after AcceptBlockHeader, currentTip:");
-    BCLog::LogGeneric(chainActive.Tip()->ToString());
+    // BCLog::LogGeneric("AcceptBlock after AcceptBlockHeader, currentTip:");
+    // BCLog::LogGeneric(chainActive.Tip()->ToString());
     // Try to process all requested blocks that we don't have, but only
     // process an unrequested block if it's new and has enough work to
     // advance our tip, and isn't too many blocks ahead.
@@ -3543,8 +3543,8 @@ bool CChainState::AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CVali
     if (!IsInitialBlockDownload() && chainActive.Tip() == pindex->pprev)
         GetMainSignals().NewPoWValidBlock(pindex, pblock);
 
-    BCLog::LogGeneric("AcceptBlock: antes de SaveBlockToDisk, currentTip:");
-    BCLog::LogGeneric(chainActive.Tip()->ToString());
+    // BCLog::LogGeneric("AcceptBlock: antes de SaveBlockToDisk, currentTip:");
+    // BCLog::LogGeneric(chainActive.Tip()->ToString());
 
     // Write block to history file
     if (fNewBlock) *fNewBlock = true;
@@ -3563,17 +3563,20 @@ bool CChainState::AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CVali
 
     CheckBlockIndex(chainparams.GetConsensus());
 
-    BCLog::LogGeneric("AcceptBlock: despues de CheckBlockIndex, currentTip:");
-    BCLog::LogGeneric(chainActive.Tip()->ToString());
+    // BCLog::LogGeneric("AcceptBlock: despues de CheckBlockIndex, currentTip:");
+    // BCLog::LogGeneric(chainActive.Tip()->ToString());
 
     return true;
 }
 
 bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<const CBlock> pblock, bool fForceProcessing, bool *fNewBlock)
 {
+    BCLog::LogGeneric("Received New Block to process");
     if (chainparams.MiningMode() > 0) {
-        ProcessNewBlockAsSelfishMiner(chainparams, pblock, fForceProcessing, fNewBlock, chainparams.MiningMode());
+        BCLog::LogGeneric("It appears we are a selfish miner");
+        return ProcessNewBlockAsSelfishMiner(chainparams, pblock, fForceProcessing, fNewBlock, chainparams.MiningMode());
     }
+    BCLog::LogGeneric("We are a normal miner");
     return ProcessNewBlock2(chainparams, pblock, fForceProcessing, fNewBlock);
 }
 
@@ -3583,6 +3586,8 @@ bool ProcessNewBlock2(const CChainParams& chainparams, const std::shared_ptr<con
 
     BCLog::LogGeneric("ProcessNewBlock2 before CheckBlock, currentTip:");
     BCLog::LogGeneric(chainActive.Tip()->ToString());
+    BCLog::LogGeneric("ProcessNewBlock2 before CheckBlock, block:");
+    BCLog::LogGeneric(block.toString());
 
     {
         CBlockIndex *pindex = nullptr;
@@ -3593,8 +3598,8 @@ bool ProcessNewBlock2(const CChainParams& chainparams, const std::shared_ptr<con
         bool ret = CheckBlock(*pblock, state, chainparams.GetConsensus());
 
 
-        BCLog::LogGeneric("ProcessNewBlock2 before AcceptBlock, currentTip:");
-        BCLog::LogGeneric(chainActive.Tip()->ToString());
+        // BCLog::LogGeneric("ProcessNewBlock2 before AcceptBlock, currentTip:");
+        // BCLog::LogGeneric(chainActive.Tip()->ToString());
 
         LOCK(cs_main);
 
@@ -3602,8 +3607,8 @@ bool ProcessNewBlock2(const CChainParams& chainparams, const std::shared_ptr<con
             // Store to disk
             ret = g_chainstate.AcceptBlock(pblock, state, chainparams, &pindex, fForceProcessing, nullptr, fNewBlock);
 
-            BCLog::LogGeneric("ProcessNewBlock2 after AcceptBlock, currentTip:");
-            BCLog::LogGeneric(chainActive.Tip()->ToString());
+            // BCLog::LogGeneric("ProcessNewBlock2 after AcceptBlock, currentTip:");
+            // BCLog::LogGeneric(chainActive.Tip()->ToString());
         }
         if (!ret) {
             GetMainSignals().BlockChecked(*pblock, state);
@@ -3618,13 +3623,13 @@ bool ProcessNewBlock2(const CChainParams& chainparams, const std::shared_ptr<con
         BCLog::LogNewBlockDiscovered(pblock->GetHash().ToString(), pblock->hashPrevBlock.ToString(), pblock->vtx.size());
     }
 
-    BCLog::LogGeneric("ProcessNewBlock2 before NotifyHeaderTip, currentTip:");
-    BCLog::LogGeneric(chainActive.Tip()->ToString());
+    // BCLog::LogGeneric("ProcessNewBlock2 before NotifyHeaderTip, currentTip:");
+    // BCLog::LogGeneric(chainActive.Tip()->ToString());
 
     NotifyHeaderTip();
 
-    BCLog::LogGeneric("ProcessNewBlock2 before ActivateBestChain, currentTip:");
-    BCLog::LogGeneric(chainActive.Tip()->ToString());
+    // BCLog::LogGeneric("ProcessNewBlock2 before ActivateBestChain, currentTip:");
+    // BCLog::LogGeneric(chainActive.Tip()->ToString());
 
     CValidationState state; // Only used to report errors, not invalidity - ignore it
     if (!g_chainstate.ActivateBestChain(state, chainparams, pblock))
@@ -4910,11 +4915,13 @@ public:
     }
 } instance_of_cmaincleanup;
 
-std::vector<CBlockIndex*> privateChain;
+std::vector<std::shared_ptr<const CBlock>> privateCBlockChain;
+std::vector<CBlockIndex*> privateCBlockIndexChain;
+bool comingFromConflict = false;
 
 CBlockIndex* privateChainActiveTip() {
     if (Params().MiningMode() > 0) {
-        return privateChain.size() > 0 ? privateChain[privateChain.size() - 1] : chainActive.Tip();
+        return privateCBlockIndexChain.size() > 0 ? privateCBlockIndexChain[privateCBlockIndexChain.size() - 1] : chainActive.Tip();
     } else {
         return chainActive.Tip();
     }
@@ -4929,70 +4936,117 @@ int privateChainActiveHeight() {
     }
 };
 
-bool ProcessNewBlockAsSelfishMiner(const CChainParams& chainparams, const std::shared_ptr<const CBlock> pblock, bool fForceProcessing, bool *fNewBlock, int miningMode) {
-    return ProcessNewBlock2(chainparams, pblock, fForceProcessing, fNewBlock);
+void DumpPrivateChain() {
+    privateCBlockChain.clear();
+    privateCBlockIndexChain.clear();
+    comingFromConflict = false;
+    return;
 };
 
-// bool ProcessNewBlockAsStandardSelfishMiner (const CChainParams& chainparams, const std::shared_ptr<const CBlock> pblock, bool fForceProcessing, bool *fNewBlock) {
-//     // Aca tengo que re-implementar o mejor dicho proxear el ProcessNewBlock pero con la logica de minado egoista
-//     // Logica basica del paper Moyority is not enough
-//     if (fNewBlock == nullptr) { // el bloque lo mine yo
-//         // agrego el bloque a la cadena privada
-//         if (publicChainActiveHeight() + 1 == privateChainActiveHeight() && ) { // la cadena publica se puso a 1 de alcanzarme y vengo de una prueba de suerte
-//             // publico el bloque nuevo para ganar el empate del que veniamo
-//         }
-//     } else { // el bloque lo mino otro
-//         if (pblock.heigth > privateChainActiveHeight()) { // la cadena publica me esta ganando
-//             // agrego el bloque nuevo a la cadena publica 
-//             // vacio toda la cadena privada y me pongo a minar sobre la publica
-//             cleanPrivateChain()
-//             return ProcessNewBlock2(chainparams, pblock, fForceProcessing, fNewBlock);
-//         } else if (pblock.heigth == privateChainActiveHeight()) { // la cadena publica me alcanzo
-//             // publico todos mis bloques y pruebo suerte
-//         } else if (pblock.heigth + 1 == privateChainActiveHeight()) { // la cadena publica se puso a 1 de alcanzarme
-//             // publico todos mis bloques y gano el conflicto
-//         } else { // le cadena publica esta a mas de 2 de distancia
-//             // publico solo mi primer bloque no publicado
-//         }
-//     }
-// };
+void AddToPrivateChain(const std::shared_ptr<const CBlock> pblock) {
+    // Update unimported blocks from private chain
+    // std::shared_ptr<uint256> hash = std::make_shared<uint256>(pblock.get()->GetHash());
 
-// bool ProcessNewBlock2(const CChainParams& chainparams, const std::shared_ptr<const CBlock> pblock, bool fForceProcessing, bool *fNewBlock)
-// {
-//     AssertLockNotHeld(cs_main);
+    // std::shared_ptr<CBlockIndex> pblockIndex { new CBlockIndex(*pblock.get()) };
+    BCLog::LogGeneric("Starting AddToPrivateChain");
+    const CBlock& block = *pblock;
+    CBlockIndex* pindexNew = new CBlockIndex(block);
+    // pindexNew->phashBlock = hash.get();
+    pindexNew->phashBlock = block.get().GetHash();
 
-//     {
-//         CBlockIndex *pindex = nullptr;
-//         if (fNewBlock) *fNewBlock = false;
-//         CValidationState state;
-//         // Ensure that CheckBlock() passes before calling AcceptBlock, as
-//         // belt-and-suspenders.
-//         bool ret = CheckBlock(*pblock, state, chainparams.GetConsensus());
+    // CBlockIndex* currentPrivateChainTip = privateChainActiveTip();
+    // if(currentPrivateChainTip) {
+    //     pindexNew->pprev = currentPrivateChainTip.get();
+    // } else {
+    //     pindexNew->pprev = chainActive.Tip();
+    // }
+    pindexNew->pprev = privateChainActiveTip();
+    pindexNew->nHeight = pindexNew->pprev->nHeight + 1;
 
-//         LOCK(cs_main);
+    privateCBlockChain.push_back(pblock);
+    privateCBlockIndexChain.push_back(pindexNew);
+    BCLog::LogGeneric("CBlockIndex added:");
+    BCLog::LogGeneric(pindexNew->ToString());
+    BCLog::LogGeneric("Ended AddToPrivateChain");
 
-//         if (ret) {
-//             // Store to disk
-//             ret = g_chainstate.AcceptBlock(pblock, state, chainparams, &pindex, fForceProcessing, nullptr, fNewBlock);
-//         }
-//         if (!ret) {
-//             GetMainSignals().BlockChecked(*pblock, state);
-//             return error("%s: AcceptBlock FAILED (%s)", __func__, FormatStateMessage(state));
-//         }
-//     }
+    return;
+    // TODO: Maybe we could use AddToBlockIndex???
+}
 
-//     if (fNewBlock) {
-//         if (*fNewBlock)
-//             BCLog::LogNewBlockReceived(pblock->GetHash().ToString(), pblock->hashPrevBlock.ToString());
-//     } else {
-//         BCLog::LogNewBlockDiscovered(pblock->GetHash().ToString(), pblock->hashPrevBlock.ToString(), pblock->vtx.size());
-//     }
+bool ProcessPrivateBlocks(int n, const CChainParams& chainparams, bool fForceProcessing, bool *fNewBlock) {
+    BCLog::LogGeneric("Starting ProcessPrivateBlocks");
+    for (uint i = 0; i <= n && privateCBlockChain.size() > 0; i++) {
+        std::shared_ptr<const CBlock> pblock = privateCBlockChain.front();
+        BCLog::LogGeneric("Going to process i: " + std::to_string(i) + );
 
-//     NotifyHeaderTip();
+        if (ProcessNewBlock2(chainparams, pblock, fForceProcessing, fNewBlock)){
+            BCLog::LogGeneric("Succesfully processed block");
+            BCLog::LogGeneric(block.get().GetHash());
+            
+            privateCBlockChain.erase(privateCBlockChain.begin());
+            privateCBlockIndexChain.erase(privateCBlockIndexChain.begin());
+        } else {
+            BCLog::LogGeneric("Something went wrong while processing private blocks");
+            // DumpPrivateChain();
+            return false;
+        }
+    }
+    if(!privateCBlockIndexChain.empty() && i > 0) {
+        BCLog::LogGeneric("Going to update the first CBlockIndex in our private chain to point to the public chain now");
+        privateCBlockIndexChain.front()->pprev = chainActive.Tip();
+        BCLog::LogGeneric("chain Active tip:");
+        BCLog::LogGeneric(chainActive.Tip()->ToString());
+    }
 
-//     CValidationState state; // Only used to report errors, not invalidity - ignore it
-//     if (!g_chainstate.ActivateBestChain(state, chainparams, pblock))
-//         return error("%s: ActivateBestChain failed (%s)", __func__, FormatStateMessage(state));
+    return i+1 == n;
+}
 
-//     return true;
-// }
+bool ProcessNewBlockAsSelfishMiner(const CChainParams& chainparams, const std::shared_ptr<const CBlock> pblock, bool fForceProcessing, bool *fNewBlock, int miningMode) {
+    // return ProcessNewBlock2(chainparams, pblock, fForceProcessing, fNewBlock);
+    return ProcessNewBlockAsStandardSelfishMiner(chainparams, pblock, fForceProcessing, fNewBlock);
+};
+
+bool ProcessNewBlockAsStandardSelfishMiner (const CChainParams& chainparams, const std::shared_ptr<const CBlock> pblock, bool fForceProcessing, bool *fNewBlock) {
+    // Aca tengo que re-implementar o mejor dicho proxear el ProcessNewBlock pero con la logica de minado egoista
+    // Logica basica del paper Mayority is not enough
+    BCLog::LogGeneric("Starting selfish miner logic");
+    publicChainHeight = chainActive.Height();
+    privateChainHeight = privateChainActiveHeight();
+    BCLog::LogGeneric("publicChainHeight: " + std::to_string(publicChainHeight) + " privateChainHeight: " + std::to_string(privateChainHeight));
+    if (fNewBlock == nullptr) { // el bloque lo mine yo
+        // agrego el bloque a la cadena privada
+        BCLog::LogGeneric("New Block is mine");
+        AddToPrivateChain(pblock);
+        if (publicChainHeight == privateChainHeight && comingFromConflict) { // acabo de ponerme 1 arriba, pero vengo de conflicto
+            // publico el bloque nuevo para ganar el empate del que veniamos
+            BCLog::LogGeneric("We came from a conflict and we are only 1 bock ahead gonna process the new block");
+            comingFromConflict = false;
+            return ProcessPrivateBlocks(1, chainparams, fForceProcessing, fNewBlock);
+        }
+    } else { // el bloque lo mino otro
+        BCLog::LogGeneric("New block is from someone else");
+        publicChainHeight++; // TODO: Aca estoy asumiendo que el bloque que me mandaron es el siguiente al que yo conocia, pero podria tener baches en el medio no?
+        int nBlocksToPublish = 0;
+        if (publicChainHeight > privateChainHeight) { // la cadena publica me esta ganando
+            // vacio toda la cadena privada y me pongo a minar sobre la publica
+            // agrego el bloque nuevo a la cadena publica 
+            BCLog::LogGeneric("The public chain is bigger than ours we treat it normal");
+            DumpPrivateChain();
+            return ProcessNewBlock2(chainparams, pblock, fForceProcessing, fNewBlock);
+        } else if (publicChainHeight == privateChainHeight) { // la cadena publica me alcanzo
+            // publico todos mis bloques y pruebo suerte
+            BCLog::LogGeneric("The public chain has caught up with the private, process all my private chain and mark it as a conflict");
+            comingFromConflict = true;
+            nBlocksToPublish = privateChain.size();
+        } else if (publicChainHeight + 1 == privateChainHeight) { // la cadena publica se puso a 1 de alcanzarme
+            // publico todos mis bloques y gano el conflicto
+            BCLog::LogGeneric("The public chain has caught up to 1 block with the private chain, process all my private chain");
+            nBlocksToPublish = privateChain.size();
+        } else { // le cadena publica esta a 2 o mas de distancia
+            // publico solo mi primer bloque no publicado
+            BCLog::LogGeneric("The public chain is 2 or more blocks behind, just process 1 block");
+            nBlocksToPublish = 1;
+        }
+        return ProcessPrivateBlocks(nBlocksToPublish, chainparams, fForceProcessing, fNewBlock);
+    }
+};
