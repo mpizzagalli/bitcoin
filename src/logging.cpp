@@ -64,7 +64,7 @@ void BCLog::WriteIntoThesisLogFile(const std::string &text, std::string &headerH
 
 void BCLog::LogGeneric(std::string message)
 {
-    if (enableGenericDebugLog) {
+    if (enableGenericDebugLog && (firstLoggedBlock > startLogAtBlock)) {
         auto timestamp = std::chrono::system_clock::now().time_since_epoch().count();
 
         logFile << genericDebug << message << ' ' << timestamp << std::endl;

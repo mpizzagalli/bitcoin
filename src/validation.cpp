@@ -3571,7 +3571,8 @@ bool CChainState::AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CVali
 
 bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<const CBlock> pblock, bool fForceProcessing, bool *fNewBlock)
 {
-    BCLog::LogGeneric("Received New Block to process");
+    BCLog::LogGeneric("Received New Block to process ");
+    BCLog::LogGeneric("Block Hash: " + std::to_string(block.get()->GetHash()));
     if (chainparams.MiningMode() > 0) {
         BCLog::LogGeneric("It appears we are a selfish miner");
         return ProcessNewBlockAsSelfishMiner(chainparams, pblock, fForceProcessing, fNewBlock, chainparams.MiningMode());
@@ -3586,8 +3587,8 @@ bool ProcessNewBlock2(const CChainParams& chainparams, const std::shared_ptr<con
 
     BCLog::LogGeneric("ProcessNewBlock2 before CheckBlock, currentTip:");
     BCLog::LogGeneric(chainActive.Tip()->ToString());
-    BCLog::LogGeneric("ProcessNewBlock2 before CheckBlock, block:");
-    BCLog::LogGeneric(pblock.get()->ToString());
+    // BCLog::LogGeneric("ProcessNewBlock2 before CheckBlock, block:");
+    // BCLog::LogGeneric(pblock.get()->ToString());
 
     {
         CBlockIndex *pindex = nullptr;
@@ -4953,7 +4954,8 @@ void AddToPrivateChain(const std::shared_ptr<const CBlock> pblock) {
     CBlockIndex* pindexNew = new CBlockIndex(block);
     // pindexNew->phashBlock = hash.get();
     // pindexNew->phashBlock = &block.GetHash();
-    pindexNew->phashBlock = std::make_shared<uint256>(pblock.get()->GetHash()).get();
+    // pindexNew->phashBlock = std::make_shared<uint256>(pblock.get()->GetHash()).get();
+    pindexNew->phashBlock = std::make_shared<uint256>(pblock.get()->GetHash());
 
     // CBlockIndex* currentPrivateChainTip = privateChainActiveTip();
     // if(currentPrivateChainTip) {
@@ -4963,6 +4965,9 @@ void AddToPrivateChain(const std::shared_ptr<const CBlock> pblock) {
     // }
     pindexNew->pprev = privateChainActiveTip();
     pindexNew->nHeight = pindexNew->pprev->nHeight + 1;
+
+    BCLog::LogGeneric("pindex->phashBlock: " + std::to_string(pindexNew->phashBlock));
+    BCLog::LogGeneric("pindex->pprev: " + std::to_string(pindexNew->pprev));
 
     privateCBlockChain.push_back(pblock);
     privateCBlockIndexChain.push_back(pindexNew);
@@ -5013,16 +5018,19 @@ bool ProcessNewBlockAsStandardSelfishMiner(const CChainParams& chainparams, cons
     BCLog::LogGeneric("Starting selfish miner logic");
     uint publicChainHeight = chainActive.Height();
     uint privateChainHeight = privateChainActiveHeight();
-    BCLog::LogGeneric("publicChainHeight: " + std::to_string(publicChainHeight) + " privateChainHeight: " + std::to_string(privateChainHeight));
+    BCLog::LogGeneric("publicChainHeight: " + std::to_string(publicChainHeight) + " privateChainHeight: " + std::to_string(privateChainHeight), + " comingFromConflict: " + std::to_string(comingFromConflict));
     if (fNewBlock == nullptr) { // el bloque lo mine yo
         // agrego el bloque a la cadena privada
         BCLog::LogGeneric("New Block is mine");
         AddToPrivateChain(pblock);
         if (publicChainHeight == privateChainHeight && comingFromConflict) { // acabo de ponerme 1 arriba, pero vengo de conflicto
             // publico el bloque nuevo para ganar el empate del que veniamos
-            BCLog::LogGeneric("We came from a conflict and we are only 1 bock ahead gonna process the new block");
+            BCLog::LogGeneric("We came from a conflict and we are only 1 block ahead gonna process the new block");
             comingFromConflict = false;
             return ProcessPrivateBlocks(1, chainparams, fForceProcessing, fNewBlock);
+        } else {
+            BCLog::LogGeneric("We didn't came from a conflict so we are good");
+            return true;
         }
     } else { // el bloque lo mino otro
         BCLog::LogGeneric("New block is from someone else");
