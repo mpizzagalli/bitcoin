@@ -110,7 +110,7 @@ namespace BCLog {
         bool DefaultShrinkDebugFile() const;
     };
 
-    void InitStream(int64_t nodeNumber, int64_t startingLogBlock, std::string destinationFolder, int64_t miningMode);
+    void InitStream(int64_t nodeNumber, int64_t startingLogBlock, std::string destinationFolder, int64_t miningMode, bool debugTesis);
     //void WriteIntoThesisLogFile(const std::string &text, std::string &headerHash, int64_t txAmount = -1);
     void LogNewBlockDiscovered(std::string headerHash, std::string parentHash, int64_t txAmount);
     void LogNewBlockReceived(std::string headerHash, std::string parentHash);

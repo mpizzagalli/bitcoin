@@ -37,13 +37,16 @@ const std::string genericDebug = "DEBUG: ";
 std::ofstream logFile;
 unsigned int startLogAtBlock;
 unsigned int firstLoggedBlock;
+bool enableGenericDebugLog;
 
-void BCLog::InitStream(int64_t nodeNumber, int64_t startingLogBlock, std::string destinationFolder, int64_t miningMode) {
+void BCLog::InitStream(int64_t nodeNumber, int64_t startingLogBlock, std::string destinationFolder, int64_t miningMode, bool debugTesis) {
     logFile = std::ofstream(destinationFolder+"/btcCoreLogN"+i64tostr(nodeNumber), std::ios_base::out | std::ios_base::app );
     logFile << "Starting bitcoin client at " << std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count() << std::endl;
     logFile << "Starting bitcoin client wih mining mode: " << miningMode << std::endl;
     startLogAtBlock = startingLogBlock;
     logFile << "Going to silence the log until block number: " << startLogAtBlock << std::endl;
+    enableGenericDebugLog = debugTesis;
+    logFile << "debug generic logs enable? " << enableGenericDebugLog << std::endl;
     firstLoggedBlock = 0;
 }
 /*
@@ -61,9 +64,11 @@ void BCLog::WriteIntoThesisLogFile(const std::string &text, std::string &headerH
 
 void BCLog::LogGeneric(std::string message)
 {
-    auto timestamp = std::chrono::system_clock::now().time_since_epoch().count();
+    if (enableGenericDebugLog) {
+        auto timestamp = std::chrono::system_clock::now().time_since_epoch().count();
 
-    logFile << genericDebug << message << ' ' << timestamp << std::endl;
+        logFile << genericDebug << message << ' ' << timestamp << std::endl;
+    }
 }
 
 void BCLog::LogNewBlockDiscovered(std::string headerHash, std::string parentHash, int64_t txAmount)
