@@ -483,7 +483,7 @@ bool ArgsManager::IsArgKnown(const std::string& key, std::string& error)
 
     return arg_no_net == std::string("-dificulta") || arg_no_net == std::string("-simuLambda") || 
            arg_no_net == std::string("-start-log-at") || arg_no_net == std::string("-log-folder") || 
-           arg_no_net == std::string("-mining-mode");
+           arg_no_net == std::string("-mining-mode") || arg_no_net == std::string("-debug-tesis");
 }
 
 std::vector<std::string> ArgsManager::GetArgs(const std::string& strArg) const

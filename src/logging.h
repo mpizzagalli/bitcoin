@@ -119,6 +119,7 @@ namespace BCLog {
     std::string GetRealTimeClockTimestamp();
     std::string GetClockWithId(clockid_t clockId);
     void LogGeneric(std::string message);
+    void LogGenericP(void* pointer);
 
 } // namespace BCLog
 

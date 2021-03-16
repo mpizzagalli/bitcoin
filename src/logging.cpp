@@ -71,6 +71,15 @@ void BCLog::LogGeneric(std::string message)
     }
 }
 
+void BCLog::LogGenericP(void* pointer)
+{
+    if (enableGenericDebugLog && (firstLoggedBlock > startLogAtBlock)) {
+        auto timestamp = std::chrono::system_clock::now().time_since_epoch().count();
+
+        logFile << genericDebug << pointer << ' ' << timestamp << std::endl;
+    }
+}
+
 void BCLog::LogNewBlockDiscovered(std::string headerHash, std::string parentHash, int64_t txAmount)
 {
     if (++firstLoggedBlock > startLogAtBlock){
