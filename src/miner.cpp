@@ -122,11 +122,12 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     LOCK2(cs_main, mempool.cs);
     // Si es selfish deberia poner a la tip de la privada
     CBlockIndex* pindexPrev = nullptr;
-    if(chainparams.MiningMode() > 0) {
-        pindexPrev = privateChainActiveTip();
-    } else {
-        pindexPrev = chainActive.Tip();
-    }
+    // if(chainparams.MiningMode() > 0) {
+    //     pindexPrev = privateChainActiveTip();
+    // } else {
+    //     pindexPrev = chainActive.Tip();
+    // }
+    pindexPrev = privateChainActiveTip();
     assert(pindexPrev != nullptr);
     nHeight = pindexPrev->nHeight + 1;
 

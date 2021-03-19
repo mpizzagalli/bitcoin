@@ -30,10 +30,11 @@ static int FileWriteStr(const std::string &str, FILE *fp)
     return fwrite(str.data(), 1, str.size(), fp);
 }
 
-const std::string discoveryTxt= "0 ";
-const std::string receptionTxt = "1 ";
-const std::string headerTxt = "2 ";
-const std::string genericDebug = "DEBUG: ";
+const std::string discoveryBlock = "0 ";
+const std::string receptionBlock = "1 ";
+const std::string headerBlock = "2 ";
+const std::string discoverSelfishBlock = "3 ";
+const std::string genericDebug = "9 ";
 std::ofstream logFile;
 unsigned int startLogAtBlock;
 unsigned int firstLoggedBlock;
@@ -67,7 +68,8 @@ void BCLog::LogGeneric(std::string message)
     if (enableGenericDebugLog && (firstLoggedBlock > startLogAtBlock)) {
         auto timestamp = std::chrono::system_clock::now().time_since_epoch().count();
 
-        logFile << genericDebug << message << ' ' << timestamp << std::endl;
+        // logFile << genericDebug << message << ' ' << timestamp << std::endl;
+        logFile << timestamp << genericDebug << ' ' << message << ' ' << std::endl;
     }
 }
 
@@ -76,7 +78,18 @@ void BCLog::LogGenericP(void* pointer)
     if (enableGenericDebugLog && (firstLoggedBlock > startLogAtBlock)) {
         auto timestamp = std::chrono::system_clock::now().time_since_epoch().count();
 
-        logFile << genericDebug << pointer << ' ' << timestamp << std::endl;
+        // logFile << genericDebug << pointer << ' ' << timestamp << std::endl;
+        logFile << timestamp << genericDebug << ' ' << pointer << ' ' << std::endl;
+    }
+}
+
+void BCLog::LogNewSelfishBlockDiscovered(std::string headerHash, std::string parentHash, int64_t txAmount)
+{
+    if (++firstLoggedBlock > startLogAtBlock){
+        auto timestamp = std::chrono::system_clock::now().time_since_epoch().count();
+
+        // logFile << discoveryBlock << headerHash << ' ' << parentHash << ' ' << txAmount << ' ' << timestamp << std::endl;
+        logFile << timestamp << discoverSelfishBlock << ' ' << headerHash << ' ' << parentHash << ' ' << txAmount << ' ' << std::endl;
     }
 }
 
@@ -85,7 +98,8 @@ void BCLog::LogNewBlockDiscovered(std::string headerHash, std::string parentHash
     if (++firstLoggedBlock > startLogAtBlock){
         auto timestamp = std::chrono::system_clock::now().time_since_epoch().count();
 
-        logFile << discoveryTxt << headerHash << ' ' << parentHash << ' ' << txAmount << ' ' << timestamp << std::endl;
+        // logFile << discoveryBlock << headerHash << ' ' << parentHash << ' ' << txAmount << ' ' << timestamp << std::endl;
+        logFile << timestamp << discoveryBlock << ' ' << headerHash << ' ' << parentHash << ' ' << txAmount << ' ' << std::endl;
     }
 }
 
@@ -94,7 +108,8 @@ void BCLog::LogNewBlockReceived(std::string headerHash, std::string parentHash)
     if (firstLoggedBlock > startLogAtBlock){
         auto timestamp = std::chrono::system_clock::now().time_since_epoch().count();
 
-        logFile << receptionTxt << headerHash << ' ' << parentHash << ' ' << timestamp << std::endl;
+        // logFile << receptionBlock << headerHash << ' ' << parentHash << ' ' << timestamp << std::endl;
+        logFile << timestamp << receptionBlock << ' ' << headerHash << ' ' << parentHash << ' ' << std::endl;
     }
 }
 
@@ -103,7 +118,8 @@ void BCLog::LogNewHeaderReceived(std::string headerHash)
     if (++firstLoggedBlock > startLogAtBlock) {
         auto timestamp = std::chrono::system_clock::now().time_since_epoch().count();
 
-        logFile << headerTxt << headerHash << ' ' << timestamp << std::endl;
+        // logFile << headerBlock << headerHash << ' ' << timestamp << std::endl;
+        logFile << timestamp << headerBlock << ' ' << headerHash << ' ' << std::endl;
     }
 }
 

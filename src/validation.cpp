@@ -3645,7 +3645,8 @@ bool ProcessNewBlock2(const CChainParams& chainparams, const std::shared_ptr<con
 bool TestBlockValidity(CValidationState& state, const CChainParams& chainparams, const CBlock& block, CBlockIndex* pindexPrev, bool fCheckPOW, bool fCheckMerkleRoot)
 {
     AssertLockHeld(cs_main);
-    assert(pindexPrev && pindexPrev == chainActive.Tip());
+    // assert(pindexPrev && pindexPrev == chainActive.Tip());
+    assert(pindexPrev && pindexPrev == privateChainActiveTip());
     CCoinsViewCache viewNew(pcoinsTip.get());
     uint256 block_hash(block.GetHash());
     CBlockIndex indexDummy(block);
@@ -3661,7 +3662,7 @@ bool TestBlockValidity(CValidationState& state, const CChainParams& chainparams,
     if (!ContextualCheckBlock(block, state, chainparams.GetConsensus(), pindexPrev))
         return error("%s: Consensus::ContextualCheckBlock: %s", __func__, FormatStateMessage(state));
     if (!g_chainstate.ConnectBlock(block, state, &indexDummy, viewNew, chainparams, true))
-        return false;
+        // return false;
     assert(state.IsValid());
 
     return true;
@@ -4966,16 +4967,18 @@ void AddToPrivateChain(const std::shared_ptr<const CBlock> pblock) {
     pindexNew->pprev = privateChainActiveTip();
     pindexNew->nHeight = pindexNew->pprev->nHeight + 1;
 
-    BCLog::LogGeneric("pindex->phashBlock: ");
-    BCLog::LogGenericP((void *)pindexNew->phashBlock);
-    BCLog::LogGeneric("pindex->pprev: ");
-    BCLog::LogGenericP(pindexNew->pprev);
+    // BCLog::LogGeneric("pindex->phashBlock: ");
+    // BCLog::LogGenericP((void *)pindexNew->phashBlock);
+    // BCLog::LogGeneric("pindex->pprev: ");
+    // BCLog::LogGenericP(pindexNew->pprev);
 
     privateCBlockChain.push_back(pblock);
     privateCBlockIndexChain.push_back(pindexNew);
     BCLog::LogGeneric("CBlockIndex added:");
     BCLog::LogGeneric(pindexNew->ToString());
     BCLog::LogGeneric("Ended AddToPrivateChain");
+
+    BCLog::LogNewSelfishBlockDiscovered(pblock->GetHash().ToString(), pblock->hashPrevBlock.ToString(), pblock->vtx.size());
 
     return;
     // TODO: Maybe we could use AddToBlockIndex???
