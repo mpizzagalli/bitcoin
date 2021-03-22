@@ -2359,6 +2359,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     else if (strCommand == NetMsgType::CMPCTBLOCK && !fImporting && !fReindex) // Ignore blocks received while importing
     {
+        BCLog::LogGeneric("Starting net_processing.cpp -> NetMsgType::CMPCTBLOCK");
         CBlockHeaderAndShortTxIDs cmpctblock;
         vRecv >> cmpctblock;
 
@@ -2559,6 +2560,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             // we have a chain with at least nMinimumChainWork), and we ignore
             // compact blocks with less work than our tip, it is safe to treat
             // reconstructed compact blocks as having been requested.
+            BCLog::LogGeneric("ProcessNewBlock from net_processing.cpp -> NetMsgType::CMPCTBLOCK");
             ProcessNewBlock(chainparams, pblock, /*fForceProcessing=*/true, &fNewBlock);
             if (fNewBlock) {
                 pfrom->nLastBlockTime = GetTime();
@@ -2580,6 +2582,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     else if (strCommand == NetMsgType::BLOCKTXN && !fImporting && !fReindex) // Ignore blocks received while importing
     {
+        BCLog::LogGeneric("Starting net_processing.cpp -> NetMsgType::BLOCKTXN");
         BlockTransactions resp;
         vRecv >> resp;
 
@@ -2642,6 +2645,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             // disk-space attacks), but this should be safe due to the
             // protections in the compact block handler -- see related comment
             // in compact block optimistic reconstruction handling.
+            BCLog::LogGeneric("ProcessNewBlock from net_processing.cpp -> NetMsgType::BLOCKTXN");
             ProcessNewBlock(chainparams, pblock, /*fForceProcessing=*/true, &fNewBlock);
             if (fNewBlock) {
                 pfrom->nLastBlockTime = GetTime();
@@ -2680,6 +2684,8 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     else if (strCommand == NetMsgType::BLOCK && !fImporting && !fReindex) // Ignore blocks received while importing
     {
+        
+        BCLog::LogGeneric("Starting net_processing.cpp -> NetMsgType::BLOCK");
         std::shared_ptr<CBlock> pblock = std::make_shared<CBlock>();
         vRecv >> *pblock;
 
@@ -2697,6 +2703,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             mapBlockSource.emplace(hash, std::make_pair(pfrom->GetId(), true));
         }
         bool fNewBlock = false;
+        BCLog::LogGeneric("ProcessNewBlock from net_processing.cpp -> NetMsgType::BLOCK");
         ProcessNewBlock(chainparams, pblock, forceProcessing, &fNewBlock);
         if (fNewBlock) {
             pfrom->nLastBlockTime = GetTime();

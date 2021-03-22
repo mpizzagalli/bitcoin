@@ -4989,14 +4989,14 @@ void AddToPrivateChain(const std::shared_ptr<const CBlock> pblock) {
     // TODO: Maybe we could use AddToBlockIndex???
 }
 
-bool ProcessPrivateBlocks(uint n, const CChainParams& chainparams, bool fForceProcessing, bool *fNewBlock) {
+bool ProcessPrivateBlocks(uint n, const CChainParams& chainparams, bool fForceProcessing) {
     BCLog::LogGeneric("Starting ProcessPrivateBlocks");
     uint i = 0;
     for (; i < n && privateCBlockChain.size() > 0; i++) {
         std::shared_ptr<const CBlock> pblock = privateCBlockChain.front();
         BCLog::LogGeneric("Going to process i: " + std::to_string(i));
 
-        if (ProcessNewBlock2(chainparams, pblock, fForceProcessing, fNewBlock)){
+        if (ProcessNewBlock2(chainparams, pblock, fForceProcessing, nullptr)){
             BCLog::LogGeneric("Succesfully processed block");
             
             privateCBlockChain.erase(privateCBlockChain.begin());
@@ -5014,7 +5014,7 @@ bool ProcessPrivateBlocks(uint n, const CChainParams& chainparams, bool fForcePr
         BCLog::LogGeneric(chainActive.Tip()->ToString());
     }
 
-    return i+1 == n;
+    return i == n;
 }
 
 bool ProcessNewBlockAsSelfishMiner(const CChainParams& chainparams, const std::shared_ptr<const CBlock> pblock, bool fForceProcessing, bool *fNewBlock, int miningMode) {
@@ -5037,7 +5037,7 @@ bool ProcessNewBlockAsStandardSelfishMiner(const CChainParams& chainparams, cons
             // publico el bloque nuevo para ganar el empate del que veniamos
             BCLog::LogGeneric("We came from a conflict and we are only 1 block ahead gonna process the new block");
             comingFromConflict = false;
-            return ProcessPrivateBlocks(1, chainparams, fForceProcessing, fNewBlock);
+            return ProcessPrivateBlocks(1, chainparams, fForceProcessing);
         } else {
             BCLog::LogGeneric("We didn't came from a conflict so we are good");
             return true;
@@ -5066,7 +5066,7 @@ bool ProcessNewBlockAsStandardSelfishMiner(const CChainParams& chainparams, cons
             BCLog::LogGeneric("The public chain is 2 or more blocks behind, just process 1 block");
             nBlocksToPublish = 1;
         }
-        return ProcessPrivateBlocks(nBlocksToPublish, chainparams, fForceProcessing, fNewBlock);
+        return ProcessPrivateBlocks(nBlocksToPublish, chainparams, fForceProcessing);
     }
     BCLog::LogGeneric("We shouldn't reach here, PANIC!");
     return ProcessNewBlock2(chainparams, pblock, fForceProcessing, fNewBlock);
