@@ -1858,7 +1858,12 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
 
     // verify that the view's current state corresponds to the previous block
     uint256 hashPrevBlock = pindex->pprev == nullptr ? uint256() : pindex->pprev->GetBlockHash();
-    assert(hashPrevBlock == view.GetBestBlock());
+    if (fJustCheck) {
+        BCLog::LogGeneric("[ConnectBlock] hashPrevBlock: " + hashPrevBlock.ToString() + " view.GestBestBlock(): " + view.GetBestBlock().ToString());
+        BCLog::LogGeneric("Since we are only checking we don't compare them");
+    } else {
+        assert(hashPrevBlock == view.GetBestBlock());
+    }
 
     // Special case for the genesis block, skipping connection of its transactions
     // (its coinbase is unspendable)
@@ -3662,7 +3667,7 @@ bool TestBlockValidity(CValidationState& state, const CChainParams& chainparams,
     if (!ContextualCheckBlock(block, state, chainparams.GetConsensus(), pindexPrev))
         return error("%s: Consensus::ContextualCheckBlock: %s", __func__, FormatStateMessage(state));
     if (!g_chainstate.ConnectBlock(block, state, &indexDummy, viewNew, chainparams, true))
-        // return false;
+        return false;
     assert(state.IsValid());
 
     return true;
@@ -4987,7 +4992,7 @@ void AddToPrivateChain(const std::shared_ptr<const CBlock> pblock) {
 bool ProcessPrivateBlocks(uint n, const CChainParams& chainparams, bool fForceProcessing, bool *fNewBlock) {
     BCLog::LogGeneric("Starting ProcessPrivateBlocks");
     uint i = 0;
-    for (; i <= n && privateCBlockChain.size() > 0; i++) {
+    for (; i < n && privateCBlockChain.size() > 0; i++) {
         std::shared_ptr<const CBlock> pblock = privateCBlockChain.front();
         BCLog::LogGeneric("Going to process i: " + std::to_string(i));
 

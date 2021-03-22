@@ -69,7 +69,7 @@ void BCLog::LogGeneric(std::string message)
         auto timestamp = std::chrono::system_clock::now().time_since_epoch().count();
 
         // logFile << genericDebug << message << ' ' << timestamp << std::endl;
-        logFile << timestamp << genericDebug << ' ' << message << ' ' << std::endl;
+        logFile << timestamp << ' ' << genericDebug << message << ' ' << std::endl;
     }
 }
 
@@ -79,7 +79,7 @@ void BCLog::LogGenericP(void* pointer)
         auto timestamp = std::chrono::system_clock::now().time_since_epoch().count();
 
         // logFile << genericDebug << pointer << ' ' << timestamp << std::endl;
-        logFile << timestamp << genericDebug << ' ' << pointer << ' ' << std::endl;
+        logFile << timestamp << ' ' << genericDebug << pointer << ' ' << std::endl;
     }
 }
 
@@ -89,7 +89,7 @@ void BCLog::LogNewSelfishBlockDiscovered(std::string headerHash, std::string par
         auto timestamp = std::chrono::system_clock::now().time_since_epoch().count();
 
         // logFile << discoveryBlock << headerHash << ' ' << parentHash << ' ' << txAmount << ' ' << timestamp << std::endl;
-        logFile << timestamp << discoverSelfishBlock << ' ' << headerHash << ' ' << parentHash << ' ' << txAmount << ' ' << std::endl;
+        logFile << timestamp << ' ' << discoverSelfishBlock << headerHash << ' ' << parentHash << ' ' << txAmount << ' ' << std::endl;
     }
 }
 
@@ -99,7 +99,7 @@ void BCLog::LogNewBlockDiscovered(std::string headerHash, std::string parentHash
         auto timestamp = std::chrono::system_clock::now().time_since_epoch().count();
 
         // logFile << discoveryBlock << headerHash << ' ' << parentHash << ' ' << txAmount << ' ' << timestamp << std::endl;
-        logFile << timestamp << discoveryBlock << ' ' << headerHash << ' ' << parentHash << ' ' << txAmount << ' ' << std::endl;
+        logFile << timestamp << ' ' << discoveryBlock << headerHash << ' ' << parentHash << ' ' << txAmount << ' ' << std::endl;
     }
 }
 
@@ -109,7 +109,7 @@ void BCLog::LogNewBlockReceived(std::string headerHash, std::string parentHash)
         auto timestamp = std::chrono::system_clock::now().time_since_epoch().count();
 
         // logFile << receptionBlock << headerHash << ' ' << parentHash << ' ' << timestamp << std::endl;
-        logFile << timestamp << receptionBlock << ' ' << headerHash << ' ' << parentHash << ' ' << std::endl;
+        logFile << timestamp << ' ' << receptionBlock << headerHash << ' ' << parentHash << ' ' << std::endl;
     }
 }
 
@@ -119,7 +119,7 @@ void BCLog::LogNewHeaderReceived(std::string headerHash)
         auto timestamp = std::chrono::system_clock::now().time_since_epoch().count();
 
         // logFile << headerBlock << headerHash << ' ' << timestamp << std::endl;
-        logFile << timestamp << headerBlock << ' ' << headerHash << ' ' << std::endl;
+        logFile << timestamp << ' ' << headerBlock << headerHash << ' ' << std::endl;
     }
 }
 
