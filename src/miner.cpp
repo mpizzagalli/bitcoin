@@ -177,7 +177,10 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     LogPrintf("CreateNewBlock(): block weight: %u txs: %u fees: %ld sigops %d\n", GetBlockWeight(*pblock), nBlockTx, nFees, nBlockSigOpsCost);
 
     // Fill in header
-    pblock->hashPrevBlock  = pindexPrev->GetBlockHash();
+    BCLog::LogGeneric("pblock->hashPrevBlock before update: " + pblock->hashPrevBlock.ToString());
+    BCLog::LogGeneric(pindexPrev->ToString());
+    pblock->hashPrevBlock = pindexPrev->GetBlockHash();
+    BCLog::LogGeneric("pblock->hashPrevBlock after update: " + pblock->hashPrevBlock.ToString());
     UpdateTime(pblock, chainparams.GetConsensus(), pindexPrev);
     /*if (chainparams.GetConsensus().simuLambda < 0 && desiredDifficulty >= 0)
         pblock->nBits = CalculateDesiredDifficulty(desiredDifficulty);
