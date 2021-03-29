@@ -102,7 +102,6 @@ static bool AppInit(int argc, char* argv[])
         }
         // Check for -testnet or -regtest parameter (Params() calls are only valid after this clause)
         try {
-            fprintf(stdout, "src/bitcoind.cpp command line parsing");
             int64_t regtestDifficulty = gArgs.GetArg("-dificulta", 0);
             std::string desiredSimuLambda = gArgs.GetArg("-simuLambda", "-1");
             double simuLambda;

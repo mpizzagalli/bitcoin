@@ -1274,7 +1274,6 @@ void static ProcessGetData(CNode* pfrom, const CChainParams& chainparams, CConnm
         const CInv &inv = *it;
         if (inv.type == MSG_BLOCK || inv.type == MSG_FILTERED_BLOCK || inv.type == MSG_CMPCT_BLOCK || inv.type == MSG_WITNESS_BLOCK) {
             it++;
-            BCLog::LogGeneric("Before ProcessGetBlockData");
             ProcessGetBlockData(pfrom, chainparams, inv, connman, interruptMsgProc);
         }
     }
@@ -2363,7 +2362,6 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     else if (strCommand == NetMsgType::CMPCTBLOCK && !fImporting && !fReindex) // Ignore blocks received while importing
     {
-        BCLog::LogGeneric("Starting net_processing.cpp -> NetMsgType::CMPCTBLOCK");
         CBlockHeaderAndShortTxIDs cmpctblock;
         vRecv >> cmpctblock;
 
@@ -2384,8 +2382,6 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             }
         }
 
-        BCLog::LogGeneric("received_new_header " + std::to_string(received_new_header));
-
         const CBlockIndex *pindex = nullptr;
         CValidationState state;
         if (!ProcessNewBlockHeaders({cmpctblock.header}, state, chainparams, &pindex, nullptr, &received_new_header)) {
@@ -2400,8 +2396,6 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                 return true;
             }
         }
-
-        BCLog::LogGeneric("[CMPCTBLOCK] after process new block headers");
 
         // When we succeed in decoding a block's txids from a cmpctblock
         // message we typically jump to the BLOCKTXN handling code, with a
@@ -2444,7 +2438,6 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             if (fAlreadyInFlight) {
                 // We requested this block for some reason, but our mempool will probably be useless
                 // so we just grab the block via normal getdata
-                BCLog::LogGeneric("[CMPCTBLOCK] Condicion falopa 1");
                 std::vector<CInv> vInv(1);
                 vInv[0] = CInv(MSG_BLOCK | GetFetchFlags(pfrom), cmpctblock.header.GetHash());
                 connman->PushMessage(pfrom, msgMaker.Make(NetMsgType::GETDATA, vInv));
@@ -2488,7 +2481,6 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                     // Duplicate txindexes, the block is now in-flight, so just request it
                     std::vector<CInv> vInv(1);
                     vInv[0] = CInv(MSG_BLOCK | GetFetchFlags(pfrom), cmpctblock.header.GetHash());
-                    BCLog::LogGeneric("[CMPCTBLOCK] Condicion falopa 43");
                     connman->PushMessage(pfrom, msgMaker.Make(NetMsgType::GETDATA, vInv));
                     return true;
                 }
@@ -2507,7 +2499,6 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                     BCLog::LogGeneric("[CMPCTBLOCK] Condicion falopa 55");
                 } else {
                     req.blockhash = pindex->GetBlockHash();
-                    BCLog::LogGeneric("[CMPCTBLOCK] Condicion falopa 56");
                     connman->PushMessage(pfrom, msgMaker.Make(NetMsgType::GETBLOCKTXN, req));
                 }
             } else {
@@ -2534,7 +2525,6 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                 // mempool will probably be useless - request the block normally
                 std::vector<CInv> vInv(1);
                 vInv[0] = CInv(MSG_BLOCK | GetFetchFlags(pfrom), cmpctblock.header.GetHash());
-                BCLog::LogGeneric("[CMPCTBLOCK] Condicion falopa 72");
                 connman->PushMessage(pfrom, msgMaker.Make(NetMsgType::GETDATA, vInv));
                 return true;
             } else {
@@ -2545,7 +2535,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         } // cs_main
 
         if (fProcessBLOCKTXN) {
-            BCLog::LogGeneric("[CMPCTBLOCK] Condicion falopa 80");
+            BCLog::LogGeneric("[CMPCTBLOCK] Condicion falopa 81");
             return ProcessMessage(pfrom, NetMsgType::BLOCKTXN, blockTxnMsg, nTimeReceived, chainparams, connman, interruptMsgProc);
         }
 
@@ -2555,7 +2545,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             // the peer if the header turns out to be for an invalid block.
             // Note that if a peer tries to build on an invalid chain, that
             // will be detected and the peer will be banned.
-            BCLog::LogGeneric("[CMPCTBLOCK] Condicion falopa 80");
+            BCLog::LogGeneric("[CMPCTBLOCK] Condicion falopa 82");
             return ProcessHeadersMessage(pfrom, connman, {cmpctblock.header}, chainparams, /*punish_duplicate_invalid=*/false);
         }
 
@@ -2579,10 +2569,8 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             BCLog::LogGeneric("ProcessNewBlock from net_processing.cpp -> NetMsgType::CMPCTBLOCK");
             ProcessNewBlock(chainparams, pblock, /*fForceProcessing=*/true, &fNewBlock);
             if (fNewBlock) {
-                BCLog::LogGeneric("[CMPCTBLOCK] Condicion normal 5");
                 pfrom->nLastBlockTime = GetTime();
             } else {
-                BCLog::LogGeneric("[CMPCTBLOCK] Condicion normal 7");
                 LOCK(cs_main);
                 mapBlockSource.erase(pblock->GetHash());
             }
@@ -2592,7 +2580,6 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                 // process from some other peer.  We do this after calling
                 // ProcessNewBlock so that a malleated cmpctblock announcement
                 // can't be used to interfere with block relay.
-                BCLog::LogGeneric("[CMPCTBLOCK] Condicion normal 10");
                 MarkBlockAsReceived(pblock->GetHash());
             }
         }
@@ -2601,7 +2588,6 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     else if (strCommand == NetMsgType::BLOCKTXN && !fImporting && !fReindex) // Ignore blocks received while importing
     {
-        BCLog::LogGeneric("Starting net_processing.cpp -> NetMsgType::BLOCKTXN");
         BlockTransactions resp;
         vRecv >> resp;
 
@@ -2627,7 +2613,6 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                 // Might have collided, fall back to getdata now :(
                 std::vector<CInv> invs;
                 invs.push_back(CInv(MSG_BLOCK | GetFetchFlags(pfrom), resp.blockhash));
-                BCLog::LogGeneric("[BLOCKTXN] Condicion falopa 95");
                 connman->PushMessage(pfrom, msgMaker.Make(NetMsgType::GETDATA, invs));
             } else {
                 // Block is either okay, or possibly we received
@@ -2705,7 +2690,6 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
     else if (strCommand == NetMsgType::BLOCK && !fImporting && !fReindex) // Ignore blocks received while importing
     {
         
-        BCLog::LogGeneric("Starting net_processing.cpp -> NetMsgType::BLOCK");
         std::shared_ptr<CBlock> pblock = std::make_shared<CBlock>();
         vRecv >> *pblock;
 
@@ -2724,7 +2708,6 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         }
         bool fNewBlock = false;
         BCLog::LogGeneric("ProcessNewBlock from net_processing.cpp -> NetMsgType::BLOCK");
-        BCLog::LogGeneric("forceProcessing: " + std::to_string(forceProcessing));
         ProcessNewBlock(chainparams, pblock, forceProcessing, &fNewBlock);
         if (fNewBlock) {
             pfrom->nLastBlockTime = GetTime();
@@ -2991,7 +2974,6 @@ bool PeerLogicValidation::ProcessMessages(CNode* pfrom, std::atomic<bool>& inter
     bool fMoreWork = false;
 
     if (!pfrom->vRecvGetData.empty()) {
-        BCLog::LogGeneric("!pfrom->vRecvGetData.empty() dio true asique entramos aca, nidea que esta pasando");
         ProcessGetData(pfrom, chainparams, connman, interruptMsgProc);
     }
 
@@ -3055,7 +3037,6 @@ bool PeerLogicValidation::ProcessMessages(CNode* pfrom, std::atomic<bool>& inter
     try
     {
         fRet = ProcessMessage(pfrom, strCommand, vRecv, msg.nTime, chainparams, connman, interruptMsgProc);
-        BCLog::LogGeneric("fRet after ProcessMessage() is: " + std::to_string(fRet));
         if (interruptMsgProc)
             return false;
         if (!pfrom->vRecvGetData.empty())
@@ -3098,8 +3079,6 @@ bool PeerLogicValidation::ProcessMessages(CNode* pfrom, std::atomic<bool>& inter
 
     LOCK(cs_main);
     SendRejectsAndCheckIfBanned(pfrom, connman);
-
-    BCLog::LogGeneric("At the end of ProcessMessages, fMoreWork: " + std::to_string(fMoreWork));
 
     return fMoreWork;
 }
@@ -3737,7 +3716,6 @@ bool PeerLogicValidation::SendMessages(CNode* pto, std::atomic<bool>& interruptM
                 vGetData.push_back(inv);
                 if (vGetData.size() >= 1000)
                 {
-                    BCLog::LogGeneric("[non-blocks] Condicion falopa 122");
                     connman->PushMessage(pto, msgMaker.Make(NetMsgType::GETDATA, vGetData));
                     vGetData.clear();
                 }

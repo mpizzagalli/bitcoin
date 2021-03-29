@@ -147,7 +147,7 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
         CBlock *pblock = &pblocktemplate->block;
         {
             LOCK(cs_main);
-            // TODO: Si estoy en selfish tengo que ver la punta de la cadena privada
+            // Tengo que ver si rollbackeo lo otro y cambio esto
             if (Params().MiningMode() > 0) {
                 IncrementExtraNonce(pblock, privateChainActiveHeight(), nExtraNonce);
             } else {

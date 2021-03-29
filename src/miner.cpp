@@ -120,14 +120,11 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     pblocktemplate->vTxSigOpsCost.push_back(-1); // updated at end
 
     LOCK2(cs_main, mempool.cs);
-    // Si es selfish deberia poner a la tip de la privada
     CBlockIndex* pindexPrev = nullptr;
-    // if(chainparams.MiningMode() > 0) {
-    //     pindexPrev = privateChainActiveTip();
-    // } else {
-    //     pindexPrev = chainActive.Tip();
-    // }
+
+    // Si es selfish elige la privada sino publica
     pindexPrev = privateChainActiveTip();
+
     assert(pindexPrev != nullptr);
     nHeight = pindexPrev->nHeight + 1;
 
@@ -177,10 +174,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     LogPrintf("CreateNewBlock(): block weight: %u txs: %u fees: %ld sigops %d\n", GetBlockWeight(*pblock), nBlockTx, nFees, nBlockSigOpsCost);
 
     // Fill in header
-    BCLog::LogGeneric("pblock->hashPrevBlock before update: " + pblock->hashPrevBlock.ToString());
-    BCLog::LogGeneric(pindexPrev->ToString());
     pblock->hashPrevBlock = pindexPrev->GetBlockHash();
-    BCLog::LogGeneric("pblock->hashPrevBlock after update: " + pblock->hashPrevBlock.ToString());
     UpdateTime(pblock, chainparams.GetConsensus(), pindexPrev);
     /*if (chainparams.GetConsensus().simuLambda < 0 && desiredDifficulty >= 0)
         pblock->nBits = CalculateDesiredDifficulty(desiredDifficulty);
@@ -450,6 +444,7 @@ void BlockAssembler::addPackageTxs(int &nPackagesSelected, int &nDescendantsUpda
     }
 }
 
+// Maybe I could rollback this change
 void IncrementExtraNonce(CBlock* pblock, int prevHeight, unsigned int& nExtraNonce)
 {
     // Update nExtraNonce
