@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	fmt.Println("Correr a mano lo siguiente:")
+	fmt.Println("Voy a correr:")
 	a := exec.Command(os.Args[1], os.Args[2:]...)
 	fmt.Println(a.String())
 	if err := a.Start(); err != nil {

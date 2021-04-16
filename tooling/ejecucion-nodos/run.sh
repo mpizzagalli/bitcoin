@@ -5,23 +5,17 @@
 # Parametros:
 # - Numero de nodos (sin incluir el del historial) que desee levantar
 # - Numero de nodos con selfish mining que desee levantar (este numero debe ser menor al de arriba)
-
-# FIXME: Considerar reportar aca algo respecto del estado de los nodos
-# FIXME: Es una paja correr este script porque no se tiene nada de output y no es tan claras las cosas que correr... habría que ver de mejorar eso en algún momento que esto no lo estoy usando ahora
-
-# FIXME: Mejorar este mecanismo
-# Hack que permite ver facilmente si la pechee o no cambiando este script, solo tengo que cambiar esta variable para que haya mayor logging
-debug=false
-
-if $debug; then
-    set -x
-fi
+# - Nombre de la corrida (por default se pone test)
+# - Modo en que se quiere correr, si es libre en base a los hash rates asignados ("free") o siguiendo una traza dada ("trace")
+# - path a la traza dada
 
 # Parametros
 numnodes=${1:-1}
 startLogAt=$(($numnodes*2400))
-runName=${2:-"test"}
-numselfishnodes=${3:-0}
+numselfishnodes=${2:-0}
+runName=${3:-"test"}
+mode=${4:-"free"}
+traceFileIn=${5:-""}
 
 # Constantes
 gobin=go
@@ -36,13 +30,9 @@ echo "Going to create the folder $runlogdir to save the results inside for nodes
 
 mkdir $runlogdir
 
-# echo "Borramos los archivos de log de corridas viejas"
-# find . -name 'btcCoreLogN*' -delete
-
 echo "Empiezo $numnodes nodo(s) BTC"
 for (( nodeId=0; nodeId<$numnodes; nodeId++ ))
 do
-    # bash $scriptdir/invokeBitcoin.sh $nodeId -dificulta=0 -dbcache=3072 -start-log-at=$startLogAt -log-folder=$runlogdir -mining-mode=$(($nodeId%2))
     if (($nodeId<$numselfishnodes)); then
         bash $scriptdir/invokeBitcoin.sh $nodeId -dificulta=0 -dbcache=3072 -start-log-at=$startLogAt -log-folder=$runlogdir -mining-mode=1
     else
@@ -57,7 +47,7 @@ do
     $gobin run $scriptdir/semaphore.go $nodeId
 done
 
-echo "Conectamos los nodos cada uno con el otro (por ahora en forma de clique)"
+echo "Conectamos los nodos cada uno con el otro (por ahora en forma de clique)" # TODO aca agregar algo para no conectar tipo clique
 for (( node1Id=0; node1Id<$numnodes-1; node1Id++ ))
 do
     for (( node2Id=node1Id+1; node2Id<$numnodes; node2Id++ ))
@@ -102,17 +92,27 @@ echo "Mato al nodo del historial"
 bash $scriptdir/bitcoindo.sh $numnodes stop
 sleep 1m
 
-# FIXME: Tengo algun forma de ver las cosas que loggea esto?
-echo "Genero bloques y txs en cada uno de los nodos"
-nodeshp=$(bc -l <<< "1.0/$numnodes")
 starttime=$(date +%s)
-for (( nodeId=0; nodeId<$numnodes; nodeId++ ))
-do
-    # $gobin run $scriptdir/launcher.go $gobin run $scriptdir/testEngine.go $nodeId $nodeshp
-    traceFile=$runlogdir/traceN$nodeId.out
-    $gobin run $scriptdir/fakeLauncher.go $gobin run $scriptdir/minerEngine.go $nodeId $nodeshp $traceFile $starttime
-    sleep 1s
-done
+
+if [ "$mode" = "free" ]; then
+    echo "Disparo el motor que genero bloques en cada uno de los nodos"
+    nodeshp=$(bc -l <<< "1.0/$numnodes") # TODO: aca cambiar para tener hash rates asimetricos
+    for (( nodeId=0; nodeId<$numnodes; nodeId++ ))
+    do
+        traceFileOut=$runlogdir/traceN$nodeId.out
+        $gobin run $scriptdir/launcher.go $gobin run $scriptdir/minerEngine.go $nodeId $nodeshp $traceFileOut $starttime
+        sleep 1s
+    done
+elif [ "$mode" = "trace" ]; then
+    echo "Muevo la traza de entrada a la carpeta de los logs y la renombro trace.in"
+    cp $traceFileIn $runlogdir/trace.in
+    echo "Disparo el motor que reproduce la traza pasada por parametro"
+    traceFileOut=$runlogdir/traceGlobal.out
+    $gobin run $scriptdir/traceEngine.go $traceFileIn $numnodes $traceFileOut $starttime
+    echo "Termino la traza dejo todo levantado para seguir probando"
+else 
+    echo "Invalid mode quedan los nodos levantados"
+fi
 
 # Paro a los nodos BTC ante un SIGINT o un SIGTERM
 stopAllBTCNodes() {
@@ -123,9 +123,6 @@ stopAllBTCNodes() {
     done
     sleep 1m
 
-    if $debug; then
-        set +x
-    fi
     exit 0
 }
 trap stopAllBTCNodes SIGINT SIGTERM

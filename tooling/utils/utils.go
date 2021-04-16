@@ -1,13 +1,13 @@
 package utils
 
 import (
-	"os"
-	"fmt"
-	"os/exec"
 	"bytes"
-	"math/rand"
 	crand "crypto/rand"
 	"encoding/binary"
+	"fmt"
+	"math/rand"
+	"os"
+	"os/exec"
 )
 
 // Mixture of things used all over our codebase
@@ -33,4 +33,18 @@ func CreateRng() *rand.Rand {
 	seed := int64(binary.LittleEndian.Uint64(buf))
 
 	return rand.New(rand.NewSource(seed))
+}
+
+func CheckIfError(e error, context string) {
+	if e != nil {
+		fmt.Println("[", context, "] Something went wrong, error:", e)
+		panic(e)
+	}
+}
+
+func CheckError(e error) {
+	if e != nil {
+		fmt.Println("Something went wrong, error:", e)
+		panic(e)
+	}
 }
