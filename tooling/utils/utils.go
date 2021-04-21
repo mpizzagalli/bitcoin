@@ -114,3 +114,22 @@ func MineBlock(nodeInfo Node, traceOut *os.File, startTime time.Time) {
 	cmd.Run()
 	WriteTraceOut(nodeInfo.id, traceOut, startTime)
 }
+
+func MineBlock2(nodeInfo Node, fn func(string)) {
+	cmd := exec.Command("bash", nodeExecutionDir+"/bitcoindo.sh", nodeInfo.id, "generatetoaddress", "1", nodeInfo.addresses[0])
+	// fmt.Println(cmd.String())
+	cmd.Run()
+	fn(nodeInfo.id)
+}
+
+func WriteTraceOutFn(traceFileOutName string, startTime time.Time) func(string) {
+	traceOutFile, e := os.Create(traceFileOutName)
+	CheckError(e)
+	defer traceOutFile.Close()
+
+	return func(id string) {
+		diff := time.Now().Sub(startTime)
+		_, err := traceOutFile.WriteString(strconv.FormatInt(diff.Milliseconds(), 10) + " " + id + "\n")
+		CheckError(err)
+	}
+}

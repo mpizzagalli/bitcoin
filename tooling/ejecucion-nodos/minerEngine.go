@@ -26,7 +26,8 @@ func getSimulatedLambda() float64 {
 }
 
 // Mina bloques de acuerdo al hashing power asignado (simuLambda)
-func mineBlocks(nodeInfo Node, simuLambda float64, traceFileName string, startTime time.Time) {
+// func mineBlocks(nodeInfo Utils.Node, simuLambda float64, traceFileName string, startTime time.Time) {
+func mineBlocks(nodeInfo Utils.Node, simuLambda float64, traceWriteFn func(string)) {
 
 	var sleepTime float64
 	var sleepSeconds time.Duration
@@ -36,10 +37,6 @@ func mineBlocks(nodeInfo Node, simuLambda float64, traceFileName string, startTi
 	rng := Utils.CreateRng()
 
 	timestamp := time.Now().UnixNano()
-
-	traceOutFIle, e := os.Create(traceFileName)
-	Utils.CheckError(e)
-	defer traceOutFIle.Close()
 
 	for i := 0; ; i ^= 1 {
 		// Hardcodeado que el tiempo entre bloques sea propocional a los 10 min
@@ -52,7 +49,8 @@ func mineBlocks(nodeInfo Node, simuLambda float64, traceFileName string, startTi
 
 		timestamp = time.Now().UnixNano()
 
-		Utils.MineBlock(nodeInfo, traceOutFIle, startTime)
+		// Utils.MineBlock(nodeInfo, traceWriteFn)
+		Utils.MineBlock2(nodeInfo, traceWriteFn)
 	}
 }
 
@@ -66,9 +64,16 @@ func mineBlocks(nodeInfo Node, simuLambda float64, traceFileName string, startTi
 func main() {
 	nodeNumber := getNodeNumber()
 	nodeInfo := Utils.ParseNodeInfo(nodeNumber)
-	startTime := Utils.ParseStartTime(os.Args[4])
-	traceFile := os.Args[3]
 	simuLambda := getSimulatedLambda()
 
-	mineBlocks(nodeInfo, nodeNumber, simuLambda, traceFile, startTime)
+	traceFn := func(id string) { return }
+
+	if len(os.Args) > 3 {
+		traceFileName := os.Args[3]
+		startTime := Utils.ParseStartTime(os.Args[4])
+
+		traceFn = Utils.WriteTraceOutFn(traceFileName, startTime)
+	}
+
+	mineBlocks(nodeInfo, simuLambda, traceFn)
 }

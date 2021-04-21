@@ -11,7 +11,7 @@ import (
 	Utils "../utils"
 )
 
-func processTrace(traceIn *os.File, totalNodes int, nodesInfo []Node, traceOut *os.File, startTime time.Time) {
+func processTrace(traceIn *os.File, totalNodes int, nodesInfo []Utils.Node, traceOutWriteFn func(string)) {
 	scanner := bufio.NewScanner(traceIn)
 	previousDuration, b := time.ParseDuration("0ms")
 	Utils.CheckError(b)
@@ -27,14 +27,14 @@ func processTrace(traceIn *os.File, totalNodes int, nodesInfo []Node, traceOut *
 			panic("The trace has a nodeID bigger as expected")
 		}
 		time.Sleep(diffDuration)
-		Utils.MineBlock(nodesInfo[nodeID], traceOut, startTime)
+		Utils.MineBlock2(nodesInfo[nodeID], traceOutWriteFn)
 		previousDuration = blockDuration
 	}
 }
 
 func main() {
-	if len(os.Args) < 5 {
-		fmt.Println("Missing arguments, usage: go run traceEngine.go tracefileIn #nodes tracefileOut timestart")
+	if len(os.Args) < 3 {
+		fmt.Println("Missing arguments, usage: go run traceEngine.go tracefileIn #nodes [tracefileOut timestart]")
 		panic("Missing arguments")
 	}
 
@@ -48,14 +48,16 @@ func main() {
 	Utils.CheckError(err)
 	defer traceIn.Close()
 
-	startTime := Utils.ParseStartTime(os.Args[4])
-	traceFileOutName := os.Args[3]
+	traceOutWriteFn := func(id string) { return }
 
-	traceOut, e := os.Create(traceFileOutName)
-	Utils.CheckError(e)
-	defer traceOut.Close()
+	if len(os.Args) > 3 {
+		traceFileName := os.Args[3]
+		startTime := Utils.ParseStartTime(os.Args[4])
 
-	processTrace(traceIn, totalNodes, nodesInfo, traceOut, startTime)
+		traceOutWriteFn = Utils.WriteTraceOutFn(traceFileName, startTime)
+	}
+
+	processTrace(traceIn, totalNodes, nodesInfo, traceOutWriteFn)
 
 	fmt.Println("traceEngine ended succesfully")
 }

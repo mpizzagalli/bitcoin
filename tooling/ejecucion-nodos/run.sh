@@ -9,15 +9,41 @@
 # - Modo en que se quiere correr, si es libre en base a los hash rates asignados ("free") o siguiendo una traza dada ("trace")
 # - path a la traza dada
 
-# Parametros
-numnodes=${1:-1}
-startLogAt=$(($numnodes*2400))
-numselfishnodes=${2:-0}
-runName=${3:-"test"}
-mode=${4:-"free"}
-traceFileIn=${5:-""}
+print_usage() {
+  printf "Usage: bash run.sh -n nodes -s selfishNodes -f runName -m mode -o [-i traceFileIn]"
+}
 
-# Constantes
+numnodes=1
+numselfishnodes=0
+runName="test"
+mode="free"
+traceFileIn=""
+writeTrace=false
+
+while getopts 'n:s:f:m:oi:' flag; do
+  case "${flag}" in
+    n) numnodes=$OPTARG ;;
+    s) numselfishnodes=$OPTARG ;;
+    f) runName="$OPTARG" ;;
+    m) mode="${OPTARG}" ;;
+    o) writeTrace=true ;;
+    i) traceFileIn="${OPTARG}" ;;
+    *) print_usage
+       exit 1 ;;
+  esac
+done
+
+startLogAt=$(($numnodes*2400))
+
+# echo $numnodes
+# echo $numselfishnodes
+# echo $runName
+# echo $mode
+# echo $traceFileIn
+echo $writeTrace
+# echo $startLogAt
+
+Constantes
 gobin=go
 scriptdir=/Users/mpizzagali/Tesis/btc-core/tooling/ejecucion-nodos
 datadir=$scriptdir/.exec-results/data-0
@@ -99,16 +125,24 @@ if [ "$mode" = "free" ]; then
     nodeshp=$(bc -l <<< "1.0/$numnodes") # TODO: aca cambiar para tener hash rates asimetricos
     for (( nodeId=0; nodeId<$numnodes; nodeId++ ))
     do
-        traceFileOut=$runlogdir/traceN$nodeId.out
-        $gobin run $scriptdir/launcher.go $gobin run $scriptdir/minerEngine.go $nodeId $nodeshp $traceFileOut $starttime
+        if [ "$writeTrace" = true ] ; then
+            traceFileOut=$runlogdir/traceN$nodeId.out
+            $gobin run $scriptdir/launcher.go $gobin run $scriptdir/minerEngine.go $nodeId $nodeshp $traceFileOut $starttime
+        else
+            $gobin run $scriptdir/launcher.go $gobin run $scriptdir/minerEngine.go $nodeId $nodeshp
+        fi
         sleep 1s
     done
 elif [ "$mode" = "trace" ]; then
     echo "Muevo la traza de entrada a la carpeta de los logs y la renombro trace.in"
     cp $traceFileIn $runlogdir/trace.in
     echo "Disparo el motor que reproduce la traza pasada por parametro"
-    traceFileOut=$runlogdir/traceGlobal.out
-    $gobin run $scriptdir/traceEngine.go $traceFileIn $numnodes $traceFileOut $starttime
+    if [ "$writeTrace" = true ] ; then
+        traceFileOut=$runlogdir/traceGlobal.out
+        $gobin run $scriptdir/traceEngine.go $traceFileIn $numnodes $traceFileOut $starttime
+    else 
+        $gobin run $scriptdir/traceEngine.go $traceFileIn $numnodes
+    fi
     echo "Termino la traza dejo todo levantado para seguir probando"
 else 
     echo "Invalid mode quedan los nodos levantados"
