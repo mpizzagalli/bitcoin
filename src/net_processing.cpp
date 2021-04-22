@@ -1498,7 +1498,6 @@ bool static ProcessHeadersMessage(CNode *pfrom, CConnman *connman, const std::ve
                         // In any case, we want to download using a compact block, not a regular one
                         vGetData[0] = CInv(MSG_CMPCT_BLOCK, vGetData[0].hash);
                     }
-                    BCLog::LogGeneric("Condicion falopa 100");
                     connman->PushMessage(pfrom, msgMaker.Make(NetMsgType::GETDATA, vGetData));
                 }
             }
@@ -1547,7 +1546,6 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         return true;
     }
 
-    BCLog::LogGeneric("Process Message with strCommand: " + strCommand);
 
 
     if (!(pfrom->GetLocalServices() & NODE_BLOOM) &&
@@ -2496,7 +2494,6 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                     txn.blockhash = cmpctblock.header.GetHash();
                     blockTxnMsg << txn;
                     fProcessBLOCKTXN = true;
-                    BCLog::LogGeneric("[CMPCTBLOCK] Condicion falopa 55");
                 } else {
                     req.blockhash = pindex->GetBlockHash();
                     connman->PushMessage(pfrom, msgMaker.Make(NetMsgType::GETBLOCKTXN, req));
@@ -2535,7 +2532,6 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         } // cs_main
 
         if (fProcessBLOCKTXN) {
-            BCLog::LogGeneric("[CMPCTBLOCK] Condicion falopa 81");
             return ProcessMessage(pfrom, NetMsgType::BLOCKTXN, blockTxnMsg, nTimeReceived, chainparams, connman, interruptMsgProc);
         }
 
@@ -2545,7 +2541,6 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             // the peer if the header turns out to be for an invalid block.
             // Note that if a peer tries to build on an invalid chain, that
             // will be detected and the peer will be banned.
-            BCLog::LogGeneric("[CMPCTBLOCK] Condicion falopa 82");
             return ProcessHeadersMessage(pfrom, connman, {cmpctblock.header}, chainparams, /*punish_duplicate_invalid=*/false);
         }
 
@@ -2566,7 +2561,6 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             // we have a chain with at least nMinimumChainWork), and we ignore
             // compact blocks with less work than our tip, it is safe to treat
             // reconstructed compact blocks as having been requested.
-            BCLog::LogGeneric("ProcessNewBlock from net_processing.cpp -> NetMsgType::CMPCTBLOCK");
             ProcessNewBlock(chainparams, pblock, /*fForceProcessing=*/true, &fNewBlock);
             if (fNewBlock) {
                 pfrom->nLastBlockTime = GetTime();
@@ -2650,7 +2644,6 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             // disk-space attacks), but this should be safe due to the
             // protections in the compact block handler -- see related comment
             // in compact block optimistic reconstruction handling.
-            BCLog::LogGeneric("ProcessNewBlock from net_processing.cpp -> NetMsgType::BLOCKTXN");
             ProcessNewBlock(chainparams, pblock, /*fForceProcessing=*/true, &fNewBlock);
             if (fNewBlock) {
                 pfrom->nLastBlockTime = GetTime();
@@ -2707,7 +2700,6 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             mapBlockSource.emplace(hash, std::make_pair(pfrom->GetId(), true));
         }
         bool fNewBlock = false;
-        BCLog::LogGeneric("ProcessNewBlock from net_processing.cpp -> NetMsgType::BLOCK");
         ProcessNewBlock(chainparams, pblock, forceProcessing, &fNewBlock);
         if (fNewBlock) {
             pfrom->nLastBlockTime = GetTime();
@@ -3726,7 +3718,6 @@ bool PeerLogicValidation::SendMessages(CNode* pto, std::atomic<bool>& interruptM
             pto->mapAskFor.erase(pto->mapAskFor.begin());
         }
         if (!vGetData.empty()) {
-            BCLog::LogGeneric("[non-blocks] Condicion falopa 123");
             connman->PushMessage(pto, msgMaker.Make(NetMsgType::GETDATA, vGetData));
         }
 
