@@ -10,9 +10,17 @@
 # - path a la traza dada
 
 print_usage() {
-  printf "Usage: bash run.sh -n nodes -s selfishNodes -f runName -m mode -o [-i traceFileIn]"
+  printf "Usage: bash run.sh -n nodes -s selfishNodes -f runName -m mode -o [-i traceFileIn]\n"
 }
 
+# Constantes
+gobin=go
+scriptdir=/Users/mpizzagali/Tesis/btc-core/tooling/ejecucion-nodos
+datadir=$scriptdir/.exec-results/data-0
+addressesdir=$scriptdir/.exec-results
+logdir=$scriptdir/logs
+
+#Parametros entrada
 numnodes=1
 numselfishnodes=0
 runName="test"
@@ -20,7 +28,7 @@ mode="free"
 traceFileIn=""
 writeTrace=false
 
-while getopts 'n:s:f:m:oi:' flag; do
+while getopts 'n:s:f:m:oi:h' flag; do
   case "${flag}" in
     n) numnodes=$OPTARG ;;
     s) numselfishnodes=$OPTARG ;;
@@ -28,27 +36,25 @@ while getopts 'n:s:f:m:oi:' flag; do
     m) mode="${OPTARG}" ;;
     o) writeTrace=true ;;
     i) traceFileIn="${OPTARG}" ;;
+    h) print_usage
+       exit 1 ;;
     *) print_usage
        exit 1 ;;
   esac
 done
 
+stopAllBTCNodes() {
+    echo 'Señal de matar a los nodos recibida, matando a los BTC nodes levantados...'
+    for (( nodeId=0; nodeId<$numnodes; nodeId++ ))
+    do
+        bash $scriptdir/bitcoindo.sh $nodeId stop
+    done
+    sleep 1m
+
+    exit 0
+}
+
 startLogAt=$(($numnodes*2400))
-
-# echo $numnodes
-# echo $numselfishnodes
-# echo $runName
-# echo $mode
-# echo $traceFileIn
-echo $writeTrace
-# echo $startLogAt
-
-Constantes
-gobin=go
-scriptdir=/Users/mpizzagali/Tesis/btc-core/tooling/ejecucion-nodos
-datadir=$scriptdir/.exec-results/data-0
-addressesdir=$scriptdir/.exec-results
-logdir=$scriptdir/logs
 
 runlogdir=$scriptdir/logs/$(date +'%Y%m%d%H%M%S')-$runName
 
@@ -143,22 +149,15 @@ elif [ "$mode" = "trace" ]; then
     else 
         $gobin run $scriptdir/traceEngine.go $traceFileIn $numnodes
     fi
-    echo "Termino la traza dejo todo levantado para seguir probando"
+    echo "Termine la traza"
+    # echo "dejo todo levantado para seguir probando"
+    stopAllBTCNodes
+    exit 0
 else 
     echo "Invalid mode quedan los nodos levantados"
 fi
 
 # Paro a los nodos BTC ante un SIGINT o un SIGTERM
-stopAllBTCNodes() {
-    echo 'Señal de matar a los nodos recibida, matando a los BTC nodes levantados...'
-    for (( nodeId=0; nodeId<$numnodes; nodeId++ ))
-    do
-        bash $scriptdir/bitcoindo.sh $nodeId stop
-    done
-    sleep 1m
-
-    exit 0
-}
 trap stopAllBTCNodes SIGINT SIGTERM
 # sleep infinity
 sleep 86400

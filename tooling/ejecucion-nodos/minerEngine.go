@@ -71,8 +71,9 @@ func main() {
 	if len(os.Args) > 3 {
 		traceFileName := os.Args[3]
 		startTime := Utils.ParseStartTime(os.Args[4])
-
-		traceFn = Utils.WriteTraceOutFn(traceFileName, startTime)
+		var file *os.File
+		file, traceFn = Utils.WriteTraceOutFn(traceFileName, startTime)
+		defer file.Close()
 	}
 
 	mineBlocks(nodeInfo, simuLambda, traceFn)

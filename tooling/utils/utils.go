@@ -122,12 +122,12 @@ func MineBlock2(nodeInfo Node, fn func(string)) {
 	fn(nodeInfo.id)
 }
 
-func WriteTraceOutFn(traceFileOutName string, startTime time.Time) func(string) {
+func WriteTraceOutFn(traceFileOutName string, startTime time.Time) (*os.File, func(string)) {
 	traceOutFile, e := os.Create(traceFileOutName)
 	CheckError(e)
-	defer traceOutFile.Close()
+	// defer traceOutFile.Close()
 
-	return func(id string) {
+	return traceOutFile, func(id string) {
 		diff := time.Now().Sub(startTime)
 		_, err := traceOutFile.WriteString(strconv.FormatInt(diff.Milliseconds(), 10) + " " + id + "\n")
 		CheckError(err)
