@@ -120,10 +120,8 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     pblocktemplate->vTxSigOpsCost.push_back(-1); // updated at end
 
     LOCK2(cs_main, mempool.cs);
-    CBlockIndex* pindexPrev = nullptr;
-
     // Si es selfish elige la privada sino publica
-    pindexPrev = privateChainActiveTip();
+    CBlockIndex* pindexPrev = privateChainActiveTip();
 
     assert(pindexPrev != nullptr);
     nHeight = pindexPrev->nHeight + 1;
@@ -445,7 +443,7 @@ void BlockAssembler::addPackageTxs(int &nPackagesSelected, int &nDescendantsUpda
 }
 
 // Maybe I could rollback this change
-void IncrementExtraNonce(CBlock* pblock, int prevHeight, unsigned int& nExtraNonce)
+void IncrementExtraNonce(CBlock* pblock, const CBlockIndex* pindexPrev, unsigned int& nExtraNonce)
 {
     // Update nExtraNonce
     static uint256 hashPrevBlock;
@@ -455,7 +453,7 @@ void IncrementExtraNonce(CBlock* pblock, int prevHeight, unsigned int& nExtraNon
         hashPrevBlock = pblock->hashPrevBlock;
     }
     ++nExtraNonce;
-    unsigned int nHeight = prevHeight+1; // Height first in coinbase required for block.version=2
+    unsigned int nHeight = pindexPrev->nHeight+1; // Height first in coinbase required for block.version=2
     CMutableTransaction txCoinbase(*pblock->vtx[0]);
     txCoinbase.vin[0].scriptSig = (CScript() << nHeight << CScriptNum(nExtraNonce)) + COINBASE_FLAGS;
     assert(txCoinbase.vin[0].scriptSig.size() <= 100);
