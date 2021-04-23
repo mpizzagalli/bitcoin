@@ -4962,15 +4962,7 @@ bool ProcessNewBlockAsStandardSelfishMiner(const CChainParams& chainparams, cons
     // Logica basica del paper Mayority is not enough
     BCLog::LogGeneric("Starting selfish miner logic");
     const CBlock& block = *pblock;
-    // CBlockIndex *pindex = g_chainstate.AddToBlockIndex(block); // TODO: Can we change this to AcceptBlockHeaders?
-    // g_chainstate.AcceptBlockHeader(const CBlockHeader& block, CValidationState& state, const CChainParams& chainparams, CBlockIndex** ppindex, bool* fnewBlock = nullptr)
-    CBlockIndex *pindex;
-    CBlockIndex **ppindex;
-    CValidationState state;
-    g_chainstate.AcceptBlockHeader(block, state, chainparams, ppindex, nullptr);
-    pindex = *ppindex;
-
-    BCLog::LogGeneric("pindex: "+ pindex->ToString());
+    CBlockIndex *pindex = g_chainstate.AddToBlockIndex(block); // TODO: Can we change this to AcceptBlockHeaders?
 
     uint publicChainHeight = chainActive.Height();
     uint privateChainHeight = privateChainActiveHeight();
