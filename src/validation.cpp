@@ -1860,10 +1860,9 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
 
     // verify that the view's current state corresponds to the previous block
     uint256 hashPrevBlock = pindex->pprev == nullptr ? uint256() : pindex->pprev->GetBlockHash();
-    if (fJustCheck) {
-        BCLog::LogGeneric("[ConnectBlock] hashPrevBlock: " + hashPrevBlock.ToString() + " view.GestBestBlock(): " + view.GetBestBlock().ToString());
-        BCLog::LogGeneric("Since we are only checking we don't compare them");
-    } else {
+    
+    if (!fJustCheck) {
+        BCLog::LogGeneric("Since we are not only checking we compare this");
         assert(hashPrevBlock == view.GetBestBlock());
     }
 
@@ -3492,8 +3491,6 @@ bool CChainState::AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CVali
     CBlockIndex *pindexDummy = nullptr;
     CBlockIndex *&pindex = ppindex ? *ppindex : pindexDummy;
 
-    BCLog::LogGeneric("AcceptBlock before AcceptBlockHeader");
-
     if (!AcceptBlockHeader(block, state, chainparams, &pindex))
         return false;
 
@@ -4924,7 +4921,6 @@ void AddToPrivateChain(const std::shared_ptr<const CBlock> pblock, CBlockIndex* 
     privateCBlockChain.push_back(pblock);
     privateCBlockIndexChain.push_back(pindex);
 
-    BCLog::LogGeneric("CBlockIndex added pindex: " + pindex->ToString());
     BCLog::LogNewSelfishBlockDiscovered(pblock->GetHash().ToString(), pblock->hashPrevBlock.ToString(), pblock->vtx.size());
 
     return;
@@ -4966,7 +4962,16 @@ bool ProcessNewBlockAsStandardSelfishMiner(const CChainParams& chainparams, cons
     // Logica basica del paper Mayority is not enough
     BCLog::LogGeneric("Starting selfish miner logic");
     const CBlock& block = *pblock;
-    CBlockIndex *pindex = g_chainstate.AddToBlockIndex(block); // TODO: Can we change this to AcceptBlockHeaders?
+    // CBlockIndex *pindex = g_chainstate.AddToBlockIndex(block); // TODO: Can we change this to AcceptBlockHeaders?
+    // g_chainstate.AcceptBlockHeader(const CBlockHeader& block, CValidationState& state, const CChainParams& chainparams, CBlockIndex** ppindex, bool* fnewBlock = nullptr)
+    CBlockIndex *pindex;
+    CBlockIndex **ppindex;
+    CValidationState state;
+    g_chainstate.AcceptBlockHeader(block, state, chainparams, ppindex, nullptr);
+    pindex = *ppindex;
+
+    BCLog::LogGeneric("pindex: "+ pindex->ToString());
+
     uint publicChainHeight = chainActive.Height();
     uint privateChainHeight = privateChainActiveHeight();
     uint newBlockHeight = pindex->nHeight;
@@ -4996,7 +5001,7 @@ bool ProcessNewBlockAsStandardSelfishMiner(const CChainParams& chainparams, cons
         } else if (newBlockHeight > privateChainHeight) { // la cadena publica me esta ganando
             // vacio toda la cadena privada y me pongo a minar sobre la publica
             // agrego el bloque nuevo a la cadena publica 
-            BCLog::LogGeneric("The public chain is bigger than ours we treat it normal");
+            BCLog::LogGeneric("The public chain is bigger than ours we dump the private chain and treat it normal");
             DumpPrivateChain();
             return ProcessNewBlockHonestly(chainparams, pblock, fForceProcessing, fNewBlock);
         } else if (newBlockHeight == privateChainHeight) { // la cadena publica me alcanzo
