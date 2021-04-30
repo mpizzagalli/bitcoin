@@ -1,6 +1,6 @@
 #!/bin/bash
-
-scriptdir=/Users/mpizzagali/Tesis/btc-core/tooling/ejecucion-nodos
+# scriptdir=/Users/mpizzagali/Tesis/btc-core/tooling/ejecucion-nodos
+scriptdir=/home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos
 
 # bash $scriptdir/run.sh -n 2 -s 1 -f test-caso-1 -m trace -i $scriptdir/trazas-testeo/caso-1-shh.in
 

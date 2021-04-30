@@ -15,7 +15,8 @@ print_usage() {
 
 # Constantes
 gobin=go
-scriptdir=/Users/mpizzagali/Tesis/btc-core/tooling/ejecucion-nodos
+# scriptdir=/Users/mpizzagali/Tesis/btc-core/tooling/ejecucion-nodos
+scriptdir=/home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos
 datadir=$scriptdir/.exec-results/data-0
 addressesdir=$scriptdir/.exec-results
 logdir=$scriptdir/logs

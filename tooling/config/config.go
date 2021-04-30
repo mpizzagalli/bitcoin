@@ -13,7 +13,8 @@ type Configuration struct {
 
 // FIXME: Maybe this can be derived from the current location of this file?
 // Allows runnning all the scripts using this from anywhere
-var projectToolingRoot = "/Users/mpizzagali/Tesis/btc-core/tooling"
+// var projectToolingRoot = "/Users/mpizzagali/Tesis/btc-core/tooling"
+var projectToolingRoot = "/home/mgeier/mpizzagalli/bitcoin/tooling"
 var config = Configuration{
 	NodeExecutionDir:    projectToolingRoot + "/ejecucion-nodos",
 	AddressesDir:        projectToolingRoot + "/ejecucion-nodos/.exec-results",
