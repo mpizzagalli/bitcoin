@@ -17,9 +17,9 @@ connect n3 n4 15ms
 
 build-network
 
-run n1 netns n1 bash /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/invokeBitcoin.sh 0 -dificulta=0 -dbcache=2048
-run n2 netns n2 bash /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/invokeBitcoin.sh 1 -dificulta=0 -dbcache=2048
-run n3 netns n3 bash /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/invokeBitcoin.sh 2 -dificulta=0 -dbcache=2048
+run n1 netns n1 bash /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/invokeBitcoin.sh 0 -dificulta=0 -dbcache=2048 -start-log-at=7200 -log-folder=/home/mgeier/mpizzagalli -mining-mode=0
+run n2 netns n2 bash /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/invokeBitcoin.sh 1 -dificulta=0 -dbcache=2048 -start-log-at=7200 -log-folder=/home/mgeier/mpizzagalli -mining-mode=0
+run n3 netns n3 bash /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/invokeBitcoin.sh 2 -dificulta=0 -dbcache=2048 -start-log-at=7200 -log-folder=/home/mgeier/mpizzagalli -mining-mode=0
 
 run n0 netns n0 sleep 1m
 run n1 netns n1 /usr/local/go/bin/go run /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/semaphore.go 0
