@@ -1,0 +1,87 @@
+def n0
+def n1
+def n2
+def n3
+def n4
+
+connect n0 n1 15ms
+connect n0 n2 15ms
+connect n0 n3 15ms
+connect n0 n4 15ms
+connect n1 n2 15ms
+connect n1 n3 15ms
+connect n1 n4 15ms
+connect n2 n3 15ms
+connect n2 n4 15ms
+connect n3 n4 15ms
+
+build-network
+
+run n1 netns n1 bash /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/invokeBitcoin.sh 0 -dificulta=0 -dbcache=2048
+run n2 netns n2 bash /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/invokeBitcoin.sh 1 -dificulta=0 -dbcache=2048
+run n3 netns n3 bash /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/invokeBitcoin.sh 2 -dificulta=0 -dbcache=2048
+
+run n0 netns n0 sleep 1m
+run n1 netns n1 /usr/local/go/bin/go run /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/semaphore.go 0
+run n2 netns n2 /usr/local/go/bin/go run /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/semaphore.go 1
+run n3 netns n3 /usr/local/go/bin/go run /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/semaphore.go 2
+
+run n1 netns n1 bash /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/connectNodes.sh 0 1 n2
+run n1 netns n1 bash /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/connectNodes.sh 0 2 n3
+run n2 netns n2 bash /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/connectNodes.sh 1 2 n3
+
+run n0 netns n0 bash /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/invokeBitcoin.sh 3 -dificulta=0 -dbcache=2048
+
+run n0 netns n0 sleep 1m
+run n0 netns n0 /usr/local/go/bin/go run /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/semaphore.go 3
+
+run n1 netns n1 bash /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/connectNodes.sh 0 3 n0
+run n0 netns n0 bash /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/connectNodes.sh 3 0 n1
+run n2 netns n2 bash /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/connectNodes.sh 1 3 n0
+run n0 netns n0 bash /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/connectNodes.sh 3 1 n2
+run n3 netns n3 bash /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/connectNodes.sh 2 3 n0
+run n0 netns n0 bash /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/connectNodes.sh 3 2 n3
+
+run n1 netns n1 rm -f /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/addrN*
+run n2 netns n2 rm -f /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/addrN*
+run n3 netns n3 rm -f /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/addrN*
+
+run n1 netns n1 bash /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/bitcoindo.sh 0 getnewaddress > /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/addrN0
+run n1 netns n1 bash /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/bitcoindo.sh 0 getnewaddress >> /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/addrN0
+
+run n2 netns n2 bash /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/bitcoindo.sh 1 getnewaddress > /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/addrN1
+run n2 netns n2 bash /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/bitcoindo.sh 1 getnewaddress >> /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/addrN1
+
+run n3 netns n3 bash /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/bitcoindo.sh 2 getnewaddress > /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/addrN2
+run n3 netns n3 bash /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/bitcoindo.sh 2 getnewaddress >> /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/addrN2
+
+run n0 netns n0 /usr/local/go/bin/go run /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/generateBlockchain.go 3
+
+run n0 netns n0 sleep 1m
+run n1 netns n1 /usr/local/go/bin/go run /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/semaphore.go 0
+run n2 netns n2 /usr/local/go/bin/go run /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/semaphore.go 1
+run n3 netns n3 /usr/local/go/bin/go run /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/semaphore.go 2
+
+run n0 netns n0 bash /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/bitcoindo.sh 3 stop
+
+run n0 netns n0 rm /root/btcCoreLogN3
+
+run n0 netns n0 rm -r /home/ndecarli/regtestData/3
+
+run n1 netns n1 /usr/local/go/bin/go run /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/launcher.go /usr/local/go/bin/go run /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/minerEngine.go 0 0.333333
+run n0 netns n0 sleep 1s
+run n2 netns n2 /usr/local/go/bin/go run /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/launcher.go /usr/local/go/bin/go run /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/minerEngine.go 1 0.333333
+run n0 netns n0 sleep 1s
+run n3 netns n3 /usr/local/go/bin/go run /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/launcher.go /usr/local/go/bin/go run /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/minerEngine.go 2 0.333333
+run n0 netns n0 sleep 1s
+
+run n1 netns n1 /usr/local/go/bin/go run /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/launcher.go /usr/local/go/bin/go run /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/pingEngine.go 4 1
+run n2 netns n2 /usr/local/go/bin/go run /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/launcher.go /usr/local/go/bin/go run /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/pingEngine.go 4 2
+run n3 netns n3 /usr/local/go/bin/go run /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/launcher.go /usr/local/go/bin/go run /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/pingEngine.go 4 3
+run n0 netns n0 /usr/local/go/bin/go run /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/pingEngine.go 4 0
+
+run n1 netns n1 bash /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/bitcoindo.sh 0 stop
+run n2 netns n2 bash /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/bitcoindo.sh 1 stop
+run n3 netns n3 bash /home/mgeier/mpizzagalli/bitcoin/tooling/ejecucion-nodos/bitcoindo.sh 2 stop
+
+run n0 netns n0 sleep 1m

@@ -21,7 +21,7 @@ var config = Configuration{
 	SherlockfogDir:      projectToolingRoot + "/sherlockfog",
 	TopologyCreationDir: projectToolingRoot + "/creacion-topologia",
 
-	BlockIntervalInSeconds: 10.0,
+	BlockIntervalInSeconds: 30.0,
 }
 
 // Usa PWD y la estructura del proyecto para obtener varios paths a ser utilizados por otros archivos
