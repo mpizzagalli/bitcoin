@@ -1,13 +1,15 @@
 package main
 
 import (
-	"os"
 	"fmt"
+	"os"
 	"strconv"
+
+	NewParsing "./newParsing"
 	Parsing "./parsing"
 )
 
-func main(){
+func main() {
 	var command = os.Args[1]
 
 	switch command {
@@ -18,10 +20,10 @@ func main(){
 			- Folder with logs of the nodes (btcCoreLogN_)
 
 			Prints the miner distribution of the main chain produced by the nodes
- 		*/
+		*/
 		var nodeNumber, _ = strconv.Atoi(os.Args[2])
 		var folderWithLogs = os.Args[3]
-	
+
 		var singleMiningDistribution = Parsing.CalculateMiningDistributionFromNodePerspective(folderWithLogs, nodeNumber)
 		os.Stdout.WriteString(fmt.Sprintf("Own: %d/total: %d\n", singleMiningDistribution.Own, singleMiningDistribution.Total))
 	case "obtained-all":
@@ -31,15 +33,15 @@ func main(){
 			- Folder with logs of the nodes (btcCoreLogN_)
 
 			Prints the miner distribution of the main chain produced by the nodes
- 		*/
+		*/
 		var numberOfNodes, _ = strconv.Atoi(os.Args[2])
 		var folderWithLogs = os.Args[3]
-	
+
 		Parsing.CalculateAndLogMiningDistribution(numberOfNodes, folderWithLogs)
 	case "obtained-intervals":
 		var numberOfNodes, _ = strconv.Atoi(os.Args[2])
 		var folderWithLogs = os.Args[3]
-	
+
 		Parsing.CalculateMiningDistributionInIntervals(numberOfNodes, folderWithLogs, 25)
 	case "expected":
 		/*
@@ -48,7 +50,7 @@ func main(){
 			- delta
 
 			Prints the expected percentage of blocks in the main chain mined by the selfish miner
- 		*/
+		*/
 		var alpha, _ = strconv.ParseFloat(os.Args[2], 64)
 		var delta, _ = strconv.ParseFloat(os.Args[3], 64)
 
@@ -61,5 +63,11 @@ func main(){
 	case "experiments-selfish":
 		var folderWithResults = os.Args[2]
 		Parsing.CalculateSelfishMinerProportionExperiments(folderWithResults)
+	case "pizza":
+		var nodeNumber, _ = strconv.Atoi(os.Args[2])
+		var folderWithLogs = os.Args[3]
+		fmt.Println(nodeNumber)
+		fmt.Println(folderWithLogs)
+		NewParsing.CalculateMetricFromSelfishPOV(folderWithLogs, nodeNumber)
 	}
 }
