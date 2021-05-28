@@ -66,8 +66,10 @@ func main() {
 	case "pizza":
 		var nodeNumber, _ = strconv.Atoi(os.Args[2])
 		var folderWithLogs = os.Args[3]
-		fmt.Println(nodeNumber)
-		fmt.Println(folderWithLogs)
-		NewParsing.CalculateMetricFromSelfishPOV(folderWithLogs, nodeNumber)
+		NewParsing.CalculateMetricForSinglePOV(folderWithLogs, nodeNumber)
+	case "pizza-all":
+		var nodeAmount, _ = strconv.Atoi(os.Args[2])
+		var folderWithLogs = os.Args[3]
+		NewParsing.CalculateMetrics(folderWithLogs, nodeAmount)
 	}
 }

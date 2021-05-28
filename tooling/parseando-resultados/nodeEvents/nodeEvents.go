@@ -17,6 +17,10 @@ type BroadcastedBlockEvent struct {
 	ParentBlock string
 }
 
+type BroadcastedHeadersBlockEvent struct {
+	BlockHash string
+}
+
 type MinedBlockEvent struct {
 	BlockHash   string
 	ParentBlock string
@@ -89,6 +93,10 @@ func readNodeEventsPizza(logFileLines []string) []NodeEvent {
 			var broadcastedBlockEvent BroadcastedBlockEvent
 			broadcastedBlockEvent.BlockHash = nodeEvent[2]
 			broadcastedBlockEvent.ParentBlock = nodeEvent[3]
+			nodeEvents = append(nodeEvents, NodeEvent{broadcastedBlockEvent})
+		} else if nodeEvent[1] == "2" {
+			var broadcastedBlockEvent BroadcastedHeadersBlockEvent
+			broadcastedBlockEvent.BlockHash = nodeEvent[2]
 			nodeEvents = append(nodeEvents, NodeEvent{broadcastedBlockEvent})
 		} else if nodeEvent[1] == "3" {
 			// Selfish mined block event: timestamp | 3 | block hash | parent hash | # txs
