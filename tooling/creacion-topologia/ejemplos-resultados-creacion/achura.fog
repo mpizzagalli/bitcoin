@@ -1,0 +1,127 @@
+for i in 0..278 do
+	def n{i}
+end for
+
+connect n0 n1 13ms
+connect n0 n2 13ms
+connect n0 n3 13ms
+connect n0 n4 13ms
+connect n0 n5 13ms
+connect n0 n6 13ms
+connect n0 n7 13ms
+connect n0 n8 13ms
+connect n0 n9 13ms
+connect n0 n10 13ms
+connect n0 n11 13ms
+connect n0 n12 13ms
+
+build-network
+
+run n92 netns n92 bash /home/mgeier/ndecarli/invokeBitcoin.sh 0 -simuLambda=0.022868 -dbcache=2048
+run n139 netns n139 bash /home/mgeier/ndecarli/invokeBitcoin.sh 1 -simuLambda=0.014516 -dbcache=2048
+run n69 netns n69 bash /home/mgeier/ndecarli/invokeBitcoin.sh 2 -simuLambda=0.078971 -dbcache=2048
+run n1 netns n1 bash /home/mgeier/ndecarli/invokeBitcoin.sh 3 -simuLambda=0.055844 -dbcache=2048
+run n2 netns n2 bash /home/mgeier/ndecarli/invokeBitcoin.sh 4 -simuLambda=0.122500 -dbcache=2048
+run n73 netns n73 bash /home/mgeier/ndecarli/invokeBitcoin.sh 5 -simuLambda=0.006509 -dbcache=2048
+run n74 netns n74 bash /home/mgeier/ndecarli/invokeBitcoin.sh 6 -simuLambda=0.006489 -dbcache=2048
+
+run n0 netns n0 sleep 1m
+run n92 netns n92 /usr/local/go/bin/go run /home/mgeier/ndecarli/semaphore.go 0
+run n139 netns n139 /usr/local/go/bin/go run /home/mgeier/ndecarli/semaphore.go 1
+run n69 netns n69 /usr/local/go/bin/go run /home/mgeier/ndecarli/semaphore.go 2
+run n1 netns n1 /usr/local/go/bin/go run /home/mgeier/ndecarli/semaphore.go 3
+run n2 netns n2 /usr/local/go/bin/go run /home/mgeier/ndecarli/semaphore.go 4
+run n73 netns n73 /usr/local/go/bin/go run /home/mgeier/ndecarli/semaphore.go 5
+
+run n92 netns n92 bash /home/mgeier/ndecarli/connectNodes.sh 0 126 n76
+run n92 netns n92 bash /home/mgeier/ndecarli/connectNodes.sh 0 151 n24
+run n92 netns n92 bash /home/mgeier/ndecarli/connectNodes.sh 0 10 n93
+run n92 netns n92 bash /home/mgeier/ndecarli/connectNodes.sh 0 224 n211
+run n139 netns n139 bash /home/mgeier/ndecarli/connectNodes.sh 1 95 n123
+run n139 netns n139 bash /home/mgeier/ndecarli/connectNodes.sh 1 174 n163
+run n69 netns n69 bash /home/mgeier/ndecarli/connectNodes.sh 2 123 n223
+run n69 netns n69 bash /home/mgeier/ndecarli/connectNodes.sh 2 34 n75
+
+run n0 netns n0 bash /home/mgeier/ndecarli/invokeBitcoin.sh 240 -dificulta=0 -dbcache=2048
+
+run n0 netns n0 sleep 1m
+run n0 netns n0 /usr/local/go/bin/go run /home/mgeier/ndecarli/semaphore.go 240
+
+run n92 netns n92 bash /home/mgeier/ndecarli/connectNodes.sh 0 240 n0
+run n0 netns n0 bash /home/mgeier/ndecarli/connectNodes.sh 240 0 n92
+run n139 netns n139 bash /home/mgeier/ndecarli/connectNodes.sh 1 240 n0
+run n0 netns n0 bash /home/mgeier/ndecarli/connectNodes.sh 240 1 n139
+run n69 netns n69 bash /home/mgeier/ndecarli/connectNodes.sh 2 240 n0
+run n0 netns n0 bash /home/mgeier/ndecarli/connectNodes.sh 240 2 n69
+run n1 netns n1 bash /home/mgeier/ndecarli/connectNodes.sh 3 240 n0
+run n0 netns n0 bash /home/mgeier/ndecarli/connectNodes.sh 240 3 n1
+run n2 netns n2 bash /home/mgeier/ndecarli/connectNodes.sh 4 240 n0
+run n0 netns n0 bash /home/mgeier/ndecarli/connectNodes.sh 240 4 n2
+
+run n92 netns n92 bash /home/mgeier/ndecarli/bitcoindo.sh 0 getnewaddress > /home/mgeier/ndecarli/addrN0
+run n92 netns n92 bash /home/mgeier/ndecarli/bitcoindo.sh 0 getnewaddress >> /home/mgeier/ndecarli/addrN0
+
+run n139 netns n139 bash /home/mgeier/ndecarli/bitcoindo.sh 1 getnewaddress > /home/mgeier/ndecarli/addrN1
+run n139 netns n139 bash /home/mgeier/ndecarli/bitcoindo.sh 1 getnewaddress >> /home/mgeier/ndecarli/addrN1
+
+run n69 netns n69 bash /home/mgeier/ndecarli/bitcoindo.sh 2 getnewaddress > /home/mgeier/ndecarli/addrN2
+run n69 netns n69 bash /home/mgeier/ndecarli/bitcoindo.sh 2 getnewaddress >> /home/mgeier/ndecarli/addrN2
+
+run n1 netns n1 bash /home/mgeier/ndecarli/bitcoindo.sh 3 getnewaddress > /home/mgeier/ndecarli/addrN3
+run n1 netns n1 bash /home/mgeier/ndecarli/bitcoindo.sh 3 getnewaddress >> /home/mgeier/ndecarli/addrN3
+
+run n2 netns n2 bash /home/mgeier/ndecarli/bitcoindo.sh 4 getnewaddress > /home/mgeier/ndecarli/addrN4
+run n2 netns n2 bash /home/mgeier/ndecarli/bitcoindo.sh 4 getnewaddress >> /home/mgeier/ndecarli/addrN4
+
+run n73 netns n73 bash /home/mgeier/ndecarli/bitcoindo.sh 5 getnewaddress > /home/mgeier/ndecarli/addrN5
+run n73 netns n73 bash /home/mgeier/ndecarli/bitcoindo.sh 5 getnewaddress >> /home/mgeier/ndecarli/addrN5
+
+run n74 netns n74 bash /home/mgeier/ndecarli/bitcoindo.sh 6 getnewaddress > /home/mgeier/ndecarli/addrN6
+run n74 netns n74 bash /home/mgeier/ndecarli/bitcoindo.sh 6 getnewaddress >> /home/mgeier/ndecarli/addrN6
+
+run n1 netns n1 scp -q -o StrictHostKeyChecking=no /home/mgeier/ndecarli/addrN* n0:/home/mgeier/ndecarli/
+run n2 netns n2 scp -q -o StrictHostKeyChecking=no /home/mgeier/ndecarli/addrN* n0:/home/mgeier/ndecarli/
+run n3 netns n3 scp -q -o StrictHostKeyChecking=no /home/mgeier/ndecarli/addrN* n0:/home/mgeier/ndecarli/
+run n4 netns n4 scp -q -o StrictHostKeyChecking=no /home/mgeier/ndecarli/addrN* n0:/home/mgeier/ndecarli/
+
+run n0 netns n0 /usr/local/go/bin/go run /home/mgeier/ndecarli/generateBlockchain.go 240
+
+run n0 netns n0 sleep 1m
+run n92 netns n92 /usr/local/go/bin/go run /home/mgeier/ndecarli/semaphore.go 0
+run n139 netns n139 /usr/local/go/bin/go run /home/mgeier/ndecarli/semaphore.go 1
+run n69 netns n69 /usr/local/go/bin/go run /home/mgeier/ndecarli/semaphore.go 2
+run n1 netns n1 /usr/local/go/bin/go run /home/mgeier/ndecarli/semaphore.go 3
+run n2 netns n2 /usr/local/go/bin/go run /home/mgeier/ndecarli/semaphore.go 4
+run n73 netns n73 /usr/local/go/bin/go run /home/mgeier/ndecarli/semaphore.go 5
+run n74 netns n74 /usr/local/go/bin/go run /home/mgeier/ndecarli/semaphore.go 6
+
+run n0 netns n0 bash /home/mgeier/ndecarli/bitcoindo.sh 240 stop
+
+run n92 netns n92 /usr/local/go/bin/go run /home/mgeier/ndecarli/launcher.go /usr/local/go/bin/go run /home/mgeier/ndecarli/testEngine.go 0
+run n139 netns n139 /usr/local/go/bin/go run /home/mgeier/ndecarli/launcher.go /usr/local/go/bin/go run /home/mgeier/ndecarli/testEngine.go 1
+run n69 netns n69 /usr/local/go/bin/go run /home/mgeier/ndecarli/launcher.go /usr/local/go/bin/go run /home/mgeier/ndecarli/testEngine.go 2
+run n1 netns n1 /usr/local/go/bin/go run /home/mgeier/ndecarli/launcher.go /usr/local/go/bin/go run /home/mgeier/ndecarli/testEngine.go 3
+run n2 netns n2 /usr/local/go/bin/go run /home/mgeier/ndecarli/launcher.go /usr/local/go/bin/go run /home/mgeier/ndecarli/testEngine.go 4
+run n73 netns n73 /usr/local/go/bin/go run /home/mgeier/ndecarli/launcher.go /usr/local/go/bin/go run /home/mgeier/ndecarli/testEngine.go 5
+run n74 netns n74 /usr/local/go/bin/go run /home/mgeier/ndecarli/launcher.go /usr/local/go/bin/go run /home/mgeier/ndecarli/testEngine.go 6
+
+run n1 netns n1 /usr/local/go/bin/go run /home/mgeier/ndecarli/launcher.go /usr/local/go/bin/go run /home/mgeier/ndecarli/pingEngine.go 278 1
+run n2 netns n2 /usr/local/go/bin/go run /home/mgeier/ndecarli/launcher.go /usr/local/go/bin/go run /home/mgeier/ndecarli/pingEngine.go 278 2
+run n3 netns n3 /usr/local/go/bin/go run /home/mgeier/ndecarli/launcher.go /usr/local/go/bin/go run /home/mgeier/ndecarli/pingEngine.go 278 3
+run n4 netns n4 /usr/local/go/bin/go run /home/mgeier/ndecarli/launcher.go /usr/local/go/bin/go run /home/mgeier/ndecarli/pingEngine.go 278 4
+run n5 netns n5 /usr/local/go/bin/go run /home/mgeier/ndecarli/launcher.go /usr/local/go/bin/go run /home/mgeier/ndecarli/pingEngine.go 278 5
+run n6 netns n6 /usr/local/go/bin/go run /home/mgeier/ndecarli/launcher.go /usr/local/go/bin/go run /home/mgeier/ndecarli/pingEngine.go 278 6
+run n7 netns n7 /usr/local/go/bin/go run /home/mgeier/ndecarli/launcher.go /usr/local/go/bin/go run /home/mgeier/ndecarli/pingEngine.go 278 7
+run n8 netns n8 /usr/local/go/bin/go run /home/mgeier/ndecarli/launcher.go /usr/local/go/bin/go run /home/mgeier/ndecarli/pingEngine.go 278 8
+run n9 netns n9 /usr/local/go/bin/go run /home/mgeier/ndecarli/launcher.go /usr/local/go/bin/go run /home/mgeier/ndecarli/pingEngine.go 278 9
+run n0 netns n0 /usr/local/go/bin/go run /home/mgeier/ndecarli/pingEngine.go 278 0
+
+run n92 netns n92 bash /home/mgeier/ndecarli/bitcoindo.sh 0 stop
+run n139 netns n139 bash /home/mgeier/ndecarli/bitcoindo.sh 1 stop
+run n69 netns n69 bash /home/mgeier/ndecarli/bitcoindo.sh 2 stop
+run n1 netns n1 bash /home/mgeier/ndecarli/bitcoindo.sh 3 stop
+run n2 netns n2 bash /home/mgeier/ndecarli/bitcoindo.sh 4 stop
+run n73 netns n73 bash /home/mgeier/ndecarli/bitcoindo.sh 5 stop
+run n74 netns n74 bash /home/mgeier/ndecarli/bitcoindo.sh 6 stop
+
+run n0 netns n0 sleep 1m

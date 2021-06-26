@@ -1,0 +1,36 @@
+Info:
+Los de nico de carli
+ParseLogs
+|-> borra cosas anteriores
+|-> compila parseLog.cpp
+|-> compila medianTimes.cpp
+|-> corre parseLog pasandole los btcCoreLogN
+  |-> escupe un simultaionSummary
+  Basicamente cuenta todos los bloques minados y en cuanto tiempo se dio.
+|-> corre parseBlockchain.go recibe los btcCoreLogN chainHashes y chainTimestamps (nose que son-> son los nombres de output)
+  Script interesante, parsea un log y arma en memoria la cadena tipo matriz.
+|-> corre medianTimes recibe los btcCoreLogN
+  Hace algo con los tiempos de los bloques, nose si me interesa
+|-> corre run generateHistory.go ../ejecucion-nodos 
+  Me suena que es el de kevin y ahce algo parecido a parseBlockChain
+|-> corre decodePings.go 
+  Levanta y los archivos de la pinta pingLogN 
+
+Estos son de nico tallar
+CalculateMiningDistirbution?
+  La posta, acepta distintos comandos
+  obtained-single: Calcula la distribucion de 1 nodo desde su prespectiva
+
+parsing/miningDistribution?
+nodeEvents/nodeEvents.go?
+
+
+Voy a modificar lo de Nico Tallar
+
+Con go run tooling/parseando-resultados/calculateMiningDistribution.go pizza 1 tooling/ejecucion-nodos/logs/20210423030228-test-caso-8-ssshshhh/
+escupe algo
+
+
+No puedo sumar la altura en los logs de btc?
+no puedo agregar el minero en el log de btc?
+
